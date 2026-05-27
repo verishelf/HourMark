@@ -26,7 +26,7 @@ const FEATURES = [
   {
     title: "Checkout",
     description:
-      "Pay securely with Apple Pay. Sellers receive fast payouts with a transparent 3% fee on every sale.",
+      "Pay with Apple Pay through Stripe. Destination charges route funds to sellers automatically — with a transparent 3% platform fee.",
   },
   {
     title: "Verify",

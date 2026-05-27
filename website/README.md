@@ -2,6 +2,8 @@
 
 Marketing site for the HourMark luxury watch marketplace iOS app. Built with Next.js 16, TypeScript, Tailwind CSS, and Framer Motion.
 
+Copy and feature highlights align with the mobile app and Stripe Connect marketplace backend (`apps/api/`).
+
 ## Development
 
 ```bash

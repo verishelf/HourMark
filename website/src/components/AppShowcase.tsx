@@ -16,7 +16,7 @@ const SCREENS = [
     subtitle: "Immersive product detail",
     image:
       "https://images.unsplash.com/photo-1548171916-3f3e5d3c8c0e?w=600&q=80",
-    accent: "Fullscreen gallery & buy now",
+    accent: "Gallery, seller profile & Apple Pay checkout",
   },
   {
     title: "Sell",
