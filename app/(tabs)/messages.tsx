@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
+import { EmptyState } from "@/components/EmptyState";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
+import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { getConversations } from "@/services/messaging";
+import { tabContentPadding } from "@/styles/layout";
 import type { Conversation } from "@/types";
 
 export default function MessagesScreen() {
@@ -23,91 +28,149 @@ export default function MessagesScreen() {
 
   if (!isAuthenticated) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.background,
-          paddingTop: insets.top + 40,
-          paddingHorizontal: 20,
-          justifyContent: "center",
-        }}
-      >
-        <Text style={{ ...Typography.h1, color: Colors.textPrimary }}>
-          Messages
-        </Text>
-        <Text
-          style={{
-            ...Typography.body,
-            color: Colors.textSecondary,
-            marginTop: 12,
-          }}
-        >
-          Sign in to chat with buyers and sellers.
-        </Text>
+      <View style={{ flex: 1, backgroundColor: Colors.background }}>
+        <ScreenHeader title="Messages" />
+        <EmptyState
+          icon="chatbubble-outline"
+          title="Sign in to message"
+          body="Connect with buyers and sellers about listings."
+          actionLabel="Sign In"
+          onAction={() => router.push("/auth/login")}
+        />
       </View>
     );
   }
 
+  const isUnread = (item: Conversation) =>
+    Boolean(
+      item.last_message &&
+        item.last_message.sender_id !== user?.id &&
+        !item.last_message.read_at
+    );
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 20 }}>
-        <Text style={{ ...Typography.h1, color: Colors.textPrimary, marginBottom: 24 }}>
-          Messages
-        </Text>
-      </View>
+      <ScreenHeader title="Messages" subtitle="Your conversations" />
 
       <FlashList
         data={conversations}
-        
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{
+          ...tabContentPadding(insets.bottom),
+          paddingHorizontal: SPACING.screen,
+        }}
         ListEmptyComponent={
-          <Text
-            style={{
-              ...Typography.body,
-              color: Colors.textMuted,
-              textAlign: "center",
-              marginTop: 48,
-            }}
-          >
-            No conversations yet
-          </Text>
+          <EmptyState
+            icon="chatbubble-outline"
+            title="No conversations yet"
+            body="Message a seller from any listing to start a conversation."
+          />
         }
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => router.push(`/chat/${item.id}`)}
-            style={({ pressed }) => ({
-              paddingVertical: 18,
-              borderBottomWidth: 1,
-              borderBottomColor: Colors.border,
-              opacity: pressed ? 0.8 : 1,
-            })}
-          >
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text style={{ ...Typography.h3, color: Colors.textPrimary }}>
-                Conversation
-              </Text>
-              {item.last_message && (
-                <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
-                  {formatRelativeTime(item.last_message.created_at)}
-                </Text>
+        renderItem={({ item }) => {
+          const unread = isUnread(item);
+          const listingTitle = item.listing
+            ? `${item.listing.brand} ${item.listing.model}`
+            : "Conversation";
+          const otherUser = item.other_user?.username ?? "User";
+
+          return (
+            <Pressable
+              onPress={() => router.push(`/chat/${item.id}`)}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                paddingVertical: 14,
+                borderBottomWidth: 1,
+                borderBottomColor: Colors.border,
+                opacity: pressed ? 0.8 : 1,
+                gap: 12,
+              })}
+            >
+              {item.listing?.images[0] ? (
+                <Image
+                  source={{ uri: item.listing.images[0] }}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: RADIUS.sm,
+                    backgroundColor: Colors.cardElevated,
+                  }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: RADIUS.sm,
+                    backgroundColor: Colors.cardElevated,
+                    borderWidth: 1,
+                    borderColor: Colors.border,
+                  }}
+                />
               )}
-            </View>
-            {item.last_message && (
-              <Text
-                style={{
-                  ...Typography.body,
-                  color: Colors.textSecondary,
-                  marginTop: 6,
-                  fontSize: 14,
-                }}
-                numberOfLines={1}
-              >
-                {item.last_message.text}
-              </Text>
-            )}
-          </Pressable>
-        )}
+              <View style={{ flex: 1 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      ...Typography.h3,
+                      color: Colors.textPrimary,
+                      fontSize: 15,
+                      flex: 1,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {listingTitle}
+                  </Text>
+                  {item.last_message && (
+                    <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
+                      {formatRelativeTime(item.last_message.created_at)}
+                    </Text>
+                  )}
+                </View>
+                <Text
+                  style={{
+                    ...Typography.caption,
+                    color: Colors.textSecondary,
+                    marginTop: 2,
+                  }}
+                >
+                  @{otherUser}
+                </Text>
+                {item.last_message && (
+                  <Text
+                    style={{
+                      ...Typography.body,
+                      color: unread ? Colors.textPrimary : Colors.textMuted,
+                      marginTop: 4,
+                      fontSize: 14,
+                      fontWeight: unread ? "500" : "400",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {item.last_message.text}
+                  </Text>
+                )}
+              </View>
+              {unread && (
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: Colors.textPrimary,
+                    alignSelf: "center",
+                  }}
+                />
+              )}
+            </Pressable>
+          );
+        }}
       />
     </View>
   );

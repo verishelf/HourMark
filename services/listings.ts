@@ -1,6 +1,28 @@
 import { MOCK_LISTINGS } from "@/data/mockListings";
+import { getImageContentType } from "@/lib/listingImages";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { CreateListingInput, Listing } from "@/types";
+
+const mockArchivedIds = new Set<string>();
+const mockListingUpdates = new Map<string, Partial<Listing>>();
+const mockUserListings: Listing[] = [];
+
+function allMockListings(): Listing[] {
+  const byId = new Map<string, Listing>();
+  for (const listing of MOCK_LISTINGS) {
+    byId.set(listing.id, listing);
+  }
+  for (const listing of mockUserListings) {
+    byId.set(listing.id, listing);
+  }
+  return Array.from(byId.values());
+}
+
+function applyMockListingState(listings: Listing[]): Listing[] {
+  return listings
+    .filter((l) => !mockArchivedIds.has(l.id))
+    .map((l) => ({ ...l, ...mockListingUpdates.get(l.id) }));
+}
 
 export async function getListings(filters?: {
   brand?: string;
@@ -10,7 +32,7 @@ export async function getListings(filters?: {
   search?: string;
 }): Promise<Listing[]> {
   if (!isSupabaseConfigured) {
-    return filterMockListings(MOCK_LISTINGS, filters);
+    return filterMockListings(applyMockListingState(allMockListings()), filters);
   }
 
   let query = supabase
@@ -41,7 +63,8 @@ export async function getListings(filters?: {
 
 export async function getListingById(id: string): Promise<Listing | null> {
   if (!isSupabaseConfigured) {
-    return MOCK_LISTINGS.find((l) => l.id === id) ?? null;
+    const listing = applyMockListingState(allMockListings()).find((l) => l.id === id);
+    return listing ?? null;
   }
 
   const { data, error } = await supabase
@@ -83,6 +106,7 @@ export async function createListing(
       authenticated: false,
       created_at: new Date().toISOString(),
     };
+    mockUserListings.unshift(mock);
     return mock;
   }
 
@@ -101,16 +125,67 @@ export async function createListing(
 
 export async function getUserListings(userId: string): Promise<Listing[]> {
   if (!isSupabaseConfigured) {
-    return MOCK_LISTINGS.filter((l) => l.seller_id === userId);
+    return applyMockListingState(
+      allMockListings().filter((l) => l.seller_id === userId)
+    );
   }
 
   const { data, error } = await supabase
     .from("listings")
     .select("*")
     .eq("seller_id", userId)
+    .neq("status", "archived")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Listing[];
+}
+
+export async function updateListing(
+  listingId: string,
+  sellerId: string,
+  input: Partial<CreateListingInput>
+): Promise<Listing> {
+  if (!isSupabaseConfigured) {
+    const base = MOCK_LISTINGS.find((l) => l.id === listingId);
+    if (!base || base.seller_id !== sellerId) {
+      throw new Error("Listing not found");
+    }
+    const previous = mockListingUpdates.get(listingId) ?? {};
+    const updated = { ...base, ...previous, ...input } as Listing;
+    mockListingUpdates.set(listingId, { ...previous, ...input });
+    return updated;
+  }
+
+  const { data, error } = await supabase
+    .from("listings")
+    .update(input)
+    .eq("id", listingId)
+    .eq("seller_id", sellerId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Listing;
+}
+
+export async function deleteListing(
+  listingId: string,
+  sellerId: string
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const existing = MOCK_LISTINGS.find((l) => l.id === listingId);
+    if (!existing || existing.seller_id !== sellerId) {
+      throw new Error("Listing not found");
+    }
+    mockArchivedIds.add(listingId);
+    return;
+  }
+
+  const { error } = await supabase
+    .from("listings")
+    .update({ status: "archived" })
+    .eq("id", listingId)
+    .eq("seller_id", sellerId);
+  if (error) throw error;
 }
 
 export async function uploadListingImage(
@@ -121,13 +196,25 @@ export async function uploadListingImage(
   if (!isSupabaseConfigured) return uri;
 
   const response = await fetch(uri);
-  const blob = await response.blob();
-  const ext = uri.split(".").pop() ?? "jpg";
+  if (!response.ok) {
+    throw new Error(`Could not read photo (${response.status}). Try picking it again.`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  if (arrayBuffer.byteLength === 0) {
+    throw new Error("Photo file is empty. Try picking it again.");
+  }
+
+  const { ext, contentType } = getImageContentType(uri);
   const path = `${userId}/${Date.now()}-${index}.${ext}`;
 
   const { error } = await supabase.storage
     .from("listing-images")
-    .upload(path, blob, { contentType: `image/${ext}` });
+    .upload(path, arrayBuffer, {
+      contentType,
+      cacheControl: "3600",
+      upsert: false,
+    });
   if (error) throw error;
 
   const { data } = supabase.storage.from("listing-images").getPublicUrl(path);

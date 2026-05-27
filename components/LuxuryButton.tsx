@@ -1,8 +1,7 @@
-import { ActivityIndicator, Pressable, Text, ViewStyle } from "react-native";
-import { MotiView } from "moti";
+import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
-import { Typography } from "@/constants/typography";
+import { RADIUS } from "@/constants/layout";
 
 type Variant = "primary" | "secondary" | "ghost" | "outline";
 
@@ -16,70 +15,91 @@ type Props = {
   style?: ViewStyle;
 };
 
+const VARIANT_STYLES: Record<
+  Variant,
+  { backgroundColor: string; borderColor: string; textColor: string; borderWidth: number }
+> = {
+  primary: {
+    backgroundColor: Colors.cardElevated,
+    borderColor: Colors.textPrimary,
+    textColor: Colors.textPrimary,
+    borderWidth: 1,
+  },
+  secondary: {
+    backgroundColor: Colors.cardElevated,
+    borderColor: Colors.borderLight,
+    textColor: Colors.textPrimary,
+    borderWidth: 1,
+  },
+  outline: {
+    backgroundColor: "transparent",
+    borderColor: Colors.textPrimary,
+    textColor: Colors.textPrimary,
+    borderWidth: 1,
+  },
+  ghost: {
+    backgroundColor: "transparent",
+    borderColor: "transparent",
+    textColor: Colors.textSecondary,
+    borderWidth: 0,
+  },
+};
+
 export function LuxuryButton({
   label,
   onPress,
-  variant = "primary",
+  variant = "outline",
   loading = false,
   disabled = false,
   fullWidth = true,
   style,
 }: Props) {
+  const v = VARIANT_STYLES[variant];
+
   const handlePress = () => {
     if (disabled || loading) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   };
 
-  const bg =
-    variant === "primary"
-      ? Colors.textPrimary
-      : variant === "secondary"
-        ? Colors.card
-        : "transparent";
-
-  const textColor =
-    variant === "primary" ? Colors.background : Colors.textPrimary;
-
-  const borderWidth = variant === "outline" ? 1 : 0;
-  const borderColor = Colors.border;
-
   return (
-    <MotiView
-      from={{ opacity: 1 }}
-      animate={{ opacity: disabled ? 0.4 : 1 }}
-      style={[{ width: fullWidth ? "100%" : undefined }, style]}
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled || loading}
+      style={({ pressed }) => [
+        styles.base,
+        {
+          width: fullWidth ? "100%" : "auto",
+          backgroundColor: v.backgroundColor,
+          borderWidth: v.borderWidth,
+          borderColor: v.borderColor,
+          opacity: disabled ? 0.4 : pressed ? 0.8 : 1,
+        },
+        style,
+      ]}
     >
-      <Pressable
-        onPress={handlePress}
-        disabled={disabled || loading}
-        style={({ pressed }) => ({
-          backgroundColor: bg,
-          borderWidth,
-          borderColor,
-          paddingVertical: 16,
-          paddingHorizontal: 24,
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 2,
-          opacity: pressed ? 0.85 : 1,
-          minHeight: 52,
-        })}
-      >
-        {loading ? (
-          <ActivityIndicator color={textColor} />
-        ) : (
-          <Text
-            style={{
-              ...Typography.label,
-              color: textColor,
-              fontSize: 12,
-            }}
-          >
-            {label}
-          </Text>
-        )}
-      </Pressable>
-    </MotiView>
+      {loading ? (
+        <ActivityIndicator color={v.textColor} />
+      ) : (
+        <Text style={[styles.label, { color: v.textColor }]}>{label}</Text>
+      )}
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  base: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: RADIUS.pill,
+    minHeight: 50,
+    minWidth: 120,
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+});

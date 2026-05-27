@@ -12,7 +12,7 @@ export default function TabLayout() {
         sceneStyle: { backgroundColor: Colors.background },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Discover" }} />
+      <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="search" options={{ title: "Search" }} />
       <Tabs.Screen name="sell" options={{ title: "Sell" }} />
       <Tabs.Screen name="messages" options={{ title: "Messages" }} />

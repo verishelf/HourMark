@@ -7,6 +7,7 @@ type Props = {
   subtitle?: string;
   actionLabel?: string;
   onAction?: () => void;
+  compact?: boolean;
 };
 
 export function SectionHeader({
@@ -14,21 +15,32 @@ export function SectionHeader({
   subtitle,
   actionLabel,
   onAction,
+  compact = false,
 }: Props) {
   return (
     <View
       style={{
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "flex-end",
-        marginBottom: 20,
+        alignItems: compact ? "center" : "flex-end",
+        marginBottom: compact ? 12 : 20,
       }}
     >
-      <View>
-        <Text style={{ ...Typography.h2, color: Colors.textPrimary }}>
+      <View style={{ flex: 1 }}>
+        <Text
+          style={
+            compact
+              ? {
+                  ...Typography.label,
+                  color: Colors.textMuted,
+                  fontSize: 11,
+                }
+              : { ...Typography.h2, color: Colors.textPrimary }
+          }
+        >
           {title}
         </Text>
-        {subtitle && (
+        {subtitle && !compact && (
           <Text
             style={{
               ...Typography.caption,
@@ -41,7 +53,7 @@ export function SectionHeader({
         )}
       </View>
       {actionLabel && onAction && (
-        <Pressable onPress={onAction}>
+        <Pressable onPress={onAction} hitSlop={8}>
           <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
             {actionLabel}
           </Text>

@@ -11,6 +11,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { formatPrice } from "@/lib/stripe";
+import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import type { Listing } from "@/types";
@@ -45,17 +46,23 @@ export function FeaturedCarousel({ listings }: Props) {
         keyExtractor={(item) => item.id}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
+          const coverImage = getListingCoverImage(item.images);
+          return (
           <Pressable
             onPress={() => router.push(`/listing/${item.id}`)}
             style={{ width, height: 520 }}
           >
+            {coverImage ? (
             <Image
-              source={{ uri: item.images[0] }}
+              source={{ uri: coverImage }}
               style={{ width: "100%", height: "100%" }}
               contentFit="cover"
               transition={400}
             />
+            ) : (
+              <View style={{ width: "100%", height: "100%", backgroundColor: Colors.cardElevated }} />
+            )}
             <View
               style={{
                 position: "absolute",
@@ -99,7 +106,8 @@ export function FeaturedCarousel({ listings }: Props) {
               </Text>
             </View>
           </Pressable>
-        )}
+          );
+        }}
       />
       <View
         style={{

@@ -1,7 +1,43 @@
-import { Pressable, ScrollView, Text } from "react-native";
+import { Pressable, Text } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
+import { RADIUS } from "@/constants/layout";
+
+type ChipProps = {
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+};
+
+export function FilterChip({ label, active = false, onPress }: ChipProps) {
+  return (
+    <Pressable
+      onPress={() => {
+        Haptics.selectionAsync();
+        onPress();
+      }}
+      style={{
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: active ? Colors.textPrimary : Colors.border,
+        backgroundColor: active ? Colors.cardElevated : "transparent",
+      }}
+    >
+      <Text
+        style={{
+          ...Typography.caption,
+          color: active ? Colors.textPrimary : Colors.textSecondary,
+          fontWeight: active ? "600" : "400",
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 type Props = {
   chips: readonly string[];
@@ -11,11 +47,7 @@ type Props = {
 
 export function FilterChips({ chips, selected, onSelect }: Props) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 8, paddingBottom: 16 }}
-    >
+    <>
       {chips.map((chip) => {
         const active = chip === selected;
         return (
@@ -28,16 +60,18 @@ export function FilterChips({ chips, selected, onSelect }: Props) {
             style={{
               paddingHorizontal: 16,
               paddingVertical: 10,
-              borderRadius: 20,
+              borderRadius: RADIUS.pill,
               borderWidth: 1,
-              borderColor: active ? Colors.textPrimary : Colors.border,
-              backgroundColor: active ? Colors.textPrimary : "transparent",
+              borderColor: Colors.textPrimary,
+              backgroundColor: "transparent",
+              opacity: active ? 1 : 0.7,
             }}
           >
             <Text
               style={{
                 ...Typography.caption,
-                color: active ? Colors.background : Colors.textSecondary,
+                color: Colors.textPrimary,
+                fontWeight: active ? "600" : "400",
               }}
             >
               {chip}
@@ -45,6 +79,6 @@ export function FilterChips({ chips, selected, onSelect }: Props) {
           </Pressable>
         );
       })}
-    </ScrollView>
+    </>
   );
 }

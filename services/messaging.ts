@@ -1,5 +1,8 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { MOCK_LISTINGS } from "@/data/mockListings";
 import type { Conversation, Message } from "@/types";
+
+const mockListing = MOCK_LISTINGS[0];
 
 const MOCK_CONVERSATIONS: Conversation[] = [
   {
@@ -9,6 +12,8 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     seller_id: "seller-1",
     created_at: "2025-03-10T00:00:00Z",
     updated_at: "2025-03-12T14:30:00Z",
+    listing: mockListing,
+    other_user: mockListing.seller,
     last_message: {
       id: "msg-3",
       conversation_id: "conv-1",

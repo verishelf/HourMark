@@ -127,14 +127,15 @@ export default function ChatScreen() {
         <Pressable
           onPress={handleSend}
           style={{
-            backgroundColor: Colors.textPrimary,
-            paddingHorizontal: 20,
+            borderWidth: 1,
+            borderColor: Colors.textPrimary,
+            backgroundColor: "transparent",
+            paddingHorizontal: 18,
             paddingVertical: 14,
+            borderRadius: 999,
           }}
         >
-          <Text style={{ color: Colors.background, fontSize: 12, fontWeight: "500" }}>
-            Send
-          </Text>
+          <Text style={{ color: Colors.textPrimary, fontSize: 12, fontWeight: "600" }}>Send</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

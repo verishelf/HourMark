@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ListingGallery } from "@/components/ListingGallery";
 import { LuxuryButton } from "@/components/LuxuryButton";
@@ -9,12 +10,44 @@ import { SellerCard } from "@/components/SellerCard";
 import { WatchCard } from "@/components/WatchCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Colors } from "@/constants/colors";
+import { CARD_GAP } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { formatPrice } from "@/lib/stripe";
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorite } from "@/hooks/useFavorite";
 import { getListingById, getRelatedListings } from "@/services/listings";
 import type { Listing } from "@/types";
+
+function FixedHeaderButton({
+  onPress,
+  icon,
+  filled,
+}: {
+  onPress: () => void;
+  icon: keyof typeof Ionicons.glyphMap;
+  filled?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.overlay,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Ionicons
+        name={icon}
+        size={22}
+        color={filled ? Colors.textPrimary : Colors.textSecondary}
+      />
+    </Pressable>
+  );
+}
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -48,35 +81,6 @@ export default function ListingDetailScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
       >
         <ListingGallery images={listing.images} />
-
-        <Pressable
-          onPress={() => router.back()}
-          style={{
-            position: "absolute",
-            top: insets.top + 12,
-            left: 20,
-            padding: 8,
-          }}
-        >
-          <Text style={{ color: Colors.textPrimary, fontSize: 24 }}>←</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            toggle();
-          }}
-          style={{
-            position: "absolute",
-            top: insets.top + 12,
-            right: 20,
-            padding: 8,
-          }}
-        >
-          <Text style={{ color: Colors.textPrimary, fontSize: 22 }}>
-            {favorited ? "♥" : "♡"}
-          </Text>
-        </Pressable>
 
         <View style={{ paddingHorizontal: 20, paddingTop: 24 }}>
           <Text style={{ ...Typography.label, color: Colors.textSecondary }}>
@@ -116,18 +120,47 @@ export default function ListingDetailScreen() {
           )}
 
           {listing.seller && (
-            <>
+            <View style={{ marginBottom: 16 }}>
               <SectionHeader title="Seller" />
               <SellerCard seller={listing.seller} />
-            </>
+            </View>
           )}
 
-          <SectionHeader title="You May Also Like" />
-          {related.map((l, i) => (
-            <WatchCard key={l.id} listing={l} variant="compact" index={i} />
-          ))}
+          {related.length > 0 && (
+            <View style={{ marginTop: 40, paddingTop: 8, gap: CARD_GAP }}>
+              <SectionHeader title="You May Also Like" />
+              {related.map((l, i) => (
+                <WatchCard key={l.id} listing={l} variant="compact" index={i} />
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
+
+      <View
+        pointerEvents="box-none"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          paddingTop: insets.top + 12,
+          paddingHorizontal: 20,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <FixedHeaderButton icon="chevron-back" onPress={() => router.back()} />
+        <FixedHeaderButton
+          icon={favorited ? "heart" : "heart-outline"}
+          filled={favorited}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            toggle();
+          }}
+        />
+      </View>
 
       <View
         style={{

@@ -8,6 +8,7 @@ import {
 import { Image } from "expo-image";
 import { MotiView } from "moti";
 import { Colors } from "@/constants/colors";
+import { resolveListingImageUrl } from "@/lib/listingImages";
 
 const { width, height } = Dimensions.get("window");
 
@@ -17,6 +18,9 @@ type Props = {
 
 export function ListingGallery({ images }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const resolvedImages = images
+    .map((image) => resolveListingImageUrl(image))
+    .filter((image): image is string => Boolean(image));
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -29,7 +33,7 @@ export function ListingGallery({ images }: Props) {
   return (
     <View>
       <FlatList
-        data={images}
+        data={resolvedImages}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -45,7 +49,7 @@ export function ListingGallery({ images }: Props) {
           />
         )}
       />
-      {images.length > 1 && (
+      {resolvedImages.length > 1 && (
         <View
           style={{
             flexDirection: "row",
@@ -54,7 +58,7 @@ export function ListingGallery({ images }: Props) {
             paddingVertical: 16,
           }}
         >
-          {images.map((_, i) => (
+          {resolvedImages.map((_, i) => (
             <MotiView
               key={i}
               animate={{
