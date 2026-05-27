@@ -18,7 +18,12 @@ import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { getFavorites } from "@/services/favorites";
 import { deleteListing, getUserListings } from "@/services/listings";
-import { getOrders, createConnectAccountLink } from "@/services/payments";
+import {
+  getOrders,
+  createConnectAccountLink,
+  getConnectStatus,
+  type ConnectStatus,
+} from "@/services/payments";
 import { signOut } from "@/services/auth";
 import { GRID_GAP, tabContentPadding } from "@/styles/layout";
 import type { Listing, Order } from "@/types";
@@ -117,12 +122,14 @@ function ProfileTabs({
 
 function SettingsRow({
   label,
+  subtitle,
   icon,
   onPress,
   destructive,
   isLast,
 }: {
   label: string;
+  subtitle?: string;
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   destructive?: boolean;
@@ -137,7 +144,14 @@ function SettingsRow({
     >
       <View style={styles.settingsRow}>
         <Ionicons name={icon} size={20} color={color} />
-        <Text style={[styles.settingsLabel, { color }]}>{label}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.settingsLabel, { color }]}>{label}</Text>
+          {subtitle ? (
+            <Text style={{ ...Typography.caption, color: Colors.textMuted, marginTop: 2 }}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
         {!destructive && <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />}
       </View>
     </Pressable>
@@ -206,6 +220,7 @@ export default function ProfileScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
   const [tab, setTab] = useState<TabKey>("listings");
 
   const loadListings = useCallback(async () => {
@@ -222,6 +237,7 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       loadListings();
+      getConnectStatus().then(setConnectStatus);
     }, [loadListings])
   );
 
@@ -343,10 +359,27 @@ export default function ProfileScreen() {
           <SettingsRow
             label="Payout Settings"
             icon="card-outline"
+            subtitle={
+              connectStatus?.onboardingComplete
+                ? "Stripe Connect active"
+                : connectStatus?.hasAccount
+                  ? "Complete onboarding"
+                  : "Set up seller payouts"
+            }
             onPress={async () => {
               if (!user) return;
-              const url = await createConnectAccountLink(user.id, Linking.createURL("/profile"));
-              Linking.openURL(url);
+              try {
+                const url = await createConnectAccountLink(
+                  user.id,
+                  Linking.createURL("/profile")
+                );
+                await Linking.openURL(url);
+              } catch (e) {
+                Alert.alert(
+                  "Payout Setup",
+                  e instanceof Error ? e.message : "Could not open Stripe onboarding"
+                );
+              }
             }}
           />
           <SettingsRow label="Verify Identity" icon="shield-checkmark-outline" onPress={() => {}} />

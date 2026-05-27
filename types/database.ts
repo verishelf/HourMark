@@ -79,6 +79,8 @@ export type Order = {
   listing?: Listing;
 };
 
+export type TransactionStatus = "pending" | "completed" | "failed" | "refunded";
+
 export type Transaction = {
   id: string;
   order_id: string;
@@ -86,7 +88,30 @@ export type Transaction = {
   commission_fee: number;
   seller_payout: number;
   stripe_transfer_id: string | null;
+  stripe_charge_id: string | null;
+  status: TransactionStatus;
   created_at: string;
+};
+
+export type Seller = {
+  id: string;
+  business_name: string | null;
+  onboarding_complete: boolean;
+  payouts_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StripeAccount = {
+  id: string;
+  user_id: string;
+  stripe_account_id: string;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
+  onboarding_complete: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type SellerVerification = {

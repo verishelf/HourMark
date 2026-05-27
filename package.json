@@ -12,7 +12,11 @@
     "website:dev": "npm run dev --prefix website",
     "website:build": "npm run build --prefix website",
     "website:start": "npm run start --prefix website",
-    "website:install": "npm install --prefix website"
+    "website:install": "npm install --prefix website",
+    "api:install": "npm install --prefix apps/api",
+    "api:dev": "npm run dev --prefix apps/api",
+    "api:build": "npm run build --prefix apps/api",
+    "api:start": "npm run start --prefix apps/api"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

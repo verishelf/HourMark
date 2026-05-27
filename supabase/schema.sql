@@ -122,6 +122,45 @@ create policy "Participants can send messages"
     )
   );
 
+-- Sellers (Stripe Connect)
+create table public.sellers (
+  id uuid references public.users(id) on delete cascade primary key,
+  business_name text,
+  onboarding_complete boolean default false not null,
+  payouts_enabled boolean default false not null,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+alter table public.sellers enable row level security;
+
+create policy "Sellers are viewable by everyone"
+  on public.sellers for select using (true);
+
+create policy "Users can update own seller profile"
+  on public.sellers for update using (auth.uid() = id);
+
+create policy "Users can insert own seller profile"
+  on public.sellers for insert with check (auth.uid() = id);
+
+-- Stripe Connect accounts
+create table public.stripe_accounts (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.users(id) on delete cascade not null unique,
+  stripe_account_id text not null unique,
+  charges_enabled boolean default false not null,
+  payouts_enabled boolean default false not null,
+  details_submitted boolean default false not null,
+  onboarding_complete boolean default false not null,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+alter table public.stripe_accounts enable row level security;
+
+create policy "Users can view own stripe account"
+  on public.stripe_accounts for select using (auth.uid() = user_id);
+
 -- Orders
 create table public.orders (
   id uuid default uuid_generate_v4() primary key,

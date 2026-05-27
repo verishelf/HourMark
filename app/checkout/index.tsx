@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useStripe,
-  
   isPlatformPaySupported,
 } from "@stripe/stripe-react-native";
 import { Image } from "expo-image";
@@ -12,7 +11,7 @@ import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { COMMISSION_RATE } from "@/constants/colors";
-import { formatPrice, calculateCommission } from "@/lib/stripe";
+import { formatPrice, calculateCommission, isStripeConfigured } from "@/lib/stripe";
 import { useAuth } from "@/hooks/useAuth";
 import { getListingById } from "@/services/listings";
 import { createPaymentIntent, completeOrder } from "@/services/payments";
@@ -26,11 +25,16 @@ export default function CheckoutScreen() {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [applePayAvailable, setApplePayAvailable] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!listingId) return;
-    getListingById(listingId).then(setListing);
+    getListingById(listingId)
+      .then(setListing)
+      .catch(() => setError("Could not load listing"))
+      .finally(() => setInitializing(false));
     isPlatformPaySupported().then(setApplePayAvailable);
   }, [listingId]);
 
@@ -40,10 +44,12 @@ export default function CheckoutScreen() {
     }
   }, [isAuthenticated, router]);
 
-  const handleCheckout = async () => {
+  const processPayment = async () => {
     if (!listing || !user) return;
 
     setLoading(true);
+    setError(null);
+
     try {
       const { clientSecret, orderId } = await createPaymentIntent({
         listingId: listing.id,
@@ -64,13 +70,11 @@ export default function CheckoutScreen() {
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: "HourMark",
         applePay: applePayAvailable
-          ? {
-              merchantCountryCode: "US",
-            }
+          ? { merchantCountryCode: "US" }
           : undefined,
         googlePay: {
           merchantCountryCode: "US",
-          testEnv: true,
+          testEnv: !isStripeConfigured,
         },
         defaultBillingDetails: { email: user.email },
       });
@@ -86,50 +90,32 @@ export default function CheckoutScreen() {
       }
 
       await completeOrder(orderId);
-      Alert.alert("Purchase Complete", "Your order has been confirmed.", [
-        { text: "OK", onPress: () => router.replace("/(tabs)/profile") },
-      ]);
+      router.replace({
+        pathname: "/checkout/success",
+        params: { orderId },
+      });
     } catch (e) {
-      Alert.alert("Payment Failed", e instanceof Error ? e.message : "Try again");
+      const message = e instanceof Error ? e.message : "Payment failed. Please try again.";
+      setError(message);
+      Alert.alert("Payment Failed", message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApplePay = async () => {
-    if (!listing || !user) return;
-    setLoading(true);
-    try {
-      const { clientSecret } = await createPaymentIntent({
-        listingId: listing.id,
-        buyerId: user.id,
-        amountCents: listing.price,
-      });
-
-      if (clientSecret === "mock_client_secret") {
-        Alert.alert("Demo Mode", "Apple Pay requires Stripe configuration.");
-        return;
-      }
-
-      await initPaymentSheet({
-        paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: "HourMark",
-        applePay: { merchantCountryCode: "US" },
-      });
-
-      const { error } = await presentPaymentSheet();
-      if (error && error.code !== "Canceled") throw new Error(error.message);
-    } catch (e) {
-      Alert.alert("Apple Pay Failed", e instanceof Error ? e.message : "Try again");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!listing) {
+  if (initializing || !listing) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: Colors.textMuted }}>Loading…</Text>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.background,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ color: Colors.textMuted }}>
+          {error ?? "Loading checkout…"}
+        </Text>
       </View>
     );
   }
@@ -161,14 +147,30 @@ export default function CheckoutScreen() {
       <Text style={{ ...Typography.h3, color: Colors.textPrimary }}>
         {listing.brand} {listing.model}
       </Text>
-      <Text style={{ ...Typography.caption, color: Colors.textMuted, marginTop: 4, marginBottom: 32 }}>
+      <Text
+        style={{
+          ...Typography.caption,
+          color: Colors.textMuted,
+          marginTop: 4,
+          marginBottom: 32,
+        }}
+      >
         Protected by HourMark buyer guarantee
       </Text>
 
-      <View style={{ borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 20, marginBottom: 32 }}>
+      <View
+        style={{
+          borderTopWidth: 1,
+          borderTopColor: Colors.border,
+          paddingTop: 20,
+          marginBottom: 32,
+        }}
+      >
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
           <Text style={{ ...Typography.body, color: Colors.textSecondary }}>Subtotal</Text>
-          <Text style={{ ...Typography.body, color: Colors.textPrimary }}>{formatPrice(listing.price)}</Text>
+          <Text style={{ ...Typography.body, color: Colors.textPrimary }}>
+            {formatPrice(listing.price)}
+          </Text>
         </View>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
           <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
@@ -186,19 +188,24 @@ export default function CheckoutScreen() {
         </View>
       </View>
 
-      <LuxuryButton label="Pay with Card" onPress={handleCheckout} loading={loading} />
+      {error ? (
+        <Text
+          style={{
+            ...Typography.caption,
+            color: Colors.error ?? "#c44",
+            marginBottom: 16,
+            textAlign: "center",
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
 
-      {applePayAvailable && (
-        <>
-          <View style={{ height: 12 }} />
-          <LuxuryButton
-            label=" Apple Pay"
-            onPress={handleApplePay}
-            variant="outline"
-            loading={loading}
-          />
-        </>
-      )}
+      <LuxuryButton
+        label={applePayAvailable ? "Pay with Apple Pay or Card" : "Pay with Card"}
+        onPress={processPayment}
+        loading={loading}
+      />
 
       <Text
         style={{
@@ -209,7 +216,9 @@ export default function CheckoutScreen() {
           lineHeight: 18,
         }}
       >
-        Payments are processed securely via Stripe. Sellers receive payouts through Stripe Connect after delivery confirmation.
+        Payments are processed securely via Stripe. HourMark retains a{" "}
+        {(COMMISSION_RATE * 100).toFixed(0)}% platform fee; the remainder is transferred to the
+        seller via Stripe Connect.
       </Text>
     </ScrollView>
   );

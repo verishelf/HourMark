@@ -52,9 +52,25 @@ npm run dev
 ## Features
 
 - Discover, Search, Sell, Messages, Profile
-- Stripe Connect checkout (3% platform fee)
+- Stripe Connect Express onboarding + destination charges (3% platform fee)
 - Supabase auth, database, realtime chat
 - Demo mode without backend keys
+
+## Stripe Connect API
+
+Production backend lives in `apps/api/`:
+
+```bash
+npm run api:install
+cd apps/api && cp .env.example .env
+npm run api:dev   # http://localhost:3001
+```
+
+Set `EXPO_PUBLIC_API_URL` in the Expo `.env` to your API URL.
+
+Run `supabase/schema.sql` then `supabase/migrations/20250527000000_stripe_connect.sql` in the Supabase SQL editor.
+
+See [apps/api/README.md](apps/api/README.md) for webhook setup and endpoints.
 
 ## License
 
