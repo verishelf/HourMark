@@ -15,18 +15,16 @@ export function Footer() {
 
         <div className="flex gap-8">
           <Link
-            href="https://github.com/verishelf/HourMark"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#how-it-works"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >
-            GitHub
+            For Buyers
           </Link>
           <Link
-            href="#features"
+            href="#how-it-works"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >
-            Features
+            For Sellers
           </Link>
           <Link
             href="#download"

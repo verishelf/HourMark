@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { AppShowcase } from "@/components/AppShowcase";
-import { TechStack } from "@/components/TechStack";
+import { HowItWorks } from "@/components/HowItWorks";
 import { Download } from "@/components/Download";
 import { Footer } from "@/components/Footer";
 
@@ -14,7 +14,7 @@ export default function Home() {
         <Hero />
         <Features />
         <AppShowcase />
-        <TechStack />
+        <HowItWorks />
         <Download />
       </main>
       <Footer />

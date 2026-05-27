@@ -45,8 +45,8 @@ export function AppShowcase() {
             Designed like a private salon.
           </h2>
           <p className="mx-auto mt-6 max-w-md text-[#a1a1aa]">
-            Matte black surfaces, editorial typography, and massive product
-            photography — inspired by Bezel, Chrono24, and Apple.
+            A refined experience for browsing rare watches, reviewing listings,
+            and managing your collection — wherever you are.
           </p>
         </motion.div>
 

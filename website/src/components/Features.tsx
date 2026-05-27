@@ -6,32 +6,32 @@ const FEATURES = [
   {
     title: "Discover",
     description:
-      "Editorial hero carousel, featured watches, new arrivals, and rare collections from verified sellers.",
+      "Browse featured watches, new arrivals, and rare collections from verified sellers — curated for serious collectors.",
   },
   {
     title: "Search",
     description:
-      "Real-time search with brand filters for Rolex, AP, Patek Philippe, Cartier, Omega, and Richard Mille.",
+      "Find exactly what you want with brand filters for Rolex, AP, Patek Philippe, Cartier, Omega, and Richard Mille.",
   },
   {
     title: "Sell",
     description:
-      "Upload multiple photos, add reference numbers and condition, preview your listing, and publish instantly.",
+      "List your watch in minutes — upload photos, add reference numbers and condition, preview your listing, and go live.",
   },
   {
     title: "Message",
     description:
-      "Real-time buyer–seller chat with read receipts and a minimal, trust-focused interface.",
+      "Chat directly with buyers and sellers to ask questions, negotiate, and close deals with confidence.",
   },
   {
     title: "Checkout",
     description:
-      "Stripe Connect payments with Apple Pay, automatic 3% platform commission, and seller payouts.",
+      "Pay securely with Apple Pay. Sellers receive fast payouts with a transparent 3% fee on every sale.",
   },
   {
     title: "Verify",
     description:
-      "Identity verification, authentication badges, seller ratings, and order tracking built in.",
+      "Identity verification, authentication badges, seller ratings, and order tracking — so every transaction feels safe.",
   },
 ];
 
@@ -46,10 +46,10 @@ export function Features() {
           transition={{ duration: 0.6 }}
         >
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#71717a]">
-            Capabilities
+            For Collectors
           </p>
           <h2 className="mt-4 max-w-xl text-4xl font-light tracking-tight text-white md:text-5xl">
-            Everything collectors need. Nothing they don&apos;t.
+            Everything buyers and sellers need.
           </h2>
         </motion.div>
 

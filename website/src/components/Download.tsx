@@ -21,34 +21,31 @@ export function Download() {
               Coming to iOS
             </p>
             <h2 className="mt-4 text-4xl font-light tracking-tight text-white md:text-6xl">
-              HourMark
+              Start buying &amp; selling
             </h2>
             <p className="mx-auto mt-6 max-w-md text-[#a1a1aa]">
-              Clone the repo, configure Supabase and Stripe, and run the Expo app
-              locally. The marketplace your collectors deserve.
+              HourMark is launching soon on the App Store. Discover authenticated
+              luxury watches, connect with verified sellers, and list your
+              collection — all from your iPhone.
             </p>
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="https://github.com/verishelf/HourMark"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:hello@hourmark.app?subject=HourMark%20Waitlist"
                 className="w-full max-w-xs bg-white px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-black transition-opacity hover:opacity-90 sm:w-auto"
               >
-                View on GitHub
+                Join the Waitlist
               </Link>
               <Link
-                href="https://github.com/verishelf/HourMark#readme"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#how-it-works"
                 className="w-full max-w-xs border border-[#1a1a1a] px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-white transition-colors hover:border-[#333] sm:w-auto"
               >
-                Setup Guide
+                Learn More
               </Link>
             </div>
 
-            <p className="mt-10 font-mono text-xs text-[#71717a]">
-              npm install && cp .env.example .env && npm start
+            <p className="mt-10 text-xs text-[#71717a]">
+              Available for iPhone · Free to browse · 3% seller fee
             </p>
           </div>
         </motion.div>
