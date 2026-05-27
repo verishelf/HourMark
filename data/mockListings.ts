@@ -1,0 +1,152 @@
+import type { Listing, UserProfile } from "@/types";
+
+const mockSeller: UserProfile = {
+  id: "seller-1",
+  username: "atelier_geneva",
+  avatar_url:
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop",
+  bio: "Curated Swiss timepieces since 2018",
+  verified: true,
+  stripe_account_id: null,
+  seller_rating: 4.9,
+  created_at: "2024-01-15T00:00:00Z",
+};
+
+export const MOCK_LISTINGS: Listing[] = [
+  {
+    id: "1",
+    seller_id: "seller-1",
+    brand: "Rolex",
+    model: "Submariner Date",
+    reference_number: "126610LN",
+    year: 2023,
+    condition: "Unworn",
+    price: 1450000,
+    description:
+      "Brand new Rolex Submariner Date with black dial and ceramic bezel. Full set with box, papers, and warranty card.",
+    images: [
+      "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80",
+      "https://images.unsplash.com/photo-1587836374828-4dbafa94fb0c?w=800&q=80",
+    ],
+    serial_number: null,
+    status: "active",
+    authenticated: true,
+    created_at: "2025-03-01T00:00:00Z",
+    seller: mockSeller,
+  },
+  {
+    id: "2",
+    seller_id: "seller-1",
+    brand: "Audemars Piguet",
+    model: "Royal Oak",
+    reference_number: "15500ST",
+    year: 2022,
+    condition: "Like New",
+    price: 5200000,
+    description:
+      "Iconic Royal Oak 41mm in stainless steel with blue Grande Tapisserie dial.",
+    images: [
+      "https://images.unsplash.com/photo-1614164185124-ebca9aefcc0e?w=800&q=80",
+    ],
+    serial_number: null,
+    status: "active",
+    authenticated: true,
+    created_at: "2025-02-20T00:00:00Z",
+    seller: mockSeller,
+  },
+  {
+    id: "3",
+    seller_id: "seller-2",
+    brand: "Patek Philippe",
+    model: "Nautilus",
+    reference_number: "5711/1A",
+    year: 2021,
+    condition: "Excellent",
+    price: 12500000,
+    description:
+      "The legendary Nautilus 5711/1A. Discontinued reference in pristine condition.",
+    images: [
+      "https://images.unsplash.com/photo-1548171916-3f3e5d3c8c0e?w=800&q=80",
+    ],
+    serial_number: null,
+    status: "active",
+    authenticated: true,
+    created_at: "2025-02-10T00:00:00Z",
+    seller: {
+      ...mockSeller,
+      id: "seller-2",
+      username: "patek_collector",
+      verified: true,
+    },
+  },
+  {
+    id: "4",
+    seller_id: "seller-3",
+    brand: "Cartier",
+    model: "Santos de Cartier",
+    reference_number: "WSSA0029",
+    year: 2024,
+    condition: "Unworn",
+    price: 780000,
+    description: "Medium model Santos with steel bracelet. Complete set.",
+    images: [
+      "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80",
+    ],
+    serial_number: null,
+    status: "active",
+    authenticated: false,
+    created_at: "2025-03-05T00:00:00Z",
+    seller: {
+      ...mockSeller,
+      id: "seller-3",
+      username: "cartier_atelier",
+      verified: false,
+    },
+  },
+  {
+    id: "5",
+    seller_id: "seller-1",
+    brand: "Omega",
+    model: "Speedmaster Professional",
+    reference_number: "310.30.42.50.01.001",
+    year: 2023,
+    condition: "Like New",
+    price: 650000,
+    description: "Moonwatch Professional with hesalite crystal. Full set.",
+    images: [
+      "https://images.unsplash.com/photo-1612817159940-7bb8f2b7b8e0?w=800&q=80",
+    ],
+    serial_number: null,
+    status: "active",
+    authenticated: true,
+    created_at: "2025-03-08T00:00:00Z",
+    seller: mockSeller,
+  },
+  {
+    id: "6",
+    seller_id: "seller-4",
+    brand: "Richard Mille",
+    model: "RM 011",
+    reference_number: "RM011-FM",
+    year: 2020,
+    condition: "Excellent",
+    price: 28500000,
+    description: "Felipe Massa edition in titanium. Limited availability.",
+    images: [
+      "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&q=80",
+    ],
+    serial_number: null,
+    status: "active",
+    authenticated: true,
+    created_at: "2025-01-28T00:00:00Z",
+    seller: {
+      ...mockSeller,
+      id: "seller-4",
+      username: "rm_private",
+      verified: true,
+    },
+  },
+];
+
+export const FEATURED_IDS = ["1", "2", "3"];
+export const NEW_ARRIVAL_IDS = ["4", "5", "6"];
