@@ -47,8 +47,8 @@ export function Hero() {
           className="mt-8 max-w-lg text-base leading-relaxed text-[#a1a1aa] md:text-lg"
         >
           HourMark is the premium iOS marketplace to buy, sell, and discover
-          authenticated luxury watches — with verified sellers, secure payments,
-          and a curated experience built for collectors.
+          authenticated luxury watches — with verified sellers, Stripe-powered
+          checkout, and automatic seller payouts on every sale.
         </motion.p>
 
         <motion.div
@@ -78,8 +78,8 @@ export function Hero() {
           className="mt-20 flex gap-12 border-t border-[#1a1a1a] pt-10"
         >
           {[
-            { value: "3%", label: "Seller fee" },
-            { value: "24/7", label: "Secure checkout" },
+            { value: "3%", label: "Platform fee" },
+            { value: "Stripe", label: "Connect payouts" },
             { value: "100%", label: "Verified sellers" },
           ].map((stat) => (
             <div key={stat.label}>

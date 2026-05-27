@@ -25,8 +25,8 @@ export function Download() {
             </h2>
             <p className="mx-auto mt-6 max-w-md text-[#a1a1aa]">
               HourMark is launching soon on the App Store. Discover authenticated
-              luxury watches, connect with verified sellers, and list your
-              collection — all from your iPhone.
+              luxury watches, checkout with Apple Pay, and sell with Stripe
+              Connect payouts — all from your iPhone.
             </p>
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -45,7 +45,7 @@ export function Download() {
             </div>
 
             <p className="mt-10 text-xs text-[#71717a]">
-              Available for iPhone · Free to browse · 3% seller fee
+              Available for iPhone · Free to browse · 3% platform fee on sales
             </p>
           </div>
         </motion.div>

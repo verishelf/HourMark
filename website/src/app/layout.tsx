@@ -10,11 +10,11 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "HourMark — Luxury Watch Marketplace",
   description:
-    "Buy and sell authenticated luxury timepieces. A premium marketplace for Rolex, Patek Philippe, Audemars Piguet, and the world's finest watches.",
+    "Buy and sell authenticated luxury timepieces with Apple Pay checkout and Stripe Connect seller payouts. A premium marketplace for Rolex, Patek Philippe, Audemars Piguet, and more.",
   openGraph: {
     title: "HourMark — Luxury Watch Marketplace",
     description:
-      "The premium iOS marketplace for curated luxury watches. Buy, sell, and connect with verified collectors.",
+      "The premium iOS marketplace for curated luxury watches. Secure checkout, verified sellers, and a 3% platform fee.",
     type: "website",
   },
 };

@@ -4,16 +4,16 @@ import { motion } from "framer-motion";
 
 const FOR_BUYERS = [
   { title: "Verified sellers", detail: "Every seller completes identity verification before listing." },
-  { title: "Secure checkout", detail: "Pay safely with Apple Pay and encrypted transactions." },
+  { title: "Secure checkout", detail: "Pay with Apple Pay — powered by Stripe destination charges." },
   { title: "Direct messaging", detail: "Ask questions, negotiate, and build trust before you buy." },
   { title: "Order tracking", detail: "Follow your purchase from payment through delivery." },
 ];
 
 const FOR_SELLERS = [
   { title: "List in minutes", detail: "Upload photos, add details, and publish your watch instantly." },
-  { title: "Low 3% fee", detail: "Keep more of every sale with transparent, competitive pricing." },
-  { title: "Fast payouts", detail: "Receive your earnings directly after a successful sale." },
-  { title: "Built-in audience", detail: "Reach collectors actively searching for luxury timepieces." },
+  { title: "Stripe Connect", detail: "Onboard with Express in the app and connect your payout account." },
+  { title: "Low 3% fee", detail: "Keep more of every sale with transparent platform pricing." },
+  { title: "Automatic payouts", detail: "Receive earnings directly to your connected account after each sale." },
 ];
 
 export function HowItWorks() {
