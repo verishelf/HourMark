@@ -21,9 +21,9 @@ npm start
 
 ## Deploy
 
-Deploy to [Vercel](https://vercel.com). The repo includes a root `vercel.json` that builds only the `website/` app, so Vercel won't try to install the Expo mobile dependencies.
+Deploy to [Vercel](https://vercel.com) from the repo root. The root `vercel.json` installs and builds only the `website/` Next.js app.
 
-Alternatively, set the Vercel project **Root Directory** to `website`.
+**Recommended:** In Vercel project settings, set **Root Directory** to `website` and remove custom root-level build overrides if you prefer the default Next.js flow.
 
 ## Design
 
