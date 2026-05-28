@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { watchImage } from "@/lib/watchImages";
 
 export function Hero() {
   return (
     <section className="relative min-h-screen overflow-hidden pt-28">
       <div className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=1920&q=85"
+          src={watchImage("hero", 1920)}
           alt="Luxury watch"
           fill
           priority

@@ -3,46 +3,41 @@
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
+import { watchImage } from "@/lib/watchImages";
 
 const SLIDES = [
   {
-    image:
-      "https://images.unsplash.com/photo-1749831754129-3a84b9fdeb87?w=1400&q=85",
+    imageKey: "blackDial" as const,
     model: "RM 11-03",
     words: ["Flyback", "Chronograph", "Titanium"],
     line: "Engineered for collectors who live at full throttle.",
   },
   {
-    image:
-      "https://images.unsplash.com/photo-1777457797327-571e21f193b0?w=1400&q=85",
+    imageKey: "metalBand" as const,
     model: "RM 07-01",
     words: ["Automatic", "Ceramic", "Skeleton"],
     line: "Sculptural forms with mechanical soul.",
   },
   {
-    image:
-      "https://images.unsplash.com/photo-1766595898967-22c61e0be796?w=1400&q=85",
+    imageKey: "greenDial" as const,
     model: "RM 016",
     words: ["Extraflat", "Calibre", "Sport"],
     line: "Ultra-thin profile, uncompromising presence.",
   },
   {
-    image:
-      "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1400&q=85",
+    imageKey: "classic" as const,
     model: "RM 35-02",
     words: ["Carbon TPT", "Nadal", "Limited"],
     line: "Aerospace materials meet haute horlogerie.",
   },
   {
-    image:
-      "https://images.unsplash.com/photo-1524592864908-329cc2083e07?w=1400&q=85",
+    imageKey: "product" as const,
     model: "RM 67-02",
     words: ["Automatic", "Extraflat", "Racing"],
     line: "Light on the wrist. Heavy on impact.",
   },
   {
-    image:
-      "https://images.unsplash.com/photo-1587836374822-0df573ebddb3?w=1400&q=85",
+    imageKey: "macro" as const,
     model: "RM 72-01",
     words: ["Lifestyle", "In-house", "Chronograph"],
     line: "The icon of modern independent watchmaking.",
@@ -54,6 +49,7 @@ const INTERVAL_MS = 5500;
 export function RichardMilleSlider() {
   const [index, setIndex] = useState(0);
   const slide = SLIDES[index];
+  const slideSrc = watchImage(slide.imageKey, 1400);
 
   const goTo = useCallback((next: number) => {
     setIndex((next + SLIDES.length) % SLIDES.length);
@@ -105,8 +101,8 @@ export function RichardMilleSlider() {
               className="absolute inset-0"
             >
               <Image
-                src={slide.image}
-                alt={`${slide.model} — Richard Mille inspired luxury timepiece`}
+                src={slideSrc}
+                alt={`${slide.model} — luxury timepiece`}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 1152px"
@@ -237,7 +233,7 @@ export function RichardMilleSlider() {
               }`}
             >
               <Image
-                src={item.image.replace("w=1400", "w=400")}
+                src={watchImage(item.imageKey, 400)}
                 alt={item.model}
                 fill
                 className="object-cover"

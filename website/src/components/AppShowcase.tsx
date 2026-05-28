@@ -2,27 +2,25 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { watchImage } from "@/lib/watchImages";
 
 const SCREENS = [
   {
     title: "Discover",
     subtitle: "Editorial home experience",
-    image:
-      "https://images.unsplash.com/photo-1614164185124-ebca9aefcc0e?w=600&q=80",
+    imageKey: "wrist" as const,
     accent: "Featured carousel & new arrivals",
   },
   {
     title: "Listing",
     subtitle: "Immersive product detail",
-    image:
-      "https://images.unsplash.com/photo-1548171916-3f3e5d3c8c0e?w=600&q=80",
+    imageKey: "blackDial" as const,
     accent: "Gallery, seller profile & Apple Pay checkout",
   },
   {
     title: "Sell",
     subtitle: "List in minutes",
-    image:
-      "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=600&q=80",
+    imageKey: "classic" as const,
     accent: "Multi-photo upload & preview",
   },
 ];
@@ -65,7 +63,7 @@ export function AppShowcase() {
                   <div className="h-1 w-16 rounded-full bg-[#1a1a1a]" />
                 </div>
                 <Image
-                  src={screen.image}
+                  src={watchImage(screen.imageKey, 600, 80)}
                   alt={screen.title}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -84,7 +82,6 @@ export function AppShowcase() {
             </motion.div>
           ))}
         </div>
-
       </div>
     </section>
   );

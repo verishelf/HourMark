@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "logos": "node scripts/generate-brand-logos.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.16.0",
@@ -21,6 +22,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "simple-icons": "^15.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

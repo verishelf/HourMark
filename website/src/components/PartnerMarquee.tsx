@@ -1,27 +1,27 @@
-import { Marquee } from "@/components/Marquee";
+import { LogoMarquee, type LogoMarqueeItem } from "@/components/LogoMarquee";
 
-const PARTNERS = [
-  "Stripe",
-  "Stripe Connect",
-  "Apple Pay",
-  "Supabase",
-  "Expo",
-  "Identity Verified",
-  "Destination Charges",
-  "Express Payouts",
-  "Realtime Chat",
-  "3% Platform Fee",
-] as const;
+const PARTNER_LOGOS: LogoMarqueeItem[] = [
+  { name: "Stripe", src: "/logos/partners/stripe.svg", width: 80, height: 28 },
+  {
+    name: "Stripe Connect",
+    src: "/logos/partners/stripe-connect.svg",
+    width: 148,
+    height: 28,
+  },
+  { name: "Apple Pay", src: "/logos/partners/apple-pay.svg", width: 120, height: 28 },
+  { name: "Supabase", src: "/logos/partners/supabase.svg", width: 80, height: 28 },
+  { name: "Expo", src: "/logos/partners/expo.svg", width: 80, height: 28 },
+];
 
 export function PartnerMarquee() {
   return (
     <section aria-label="Technology partners" className="bg-[#0a0a0a]">
-      <Marquee
-        items={PARTNERS}
+      <LogoMarquee
+        items={PARTNER_LOGOS}
         direction="right"
         durationSeconds={55}
         className="border-t-0"
-        itemClassName="text-[11px] font-medium uppercase tracking-[0.28em] text-[#71717a]"
+        logoHeightClass="h-6 md:h-7"
       />
     </section>
   );
