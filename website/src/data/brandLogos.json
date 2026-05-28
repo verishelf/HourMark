@@ -26,8 +26,9 @@
     "file": "richard-mille",
     "name": "Richard Mille",
     "src": "/logos/brands/richard-mille.svg",
-    "width": 140,
-    "height": 32
+    "width": 360,
+    "height": 28,
+    "slotClassName": "h-6 w-36 sm:h-7 sm:w-40 md:h-8 md:w-44"
   },
   {
     "file": "cartier",

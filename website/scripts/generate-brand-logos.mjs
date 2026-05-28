@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as simpleIcons from "simple-icons";
@@ -7,12 +7,19 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "public", "logo
 const brandsDir = join(root, "brands");
 const partnersDir = join(root, "partners");
 
-/** @type {{ file: string; name: string; wiki: string; width: number; height: number; monochrome?: boolean }[]} */
+/** @type {{ file: string; name: string; wiki: string; width: number; height: number; monochrome?: boolean; slotClassName?: string }[]} */
 const BRANDS = [
   { file: "rolex", name: "Rolex", wiki: "Rolex_wordmark_logo.svg", width: 120, height: 32 },
   { file: "audemars-piguet", name: "Audemars Piguet", wiki: "Audemars Piguet logo.png", width: 140, height: 32, monochrome: true },
   { file: "patek-philippe", name: "Patek Philippe", wiki: "Patek Philippe Logo.png", width: 130, height: 32, monochrome: true },
-  { file: "richard-mille", name: "Richard Mille", wiki: "Richard Mille Logo.svg", width: 140, height: 32 },
+  {
+    file: "richard-mille",
+    name: "Richard Mille",
+    wiki: "Richard Mille Logo.svg",
+    width: 360,
+    height: 28,
+    slotClassName: "h-6 w-36 sm:h-7 sm:w-40 md:h-8 md:w-44",
+  },
   { file: "cartier", name: "Cartier", wiki: "Cartier_logo.svg", width: 110, height: 32 },
   { file: "omega", name: "Omega", wiki: "Omega_Logo.svg", width: 110, height: 32 },
   {
@@ -60,6 +67,15 @@ function normalizeSvg(svg, label) {
     .replace(/<\?xml[^?]*\?>\s*/i, "")
     .replace(/<!DOCTYPE[^>]*>\s*/i, "");
 
+  const viewBoxMatch = out.match(/viewBox="([^"]+)"/i);
+  const widthMatch = out.match(/<svg[^>]*\swidth="([0-9.]+)/i);
+  const heightMatch = out.match(/<svg[^>]*\sheight="([0-9.]+)/i);
+  let viewBox = viewBoxMatch?.[1];
+
+  if (!viewBox && widthMatch && heightMatch) {
+    viewBox = `0 0 ${widthMatch[1]} ${heightMatch[1]}`;
+  }
+
   if (!out.includes("<title>")) {
     out = out.replace(/<svg/i, `<svg role="img" aria-label="${label}"`);
     out = out.replace(/<svg([^>]*)>/i, `<svg$1><title>${label}</title>`);
@@ -77,6 +93,10 @@ function normalizeSvg(svg, label) {
 
   out = out.replace(/<svg([^>]*)\swidth="[^"]*"/i, "<svg$1");
   out = out.replace(/<svg([^>]*)\sheight="[^"]*"/i, "<svg$1");
+
+  if (viewBox && !/viewBox="/i.test(out)) {
+    out = out.replace(/<svg/i, `<svg viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet"`);
+  }
 
   return out;
 }
@@ -134,8 +154,13 @@ async function main() {
     await sleep(800);
     const filename = await downloadBrand(brand);
     manifest.push({
-      ...brand,
+      file: brand.file,
+      name: brand.name,
       src: `/logos/brands/${filename}`,
+      width: brand.width,
+      height: brand.height,
+      ...(brand.monochrome ? { monochrome: true } : {}),
+      ...(brand.slotClassName ? { slotClassName: brand.slotClassName } : {}),
     });
     console.log(`✓ ${brand.name} → ${filename}`);
   }

@@ -9,6 +9,8 @@ export type LogoMarqueeItem = {
   height: number;
   /** Lighten dark/colored PNG marks on black backgrounds */
   monochrome?: boolean;
+  /** Override default marquee slot (wide wordmarks need more width) */
+  slotClassName?: string;
 };
 
 type LogoMarqueeProps = {
@@ -42,7 +44,9 @@ export function LogoMarquee({
         {track.map((item, index) => (
           <div
             key={`${item.name}-${index}`}
-            className={`flex shrink-0 items-center justify-center ${slotClassName}`}
+            className={`flex shrink-0 items-center justify-center ${
+              item.slotClassName ?? slotClassName
+            }`}
           >
             <Image
               src={item.src}
