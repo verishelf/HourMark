@@ -16,9 +16,9 @@ export function PartnerMarquee() {
       <LogoMarquee
         items={PARTNER_LOGOS}
         direction="right"
-        durationSeconds={55}
+        durationSeconds={50}
         className="border-t-0"
-        slotClassName="h-7 w-32 md:h-8 md:w-36"
+        slotClassName="h-6 w-[5.5rem] sm:h-7 sm:w-24 md:h-8 md:w-28"
       />
     </section>
   );
