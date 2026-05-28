@@ -53,8 +53,10 @@ const BRANDS = [
     file: "a-lange-sohne",
     name: "A. Lange & Söhne",
     wiki: "Alange_soehne_logo.svg",
-    width: 140,
+    width: 200,
     height: 32,
+    slotClassName: "h-6 w-32 sm:h-7 sm:w-36 md:h-8 md:w-40",
+    wordmarkOnly: true,
   },
 ];
 
@@ -84,8 +86,11 @@ function normalizeSvg(svg, label) {
   out = out
     .replace(/\sfill="(?!none)[^"]*"/gi, ' fill="#a1a1aa"')
     .replace(/\sstroke="(?!none)[^"]*"/gi, ' stroke="#a1a1aa"')
+    .replace(/style="fill:#[^";]+[^"]*"/gi, 'fill="#a1a1aa"')
     .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/\sclass="[^"]*"/gi, "");
+    .replace(/\sclass="[^"]*"/gi, "")
+    .replace(/<symbol\s+id="[abc]"\s+overflow="visible"\s*\/>/gi, "")
+    .replace(/<use[^>]*xlink:href="#[abc]"[^>]*\/>/gi, "");
 
   if (!/fill="#a1a1aa"/i.test(out) && !/fill="currentColor"/i.test(out)) {
     out = out.replace(/<svg/i, '<svg fill="#a1a1aa"');
@@ -105,7 +110,28 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function wordmarkSvg(label, lines) {
+  const height = 32;
+  const width = Math.max(...lines.map((line) => line.length * 9 + 24));
+  const textEls = lines
+    .map((line, index) => {
+      const y = lines.length === 1 ? 22 : 13 + index * 13;
+      return `<text x="0" y="${y}" font-family="Georgia, 'Times New Roman', serif" font-size="10" font-weight="500" letter-spacing="0.2em">${line}</text>`;
+    })
+    .join("");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}" fill="#a1a1aa"><title>${label}</title>${textEls}</svg>`;
+}
+
 async function downloadBrand(brand, attempt = 1) {
+  if (brand.wordmarkOnly) {
+    const filename = `${brand.file}.svg`;
+    writeFileSync(
+      join(brandsDir, filename),
+      wordmarkSvg(brand.name, ["A. LANGE", "& SÖHNE"]),
+    );
+    return filename;
+  }
+
   const response = await fetch(wikiUrl(brand.wiki), {
     headers: { "User-Agent": "HourMark-Website/1.0 (logo build script)" },
   });

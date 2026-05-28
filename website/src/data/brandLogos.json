@@ -49,7 +49,8 @@
     "name": "Vacheron Constantin",
     "src": "/logos/brands/vacheron-constantin.svg",
     "width": 150,
-    "height": 32
+    "height": 32,
+    "slotClassName": "h-6 w-32 sm:h-7 sm:w-36 md:h-8 md:w-40"
   },
   {
     "file": "jaeger-lecoultre",
@@ -99,7 +100,8 @@
     "file": "a-lange-sohne",
     "name": "A. Lange & Söhne",
     "src": "/logos/brands/a-lange-sohne.svg",
-    "width": 140,
-    "height": 32
+    "width": 200,
+    "height": 32,
+    "slotClassName": "h-6 w-32 sm:h-7 sm:w-36 md:h-8 md:w-40"
   }
 ]
