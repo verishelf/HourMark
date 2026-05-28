@@ -1,86 +1,188 @@
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as simpleIcons from "simple-icons";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "public", "logos");
+const brandsDir = join(root, "brands");
+const partnersDir = join(root, "partners");
 
-const brands = [
-  { file: "rolex", label: "ROLEX", width: 88 },
-  { file: "audemars-piguet", label: "AUDEMARS PIGUET", width: 168 },
-  { file: "patek-philippe", label: "PATEK PHILIPPE", width: 156 },
-  { file: "richard-mille", label: "RICHARD MILLE", width: 156 },
-  { file: "cartier", label: "CARTIER", width: 96 },
-  { file: "omega", label: "OMEGA", width: 88 },
-  { file: "vacheron-constantin", label: "VACHERON CONSTANTIN", width: 210 },
-  { file: "jaeger-lecoultre", label: "JAEGER-LECOULTRE", width: 188 },
-  { file: "iwc", label: "IWC", width: 52 },
-  { file: "panerai", label: "PANERAI", width: 96 },
-  { file: "breitling", label: "BREITLING", width: 108 },
-  { file: "tudor", label: "TUDOR", width: 76 },
-  { file: "hublot", label: "HUBLOT", width: 88 },
-  { file: "a-lange-sohne", label: "A. LANGE & SÖHNE", width: 168 },
+/** @type {{ file: string; name: string; wiki: string; width: number; height: number; monochrome?: boolean }[]} */
+const BRANDS = [
+  { file: "rolex", name: "Rolex", wiki: "Rolex_wordmark_logo.svg", width: 120, height: 32 },
+  { file: "audemars-piguet", name: "Audemars Piguet", wiki: "Audemars Piguet logo.png", width: 140, height: 32, monochrome: true },
+  { file: "patek-philippe", name: "Patek Philippe", wiki: "Patek Philippe Logo.png", width: 130, height: 32, monochrome: true },
+  { file: "richard-mille", name: "Richard Mille", wiki: "Richard Mille Logo.svg", width: 140, height: 32 },
+  { file: "cartier", name: "Cartier", wiki: "Cartier_logo.svg", width: 110, height: 32 },
+  { file: "omega", name: "Omega", wiki: "Omega_Logo.svg", width: 110, height: 32 },
+  {
+    file: "vacheron-constantin",
+    name: "Vacheron Constantin",
+    wiki: "Vacheron logo.svg",
+    width: 150,
+    height: 32,
+  },
+  {
+    file: "jaeger-lecoultre",
+    name: "Jaeger-LeCoultre",
+    wiki: "Jaeger-LeCoultre Logo.png",
+    width: 150,
+    height: 32,
+    monochrome: true,
+  },
+  { file: "iwc", name: "IWC", wiki: "IWC logo.svg", width: 72, height: 32 },
+  { file: "panerai", name: "Panerai", wiki: "Panerai_logo.svg", width: 120, height: 32 },
+  {
+    file: "breitling",
+    name: "Breitling",
+    wiki: "Logo Breitling 2018 1884 P.png",
+    width: 130,
+    height: 32,
+    monochrome: true,
+  },
+  { file: "tudor", name: "Tudor", wiki: "Tudor (Uhrenmarke) logo.svg", width: 100, height: 32 },
+  { file: "hublot", name: "Hublot", wiki: "Hublot_logo.svg", width: 110, height: 32 },
+  {
+    file: "a-lange-sohne",
+    name: "A. Lange & Söhne",
+    wiki: "Alange_soehne_logo.svg",
+    width: 140,
+    height: 32,
+  },
 ];
 
-function brandSvg({ label, width }) {
-  const height = 32;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}">
-  <title>${label}</title>
-  <text x="0" y="22" fill="#a1a1aa" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="500" letter-spacing="0.28em">${label}</text>
-</svg>`;
+function wikiUrl(filename) {
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}`;
 }
 
-function iconSvg(icon, width = 96, height = 32, fill = "#71717a") {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${width}" height="${height}" role="img" aria-label="${icon.title}">
+function normalizeSvg(svg, label) {
+  let out = svg
+    .replace(/<\?xml[^?]*\?>\s*/i, "")
+    .replace(/<!DOCTYPE[^>]*>\s*/i, "");
+
+  if (!out.includes("<title>")) {
+    out = out.replace(/<svg/i, `<svg role="img" aria-label="${label}"`);
+    out = out.replace(/<svg([^>]*)>/i, `<svg$1><title>${label}</title>`);
+  }
+
+  out = out
+    .replace(/\sfill="(?!none)[^"]*"/gi, ' fill="#a1a1aa"')
+    .replace(/\sstroke="(?!none)[^"]*"/gi, ' stroke="#a1a1aa"')
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/\sclass="[^"]*"/gi, "");
+
+  if (!/fill="#a1a1aa"/i.test(out) && !/fill="currentColor"/i.test(out)) {
+    out = out.replace(/<svg/i, '<svg fill="#a1a1aa"');
+  }
+
+  out = out.replace(/<svg([^>]*)\swidth="[^"]*"/i, "<svg$1");
+  out = out.replace(/<svg([^>]*)\sheight="[^"]*"/i, "<svg$1");
+
+  return out;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function downloadBrand(brand, attempt = 1) {
+  const response = await fetch(wikiUrl(brand.wiki), {
+    headers: { "User-Agent": "HourMark-Website/1.0 (logo build script)" },
+  });
+
+  if (response.status === 429 && attempt < 5) {
+    await sleep(2000 * attempt);
+    return downloadBrand(brand, attempt + 1);
+  }
+
+  if (!response.ok) {
+    throw new Error(`${brand.name}: HTTP ${response.status}`);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  if (contentType.includes("svg") || brand.wiki.endsWith(".svg")) {
+    const normalized = normalizeSvg(buffer.toString("utf8"), brand.name);
+    writeFileSync(join(brandsDir, `${brand.file}.svg`), normalized);
+    return `${brand.file}.svg`;
+  }
+
+  const ext = brand.wiki.toLowerCase().endsWith(".png") ? "png" : "jpg";
+  const filename = `${brand.file}.${ext}`;
+  writeFileSync(join(brandsDir, filename), buffer);
+  return filename;
+}
+
+function iconSvg(icon, fill = "#71717a") {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="80" height="28" role="img" aria-label="${icon.title}">
   <title>${icon.title}</title>
   <path fill="${fill}" d="${icon.path}"/>
 </svg>`;
 }
 
-mkdirSync(join(root, "brands"), { recursive: true });
-mkdirSync(join(root, "partners"), { recursive: true });
+async function main() {
+  mkdirSync(brandsDir, { recursive: true });
+  mkdirSync(partnersDir, { recursive: true });
+  mkdirSync(join(dirname(fileURLToPath(import.meta.url)), "..", "src", "data"), {
+    recursive: true,
+  });
 
-for (const brand of brands) {
-  writeFileSync(
-    join(root, "brands", `${brand.file}.svg`),
-    brandSvg(brand),
-  );
-}
+  const manifest = [];
 
-const partnerIcons = [
-  { file: "stripe", slug: "stripe", fill: "#a1a1aa" },
-  { file: "apple", slug: "apple", fill: "#a1a1aa" },
-  { file: "supabase", slug: "supabase", fill: "#71717a" },
-  { file: "expo", slug: "expo", fill: "#71717a" },
-];
-
-for (const { file, slug, fill } of partnerIcons) {
-  const icon = Object.values(simpleIcons).find((entry) => entry.slug === slug);
-  if (!icon) {
-    console.warn(`Missing icon: ${slug}`);
-    continue;
+  for (const brand of BRANDS) {
+    await sleep(800);
+    const filename = await downloadBrand(brand);
+    manifest.push({
+      ...brand,
+      src: `/logos/brands/${filename}`,
+    });
+    console.log(`✓ ${brand.name} → ${filename}`);
   }
-  writeFileSync(join(root, "partners", `${file}.svg`), iconSvg(icon, 80, 28, fill));
-}
 
-// Apple Pay wordmark companion
-writeFileSync(
-  join(root, "partners", "apple-pay.svg"),
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" role="img" aria-label="Apple Pay">
+  writeFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "src", "data", "brandLogos.json"),
+    JSON.stringify(manifest, null, 2),
+  );
+
+  const partnerIcons = [
+    { file: "stripe", slug: "stripe", fill: "#a1a1aa" },
+    { file: "apple", slug: "apple", fill: "#a1a1aa" },
+    { file: "supabase", slug: "supabase", fill: "#71717a" },
+    { file: "expo", slug: "expo", fill: "#71717a" },
+  ];
+
+  for (const { file, slug, fill } of partnerIcons) {
+    const icon = Object.values(simpleIcons).find((entry) => entry.slug === slug);
+    if (!icon) continue;
+    writeFileSync(join(partnersDir, `${file}.svg`), iconSvg(icon, fill));
+  }
+
+  const apple = Object.values(simpleIcons).find((e) => e.slug === "apple");
+  const stripe = Object.values(simpleIcons).find((e) => e.slug === "stripe");
+
+  writeFileSync(
+    join(partnersDir, "apple-pay.svg"),
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" role="img" aria-label="Apple Pay">
   <title>Apple Pay</title>
-  <path fill="#a1a1aa" d="${Object.values(simpleIcons).find((e) => e.slug === "apple").path}" transform="translate(0,4) scale(0.9)"/>
+  <path fill="#a1a1aa" d="${apple.path}" transform="translate(0,4) scale(0.9)"/>
   <text x="30" y="21" fill="#a1a1aa" font-family="system-ui, sans-serif" font-size="13" font-weight="500">Pay</text>
 </svg>`,
-);
+  );
 
-// Stripe Connect label
-writeFileSync(
-  join(root, "partners", "stripe-connect.svg"),
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 32" role="img" aria-label="Stripe Connect">
+  writeFileSync(
+    join(partnersDir, "stripe-connect.svg"),
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 32" role="img" aria-label="Stripe Connect">
   <title>Stripe Connect</title>
-  <path fill="#71717a" d="${Object.values(simpleIcons).find((e) => e.slug === "stripe").path}" transform="translate(0,4) scale(0.85)"/>
+  <path fill="#71717a" d="${stripe.path}" transform="translate(0,4) scale(0.85)"/>
   <text x="34" y="21" fill="#71717a" font-family="system-ui, sans-serif" font-size="10" font-weight="500" letter-spacing="0.12em">CONNECT</text>
 </svg>`,
-);
+  );
 
-console.log("Generated brand and partner logos.");
+  console.log(`\nWrote manifest with ${manifest.length} brand logos.`);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

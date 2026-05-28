@@ -7,6 +7,8 @@ export type LogoMarqueeItem = {
   src: string;
   width: number;
   height: number;
+  /** Lighten dark/colored PNG marks on black backgrounds */
+  monochrome?: boolean;
 };
 
 type LogoMarqueeProps = {
@@ -46,7 +48,11 @@ export function LogoMarquee({
               alt={item.name}
               width={item.width}
               height={item.height}
-              className={`w-auto max-w-none object-contain ${logoHeightClass}`}
+              className={`w-auto max-w-none object-contain ${logoHeightClass} ${
+                item.monochrome
+                  ? "brightness-0 invert"
+                  : ""
+              }`}
             />
           </div>
         ))}

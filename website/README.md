@@ -4,6 +4,8 @@ Marketing site for the HourMark luxury watch marketplace iOS app. Built with Nex
 
 Copy and feature highlights align with the mobile app and Stripe Connect marketplace backend (`apps/api/`).
 
+Brand marquee logos are sourced from Wikimedia Commons and committed under `public/logos/brands/`. Regenerate with `npm run logos`.
+
 ## Development
 
 ```bash

@@ -1,0 +1,104 @@
+[
+  {
+    "file": "rolex",
+    "name": "Rolex",
+    "src": "/logos/brands/rolex.svg",
+    "width": 120,
+    "height": 32
+  },
+  {
+    "file": "audemars-piguet",
+    "name": "Audemars Piguet",
+    "src": "/logos/brands/audemars-piguet.png",
+    "width": 140,
+    "height": 32,
+    "monochrome": true
+  },
+  {
+    "file": "patek-philippe",
+    "name": "Patek Philippe",
+    "src": "/logos/brands/patek-philippe.png",
+    "width": 130,
+    "height": 32,
+    "monochrome": true
+  },
+  {
+    "file": "richard-mille",
+    "name": "Richard Mille",
+    "src": "/logos/brands/richard-mille.svg",
+    "width": 140,
+    "height": 32
+  },
+  {
+    "file": "cartier",
+    "name": "Cartier",
+    "src": "/logos/brands/cartier.svg",
+    "width": 110,
+    "height": 32
+  },
+  {
+    "file": "omega",
+    "name": "Omega",
+    "src": "/logos/brands/omega.svg",
+    "width": 110,
+    "height": 32
+  },
+  {
+    "file": "vacheron-constantin",
+    "name": "Vacheron Constantin",
+    "src": "/logos/brands/vacheron-constantin.svg",
+    "width": 150,
+    "height": 32
+  },
+  {
+    "file": "jaeger-lecoultre",
+    "name": "Jaeger-LeCoultre",
+    "src": "/logos/brands/jaeger-lecoultre.png",
+    "width": 150,
+    "height": 32,
+    "monochrome": true
+  },
+  {
+    "file": "iwc",
+    "name": "IWC",
+    "src": "/logos/brands/iwc.svg",
+    "width": 72,
+    "height": 32
+  },
+  {
+    "file": "panerai",
+    "name": "Panerai",
+    "src": "/logos/brands/panerai.svg",
+    "width": 120,
+    "height": 32
+  },
+  {
+    "file": "breitling",
+    "name": "Breitling",
+    "src": "/logos/brands/breitling.png",
+    "width": 130,
+    "height": 32,
+    "monochrome": true
+  },
+  {
+    "file": "tudor",
+    "name": "Tudor",
+    "src": "/logos/brands/tudor.svg",
+    "width": 100,
+    "height": 32
+  },
+  {
+    "file": "hublot",
+    "name": "Hublot",
+    "src": "/logos/brands/hublot.svg",
+    "width": 110,
+    "height": 32
+  },
+  {
+    "file": "a-lange-sohne",
+    "name": "A. Lange & Söhne",
+    "src": "/logos/brands/a-lange-sohne.svg",
+    "width": 140,
+    "height": 32
+  }
+]
