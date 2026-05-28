@@ -5,16 +5,19 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { Href, useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
+import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { Typography } from "@/constants/typography";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { signInWithEmail, signInWithApple } from "@/services/auth";
@@ -88,83 +91,129 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <Image
+        source={{ uri: LOGGED_OUT_GATE_IMAGES.login }}
+        style={styles.background}
+        contentFit="cover"
+      />
+      <View style={styles.overlay} />
       <ScrollView
         {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingTop: insets.top + 40,
+          paddingTop: insets.top + 24,
           paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 40,
+          paddingBottom: insets.bottom + 24,
           justifyContent: "center",
         }}
       >
-        <Pressable onPress={() => router.back()} style={{ marginBottom: 32 }}>
-          <Text style={{ color: Colors.textSecondary, fontSize: 24 }}>←</Text>
-        </Pressable>
+        <View style={styles.card}>
+          <Text
+            style={{
+              ...Typography.hero,
+              color: Colors.textPrimary,
+              fontSize: 36,
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
+            Welcome Back
+          </Text>
+          <Text
+            style={{
+              ...Typography.body,
+              color: Colors.textSecondary,
+              marginBottom: 28,
+              textAlign: "center",
+            }}
+          >
+            Sign in to HourMark
+          </Text>
 
-        <Text style={{ ...Typography.hero, color: Colors.textPrimary, fontSize: 36, marginBottom: 8 }}>
-          Welcome
-        </Text>
-        <Text style={{ ...Typography.body, color: Colors.textSecondary, marginBottom: 40 }}>
-          Sign in to HourMark
-        </Text>
-
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor={Colors.textMuted}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={inputStyle}
-        />
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor={Colors.textMuted}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={inputStyle}
-        />
-
-        <LuxuryButton label="Sign In" onPress={handleLogin} loading={loading} />
-
-        <View style={{ height: 24 }} />
-
-        {Platform.OS === "ios" && (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-            cornerRadius={2}
-            style={{ width: "100%", height: 52, marginBottom: 16 }}
-            onPress={handleAppleSignIn}
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor={Colors.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={inputStyle}
           />
-        )}
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor={Colors.textMuted}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={inputStyle}
+          />
 
-        <LuxuryButton
-          label="Continue with Google"
-          onPress={() =>
-            Alert.alert("Google Sign In", "Configure Google OAuth in Supabase dashboard.")
-          }
-          variant="outline"
-        />
+          <LuxuryButton label="Sign In" onPress={handleLogin} loading={loading} size="large" />
 
-        <Pressable onPress={() => router.push("/auth/signup")} style={{ marginTop: 32, alignItems: "center" }}>
-          <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
-            Don't have an account? Create one
-          </Text>
-        </Pressable>
+          <View style={{ height: 18 }} />
 
-        <Pressable onPress={() => router.replace("/(tabs)")} style={{ marginTop: 16, alignItems: "center" }}>
-          <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
-            Browse as guest
-          </Text>
-        </Pressable>
+          {Platform.OS === "ios" && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+              cornerRadius={2}
+              style={{ width: "100%", height: 52, marginBottom: 12 }}
+              onPress={handleAppleSignIn}
+            />
+          )}
+
+          <LuxuryButton
+            label="Continue with Google"
+            onPress={() =>
+              Alert.alert("Google Sign In", "Configure Google OAuth in Supabase dashboard.")
+            }
+            variant="outline"
+          />
+
+          <Pressable
+            onPress={() => router.push("/auth/signup")}
+            style={{ marginTop: 20, alignItems: "center" }}
+          >
+            <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
+              Don't have an account? Create one
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.replace("/(tabs)")}
+            style={{ marginTop: 12, alignItems: "center" }}
+          >
+            <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
+              Browse as guest
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.62)",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 16,
+    backgroundColor: Colors.card,
+    padding: 20,
+  },
+});

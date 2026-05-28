@@ -30,11 +30,19 @@ export default function RootLayout() {
             options={{ animation: "slide_from_right" }}
           />
           <Stack.Screen
+            name="seller/[id]"
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
             name="checkout/index"
             options={{ animation: "slide_from_bottom", presentation: "modal" }}
           />
           <Stack.Screen
             name="verify/index"
+            options={{ animation: "slide_from_bottom", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="profile/edit"
             options={{ animation: "slide_from_bottom", presentation: "modal" }}
           />
           <Stack.Screen

@@ -5,9 +5,11 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { EmptyState } from "@/components/EmptyState";
+import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
+import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
@@ -19,7 +21,7 @@ import type { Conversation } from "@/types";
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
@@ -27,18 +29,15 @@ export default function MessagesScreen() {
     getConversations(user.id).then(setConversations);
   }, [user]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background }}>
-        <ScreenHeader title="Messages" />
-        <EmptyState
-          icon="chatbubble-outline"
-          title="Sign in to message"
-          body="Connect with buyers and sellers about listings."
-          actionLabel="Sign In"
-          onAction={() => router.push("/auth/login")}
-        />
-      </View>
+      <LoggedOutGate
+        title="Messages"
+        subtitle="Sign in to connect with buyers and sellers about listings."
+        backgroundImage={LOGGED_OUT_GATE_IMAGES.messages}
+        onSignIn={() => router.push("/auth/login")}
+        onSignUp={() => router.push("/auth/signup")}
+      />
     );
   }
 

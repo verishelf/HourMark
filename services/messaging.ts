@@ -66,6 +66,58 @@ export async function getConversations(userId: string): Promise<Conversation[]> 
   return (data ?? []) as Conversation[];
 }
 
+export async function getOrCreateConversation(params: {
+  listingId: string;
+  buyerId: string;
+  sellerId: string;
+}): Promise<Conversation> {
+  if (!isSupabaseConfigured) {
+    const existing = MOCK_CONVERSATIONS.find(
+      (c) =>
+        c.listing_id === params.listingId &&
+        c.buyer_id === params.buyerId &&
+        c.seller_id === params.sellerId
+    );
+    if (existing) return existing;
+
+    const created: Conversation = {
+      id: `conv-${Date.now()}`,
+      listing_id: params.listingId,
+      buyer_id: params.buyerId,
+      seller_id: params.sellerId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    return created;
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("listing_id", params.listingId)
+    .eq("buyer_id", params.buyerId)
+    .eq("seller_id", params.sellerId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existing) return existing as Conversation;
+
+  const { data: created, error: createError } = await supabase
+    .from("conversations")
+    .insert({
+      listing_id: params.listingId,
+      buyer_id: params.buyerId,
+      seller_id: params.sellerId,
+    })
+    .select("*")
+    .single();
+
+  if (createError) throw createError;
+  return created as Conversation;
+}
+
 export async function getMessages(conversationId: string): Promise<Message[]> {
   if (!isSupabaseConfigured) {
     return MOCK_MESSAGES[conversationId] ?? [];

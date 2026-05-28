@@ -138,6 +138,7 @@ export default function SearchScreen() {
         >
           <FilterDropdown
             compact
+            showTitle
             title="Brand"
             value={brand}
             options={brandOptions}
@@ -145,6 +146,7 @@ export default function SearchScreen() {
           />
           <FilterDropdown
             compact
+            showTitle
             title="Price"
             value={priceValue}
             options={PRICE_OPTIONS}
@@ -152,6 +154,7 @@ export default function SearchScreen() {
           />
           <FilterDropdown
             compact
+            showTitle
             title="Condition"
             value={condition}
             options={conditionOptions}
@@ -171,6 +174,7 @@ export default function SearchScreen() {
         </Text>
         <FilterDropdown
           compact
+          showTitle
           title="Sort"
           value={sort}
           options={SORT_OPTIONS}

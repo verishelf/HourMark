@@ -16,6 +16,9 @@ const PARTNER_LOGOS: LogoMarqueeItem[] = [
 export function PartnerMarquee() {
   return (
     <section aria-label="Technology partners" className="bg-[#0a0a0a]">
+      <p className="px-4 pb-3 pt-6 text-center text-sm font-semibold uppercase tracking-[0.14em] text-white/80 md:text-base">
+        On a Secure Trusted Platform
+      </p>
       <LogoMarquee
         items={PARTNER_LOGOS}
         direction="right"

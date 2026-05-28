@@ -17,10 +17,12 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/EmptyState";
+import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { LUXURY_BRANDS, CONDITIONS } from "@/constants/brands";
 import { Colors } from "@/constants/colors";
+import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
@@ -73,7 +75,7 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
 export default function SellScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, profile, isAuthenticated, refreshProfile } = useAuth();
+  const { user, profile, isAuthenticated, loading: authLoading, refreshProfile } = useAuth();
   const [images, setImages] = useState<string[]>([]);
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
@@ -196,17 +198,15 @@ export default function SellScreen() {
 
   const footerBottom = insets.bottom + SPACING.tabBarHeight;
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return (
-      <View style={styles.screen}>
-        <ScreenHeader title="Sell on HourMark" />
-        <View style={styles.loggedOutBody}>
-          <Text style={styles.loggedOutText}>
-            Sign in to list your timepieces to collectors worldwide.
-          </Text>
-          <LuxuryButton label="Sign In" onPress={() => router.push("/auth/login")} variant="primary" />
-        </View>
-      </View>
+      <LoggedOutGate
+        title="Sell on HourMark"
+        subtitle="List your timepieces to collectors worldwide."
+        backgroundImage={LOGGED_OUT_GATE_IMAGES.sell}
+        onSignIn={() => router.push("/auth/login")}
+        onSignUp={() => router.push("/auth/signup")}
+      />
     );
   }
 
@@ -454,17 +454,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  loggedOutBody: {
-    paddingHorizontal: SPACING.screen,
-    flex: 1,
-    justifyContent: "center",
-  },
-  loggedOutText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    marginBottom: 32,
-    lineHeight: 22,
   },
   pageTitle: {
     ...Typography.h2,

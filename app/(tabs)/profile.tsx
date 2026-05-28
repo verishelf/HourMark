@@ -6,13 +6,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
-import { LuxuryButton } from "@/components/LuxuryButton";
+import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { MyListingCard } from "@/components/MyListingCard";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
+import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { CARD_GAP, RADIUS, SPACING, LISTING_CARD_RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
@@ -73,15 +74,22 @@ function ProfileHeader({
   avatarUrl,
   verified,
   bio,
+  onEdit,
 }: {
   username: string;
   avatarUrl: string;
   verified: boolean;
   bio?: string | null;
+  onEdit: () => void;
 }) {
   return (
     <View style={styles.header}>
-      <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+      <Pressable onPress={onEdit} style={styles.avatarPressable}>
+        <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        <View style={styles.avatarEditDot}>
+          <Ionicons name="pencil" size={12} color={Colors.textPrimary} />
+        </View>
+      </Pressable>
       <View style={styles.headerMeta}>
         <Text style={styles.username} numberOfLines={1}>
           @{username}
@@ -207,6 +215,10 @@ export default function ProfileScreen() {
     router.push("/verify?returnPath=profile");
   };
 
+  const handleEditProfile = () => {
+    router.push("/profile/edit");
+  };
+
   const loadListings = useCallback(async () => {
     if (!user) return;
     setListings(await getUserListings(user.id));
@@ -250,21 +262,13 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated && !loading) {
     return (
-      <View style={styles.screen}>
-        <ScreenHeader
-          title="Profile"
-          subtitle="The luxury watch marketplace for discerning collectors."
-        />
-        <View style={styles.content}>
-          <LuxuryButton label="Sign In" onPress={() => router.push("/auth/login")} variant="primary" />
-          <View style={styles.buttonGap} />
-          <LuxuryButton
-            label="Create Account"
-            onPress={() => router.push("/auth/signup")}
-            variant="outline"
-          />
-        </View>
-      </View>
+      <LoggedOutGate
+        title="HourMark"
+        subtitle="Join the private marketplace for authenticated luxury timepieces."
+        backgroundImage={LOGGED_OUT_GATE_IMAGES.profile}
+        onSignIn={() => router.push("/auth/login")}
+        onSignUp={() => router.push("/auth/signup")}
+      />
     );
   }
 
@@ -290,7 +294,14 @@ export default function ProfileScreen() {
       contentContainerStyle={tabContentPadding(insets.bottom)}
       {...HIDE_SCROLL_INDICATORS}
     >
-      <ScreenHeader title="Profile" />
+      <ScreenHeader
+        title="Profile"
+        rightAction={
+          <Pressable onPress={handleEditProfile} hitSlop={12} style={styles.editButton}>
+            <Text style={styles.editButtonLabel}>Edit</Text>
+          </Pressable>
+        }
+      />
 
       <View style={styles.content}>
         <ProfileHeader
@@ -301,6 +312,7 @@ export default function ProfileScreen() {
           }
           verified={Boolean(profile?.verified)}
           bio={profile?.bio}
+          onEdit={handleEditProfile}
         />
 
         <ProfileTabs tabs={tabs} active={tab} onChange={setTab} />
@@ -381,13 +393,13 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: SPACING.screen,
   },
-  buttonGap: {
-    height: 12,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 24,
+  },
+  avatarPressable: {
+    position: "relative",
   },
   avatar: {
     width: 64,
@@ -396,6 +408,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardElevated,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  avatarEditDot: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editButton: {
+    paddingTop: 4,
+    paddingHorizontal: 4,
+  },
+  editButtonLabel: {
+    ...Typography.caption,
+    color: Colors.textPrimary,
+    fontSize: 14,
+    fontWeight: "500",
   },
   headerMeta: {
     flex: 1,

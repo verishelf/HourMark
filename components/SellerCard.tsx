@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { RADIUS } from "@/constants/layout";
@@ -74,6 +75,9 @@ export function SellerCard({ seller, onPress }: Props) {
               <Text style={{ ...Typography.caption, color: Colors.textSecondary, fontSize: 11 }}>Verified</Text>
             </View>
           )}
+          {onPress ? (
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          ) : null}
         </View>
       </View>
 

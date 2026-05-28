@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +17,7 @@ import { formatPrice } from "@/lib/stripe";
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorite } from "@/hooks/useFavorite";
 import { getListingById, getRelatedListings } from "@/services/listings";
+import { getOrCreateConversation } from "@/services/messaging";
 import type { Listing } from "@/types";
 
 function FixedHeaderButton({
@@ -94,13 +95,45 @@ export default function ListingDetailScreen() {
     });
   };
 
+  const handleMessageSeller = async () => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      router.push({
+        pathname: "/auth/login",
+        params: { redirect: `/listing/${listing.id}` },
+      });
+      return;
+    }
+
+    if (!user || user.id === listing.seller_id) {
+      if (user?.id === listing.seller_id) {
+        Alert.alert("Your listing", "You cannot message yourself.");
+      }
+      return;
+    }
+
+    try {
+      const conversation = await getOrCreateConversation({
+        listingId: listing.id,
+        buyerId: user.id,
+        sellerId: listing.seller_id,
+      });
+      router.push(`/chat/${conversation.id}`);
+    } catch (e) {
+      Alert.alert("Message Seller", e instanceof Error ? e.message : "Could not open chat.");
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <ScrollView
         {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
       >
-        <ListingGallery images={listing.images} />
+        <View style={{ position: "relative" }}>
+          <ListingGallery images={listing.images} />
+        </View>
 
         <View style={{ paddingHorizontal: 20, paddingTop: 24 }}>
           <Text style={{ ...Typography.label, color: Colors.textSecondary }}>
@@ -142,7 +175,10 @@ export default function ListingDetailScreen() {
           {listing.seller && (
             <View style={{ marginBottom: 16 }}>
               <SectionHeader title="Seller" />
-              <SellerCard seller={listing.seller} />
+              <SellerCard
+                seller={listing.seller}
+                onPress={() => router.push(`/seller/${listing.seller_id}`)}
+              />
             </View>
           )}
 
@@ -175,14 +211,17 @@ export default function ListingDetailScreen() {
         }}
       >
         <FixedHeaderButton icon="chevron-back" onPress={() => router.back()} />
-        <FixedHeaderButton
-          icon={favorited ? "heart" : "heart-outline"}
-          filled={favorited}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            toggle();
-          }}
-        />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <FixedHeaderButton icon="chatbubble-ellipses-outline" onPress={handleMessageSeller} />
+          <FixedHeaderButton
+            icon={favorited ? "heart" : "heart-outline"}
+            filled={favorited}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              toggle();
+            }}
+          />
+        </View>
       </View>
 
       <View

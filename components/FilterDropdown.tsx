@@ -19,14 +19,23 @@ type Props = {
   options: Option[];
   onSelect: (value: string) => void;
   compact?: boolean;
+  /** When true, the trigger shows the filter title (e.g. "Brand") instead of the selected value. */
+  showTitle?: boolean;
 };
 
-export function FilterDropdown({ title, value, options, onSelect, compact = false }: Props) {
+export function FilterDropdown({
+  title,
+  value,
+  options,
+  onSelect,
+  compact = false,
+  showTitle = false,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
 
   const selected = options.find((o) => o.value === value);
-  const displayLabel = selected?.label ?? title;
+  const displayLabel = showTitle ? title : (selected?.label ?? title);
 
   return (
     <>

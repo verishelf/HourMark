@@ -123,6 +123,23 @@ export async function createListing(
   return data as Listing;
 }
 
+export async function getSellerActiveListings(sellerId: string): Promise<Listing[]> {
+  if (!isSupabaseConfigured) {
+    return applyMockListingState(allMockListings()).filter(
+      (l) => l.seller_id === sellerId && l.status === "active"
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*, seller:users(*)")
+    .eq("seller_id", sellerId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Listing[];
+}
+
 export async function getUserListings(userId: string): Promise<Listing[]> {
   if (!isSupabaseConfigured) {
     return applyMockListingState(
