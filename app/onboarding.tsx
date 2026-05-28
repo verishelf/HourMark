@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MotiView } from "moti";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Typography } from "@/constants/typography";
 
 const { width } = Dimensions.get("window");
@@ -50,7 +51,7 @@ export default function OnboardingScreen() {
         data={SLIDES}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
+        {...HIDE_SCROLL_INDICATORS}
         keyExtractor={(_, i) => String(i)}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}

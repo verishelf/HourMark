@@ -1,5 +1,5 @@
+import "react-native-reanimated";
 import "../global.css";
-import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -8,10 +8,6 @@ import { STRIPE_PUBLISHABLE_KEY } from "@/lib/stripe";
 import { Colors } from "@/constants/colors";
 
 export default function RootLayout() {
-  useEffect(() => {
-    // Reanimated is configured via babel plugin
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
       <StripeProvider
@@ -35,6 +31,10 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="checkout/index"
+            options={{ animation: "slide_from_bottom", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="verify/index"
             options={{ animation: "slide_from_bottom", presentation: "modal" }}
           />
           <Stack.Screen

@@ -1,5 +1,6 @@
 -- HourMark Supabase Schema
--- Run in Supabase SQL Editor
+-- Fresh install only: run in Supabase SQL Editor on a new project.
+-- Existing project? Run supabase/migrations/20260527180000_seller_verification.sql instead.
 
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
@@ -12,6 +13,8 @@ create table public.users (
   bio text,
   verified boolean default false,
   stripe_account_id text,
+  stripe_onboarding_status text default 'not_started'
+    check (stripe_onboarding_status in ('not_started', 'pending', 'complete', 'restricted')),
   seller_rating numeric(3, 2) default 0,
   created_at timestamptz default now()
 );
@@ -172,6 +175,18 @@ create table public.orders (
   status text default 'pending' check (status in ('pending', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded')),
   tracking_number text,
   stripe_payment_intent_id text,
+  payment_method text default 'card'
+    check (payment_method in ('card', 'apple_pay', 'wire_transfer')),
+  wire_reference text,
+  buyer_name text,
+  buyer_email text,
+  buyer_phone text,
+  shipping_address_line1 text,
+  shipping_address_line2 text,
+  shipping_city text,
+  shipping_state text,
+  shipping_postal_code text,
+  shipping_country text default 'US',
   created_at timestamptz default now()
 );
 
@@ -210,6 +225,9 @@ create table public.seller_verifications (
   user_id uuid references public.users(id) on delete cascade not null,
   status text default 'pending' check (status in ('pending', 'approved', 'rejected')),
   document_url text,
+  stripe_account_id text,
+  rejection_reason text,
+  requirements_due jsonb default '[]'::jsonb,
   submitted_at timestamptz default now(),
   reviewed_at timestamptz
 );
@@ -254,3 +272,81 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Sync seller verification state from Stripe Connect webhooks (service role only)
+create or replace function public.sync_seller_verification(
+  p_user_id uuid,
+  p_stripe_account_id text,
+  p_status text,
+  p_requirements_due jsonb default '[]'::jsonb,
+  p_rejection_reason text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_onboarding_status text;
+  v_verified boolean;
+  v_verification_id uuid;
+begin
+  if p_status not in ('pending', 'approved', 'rejected') then
+    raise exception 'Invalid verification status: %', p_status;
+  end if;
+
+  v_verified := p_status = 'approved';
+  v_onboarding_status := case
+    when p_status = 'approved' then 'complete'
+    when p_status = 'rejected' then 'restricted'
+    else 'pending'
+  end;
+
+  update public.users
+  set
+    verified = v_verified,
+    stripe_account_id = p_stripe_account_id,
+    stripe_onboarding_status = v_onboarding_status
+  where id = p_user_id;
+
+  select id into v_verification_id
+  from public.seller_verifications
+  where user_id = p_user_id
+  order by submitted_at desc
+  limit 1;
+
+  if v_verification_id is not null then
+    update public.seller_verifications
+    set
+      status = p_status,
+      stripe_account_id = p_stripe_account_id,
+      rejection_reason = p_rejection_reason,
+      requirements_due = coalesce(p_requirements_due, '[]'::jsonb),
+      reviewed_at = case
+        when p_status in ('approved', 'rejected') then now()
+        else reviewed_at
+      end
+    where id = v_verification_id;
+  else
+    insert into public.seller_verifications (
+      user_id,
+      status,
+      stripe_account_id,
+      rejection_reason,
+      requirements_due,
+      reviewed_at
+    )
+    values (
+      p_user_id,
+      p_status,
+      p_stripe_account_id,
+      p_rejection_reason,
+      coalesce(p_requirements_due, '[]'::jsonb),
+      case when p_status in ('approved', 'rejected') then now() else null end
+    );
+  end if;
+end;
+$$;
+
+revoke all on function public.sync_seller_verification(uuid, text, text, jsonb, text) from public;
+grant execute on function public.sync_seller_verification(uuid, text, text, jsonb, text) to service_role;

@@ -11,6 +11,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MessageBubble } from "@/components/MessageBubble";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
@@ -80,6 +81,7 @@ export default function ChatScreen() {
         ref={listRef}
         data={messages}
         keyExtractor={(item) => item.id}
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           padding: 20,
           paddingBottom: 16,

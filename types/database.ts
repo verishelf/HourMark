@@ -1,3 +1,9 @@
+export type StripeOnboardingStatus =
+  | "not_started"
+  | "pending"
+  | "complete"
+  | "restricted";
+
 export type UserProfile = {
   id: string;
   username: string | null;
@@ -5,6 +11,7 @@ export type UserProfile = {
   bio: string | null;
   verified: boolean;
   stripe_account_id: string | null;
+  stripe_onboarding_status: StripeOnboardingStatus;
   seller_rating: number | null;
   created_at: string;
 };
@@ -65,6 +72,20 @@ export type OrderStatus =
   | "cancelled"
   | "refunded";
 
+export type PaymentMethod = "card" | "apple_pay" | "wire_transfer";
+
+export type ShippingDetails = {
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country?: string;
+};
+
 export type Order = {
   id: string;
   buyer_id: string;
@@ -73,8 +94,19 @@ export type Order = {
   amount: number;
   commission_fee: number;
   status: OrderStatus;
+  payment_method: PaymentMethod;
   tracking_number: string | null;
   stripe_payment_intent_id: string | null;
+  wire_reference: string | null;
+  buyer_name: string | null;
+  buyer_email: string | null;
+  buyer_phone: string | null;
+  shipping_address_line1: string | null;
+  shipping_address_line2: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_postal_code: string | null;
+  shipping_country: string | null;
   created_at: string;
   listing?: Listing;
 };
@@ -119,8 +151,19 @@ export type SellerVerification = {
   user_id: string;
   status: "pending" | "approved" | "rejected";
   document_url: string | null;
+  stripe_account_id: string | null;
+  rejection_reason: string | null;
+  requirements_due: string[];
   submitted_at: string;
   reviewed_at: string | null;
+};
+
+export type VerificationStatus = {
+  status: "not_started" | "pending" | "verified" | "action_required";
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  requirementsDue: string[];
+  rejectionReason: string | null;
 };
 
 export type CreateListingInput = {

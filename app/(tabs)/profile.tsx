@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as Linking from "expo-linking";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { MyListingCard } from "@/components/MyListingCard";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { SettingsRow } from "@/components/SettingsRow";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
@@ -18,15 +18,15 @@ import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { getFavorites } from "@/services/favorites";
 import { deleteListing, getUserListings } from "@/services/listings";
-import {
-  getOrders,
-  createConnectAccountLink,
-  getConnectStatus,
-  type ConnectStatus,
-} from "@/services/payments";
+import { getOrders } from "@/services/payments";
 import { signOut } from "@/services/auth";
-import { GRID_GAP, tabContentPadding } from "@/styles/layout";
-import type { Listing, Order } from "@/types";
+import {
+  getSellerVerificationStatus,
+  getVerificationStatusLabel,
+} from "@/services/verification";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
+import { tabContentPadding, GRID_GAP } from "@/styles/layout";
+import type { Listing, Order, VerificationStatus } from "@/types";
 
 type TabKey = "listings" | "favorites" | "orders";
 
@@ -120,44 +120,6 @@ function ProfileTabs({
   );
 }
 
-function SettingsRow({
-  label,
-  subtitle,
-  icon,
-  onPress,
-  destructive,
-  isLast,
-}: {
-  label: string;
-  subtitle?: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-  destructive?: boolean;
-  isLast?: boolean;
-}) {
-  const color = destructive ? Colors.error : Colors.textPrimary;
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [pressed && styles.pressed, !isLast && styles.settingsRowBorder]}
-    >
-      <View style={styles.settingsRow}>
-        <Ionicons name={icon} size={20} color={color} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.settingsLabel, { color }]}>{label}</Text>
-          {subtitle ? (
-            <Text style={{ ...Typography.caption, color: Colors.textMuted, marginTop: 2 }}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
-        {!destructive && <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />}
-      </View>
-    </Pressable>
-  );
-}
-
 function ListingRow({ listing }: { listing: Listing }) {
   const router = useRouter();
   const coverImage = getListingCoverImage(listing.images);
@@ -216,12 +178,35 @@ function OrderRow({ order }: { order: Order }) {
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, profile, isAuthenticated, loading } = useAuth();
+  const { user, profile, isAuthenticated, loading, refreshProfile } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
   const [tab, setTab] = useState<TabKey>("listings");
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
+    status: "not_started",
+    chargesEnabled: false,
+    payoutsEnabled: false,
+    requirementsDue: [],
+    rejectionReason: null,
+  });
+
+  const loadVerificationStatus = useCallback(async () => {
+    if (!user) return;
+    try {
+      const status = await getSellerVerificationStatus();
+      setVerificationStatus(status);
+      await refreshProfile();
+    } catch {
+      // Keep profile-derived fallback when API is unavailable.
+    }
+  }, [refreshProfile, user]);
+
+  const handleStartVerification = () => {
+    if (!user) return;
+    router.push("/verify?returnPath=profile");
+  };
 
   const loadListings = useCallback(async () => {
     if (!user) return;
@@ -237,8 +222,8 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       loadListings();
-      getConnectStatus().then(setConnectStatus);
-    }, [loadListings])
+      loadVerificationStatus();
+    }, [loadListings, loadVerificationStatus])
   );
 
   const handleDeleteListing = (listing: Listing) => {
@@ -290,11 +275,21 @@ export default function ProfileScreen() {
     { key: "orders", label: "Orders" },
   ];
 
+  const verificationLabel = profile?.verified
+    ? "Verified"
+    : getVerificationStatusLabel(verificationStatus.status);
+  const verificationVariant =
+    profile?.verified || verificationStatus.status === "verified"
+      ? "success"
+      : verificationStatus.status === "action_required"
+        ? "muted"
+        : "muted";
+
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={tabContentPadding(insets.bottom)}
-      showsVerticalScrollIndicator={false}
+      {...HIDE_SCROLL_INDICATORS}
     >
       <ScreenHeader title="Profile" />
 
@@ -357,32 +352,12 @@ export default function ProfileScreen() {
 
         <View style={styles.settingsSection}>
           <SettingsRow
-            label="Payout Settings"
-            icon="card-outline"
-            subtitle={
-              connectStatus?.onboardingComplete
-                ? "Stripe Connect active"
-                : connectStatus?.hasAccount
-                  ? "Complete onboarding"
-                  : "Set up seller payouts"
-            }
-            onPress={async () => {
-              if (!user) return;
-              try {
-                const url = await createConnectAccountLink(
-                  user.id,
-                  Linking.createURL("/profile")
-                );
-                await Linking.openURL(url);
-              } catch (e) {
-                Alert.alert(
-                  "Payout Setup",
-                  e instanceof Error ? e.message : "Could not open Stripe onboarding"
-                );
-              }
-            }}
+            label="Seller Verification"
+            icon="shield-checkmark-outline"
+            subtitle="Verify your identity (name, address, SSN) and connect payouts to start selling."
+            trailing={<Badge label={verificationLabel} variant={verificationVariant} />}
+            onPress={handleStartVerification}
           />
-          <SettingsRow label="Verify Identity" icon="shield-checkmark-outline" onPress={() => {}} />
           <SettingsRow
             label="Sign Out"
             icon="log-out-outline"
@@ -531,24 +506,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: Colors.card,
     overflow: "hidden",
-  },
-  settingsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  settingsRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  settingsLabel: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "500",
-    color: Colors.textPrimary,
   },
   pressed: {
     opacity: 0.85,

@@ -1,7 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { MotiView } from "moti";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Badge } from "@/components/Badge";
@@ -77,10 +76,7 @@ export function WatchCard({
   };
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 16 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 500, delay: index * 80 }}
+    <View
       style={{
         marginBottom: isGrid || isCompact ? 0 : CARD_GAP,
         flex: isGrid ? 1 : undefined,
@@ -266,6 +262,6 @@ export function WatchCard({
           </View>
         ) : null}
       </View>
-    </MotiView>
+    </View>
   );
 }

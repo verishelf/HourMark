@@ -1,16 +1,12 @@
 /**
- * @deprecated Use the production API in apps/api instead.
+ * HourMark Stripe Connect — reference only.
  *
- * HourMark Stripe Connect is implemented at:
- *   apps/api/src/routes/stripe/
- *   apps/api/src/controllers/stripe/
- *   apps/api/src/services/stripe/
- *   apps/api/src/webhooks/
+ * Production implementation:
+ * - Supabase Edge Functions: supabase/functions/*
+ * - Optional Node API: apps/api (see apps/api README)
  *
- * Start locally:
- *   cd apps/api && cp .env.example .env && npm install && npm run dev
- *
- * Platform commission: 3% via destination charges (application_fee_amount)
+ * Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, and Supabase service role secrets.
+ * Platform commission: 3% (application_fee_amount)
  */
 
 export {};

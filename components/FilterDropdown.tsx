@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Typography } from "@/constants/typography";
 import { RADIUS } from "@/constants/layout";
 
@@ -76,7 +77,7 @@ export function FilterDropdown({ title, value, options, onSelect, compact = fals
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={{ ...Typography.label, color: Colors.textMuted, paddingHorizontal: 20, marginBottom: 12 }}>{title}</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView {...HIDE_SCROLL_INDICATORS}>
               {options.map((option) => {
                 const active = option.value === value;
                 return (

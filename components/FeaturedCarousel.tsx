@@ -13,6 +13,7 @@ import { MotiView } from "moti";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Typography } from "@/constants/typography";
 import type { Listing } from "@/types";
 
@@ -42,7 +43,7 @@ export function FeaturedCarousel({ listings }: Props) {
         data={listings}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
+        {...HIDE_SCROLL_INDICATORS}
         keyExtractor={(item) => item.id}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}

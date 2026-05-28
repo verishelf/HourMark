@@ -8,6 +8,7 @@ import {
 import { Image } from "expo-image";
 import { MotiView } from "moti";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { resolveListingImageUrl } from "@/lib/listingImages";
 
 const { width, height } = Dimensions.get("window");
@@ -36,7 +37,7 @@ export function ListingGallery({ images }: Props) {
         data={resolvedImages}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
+        {...HIDE_SCROLL_INDICATORS}
         keyExtractor={(_, i) => String(i)}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}

@@ -1,12 +1,11 @@
-import { View } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { ScrollView, View } from "react-native";
 import { WatchCard } from "@/components/WatchCard";
 import { WatchCardSkeleton } from "@/components/SkeletonLoader";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { HORIZONTAL_CARD_GAP, SPACING } from "@/constants/layout";
 import type { Listing } from "@/types";
 
 const CARD_WIDTH = 260;
-const ROW_HEIGHT = 328;
 
 const itemStyle = {
   width: CARD_WIDTH,
@@ -18,6 +17,11 @@ type Props = {
   loading?: boolean;
   loadingCount?: number;
   showBuy?: boolean;
+  contentContainerStyle?: {
+    paddingLeft?: number;
+    paddingRight?: number;
+    marginBottom?: number;
+  };
 };
 
 export function HorizontalListingScroll({
@@ -25,44 +29,42 @@ export function HorizontalListingScroll({
   loading = false,
   loadingCount = 3,
   showBuy = false,
+  contentContainerStyle,
 }: Props) {
+  const scrollContentStyle = {
+    paddingLeft: contentContainerStyle?.paddingLeft,
+    paddingRight: contentContainerStyle?.paddingRight ?? SPACING.screen,
+    marginBottom: contentContainerStyle?.marginBottom ?? 24,
+  };
   if (loading) {
     return (
-      <View style={{ height: ROW_HEIGHT, marginBottom: 24 }}>
-        <FlashList
-          data={Array.from({ length: loadingCount }, (_, i) => i)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => String(item)}
-          estimatedItemSize={CARD_WIDTH + HORIZONTAL_CARD_GAP}
-          contentContainerStyle={{ paddingRight: SPACING.screen - HORIZONTAL_CARD_GAP }}
-          renderItem={() => (
-            <View style={itemStyle}>
-              <WatchCardSkeleton variant="compact" />
-            </View>
-          )}
-        />
-      </View>
+      <ScrollView
+        horizontal
+        {...HIDE_SCROLL_INDICATORS}
+        contentContainerStyle={scrollContentStyle}
+      >
+        {Array.from({ length: loadingCount }, (_, i) => (
+          <View key={i} style={itemStyle}>
+            <WatchCardSkeleton variant="compact" />
+          </View>
+        ))}
+      </ScrollView>
     );
   }
 
   if (!listings.length) return null;
 
   return (
-    <View style={{ height: ROW_HEIGHT, marginBottom: 24 }}>
-      <FlashList
-        data={listings}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        estimatedItemSize={CARD_WIDTH + HORIZONTAL_CARD_GAP}
-        contentContainerStyle={{ paddingRight: SPACING.screen - HORIZONTAL_CARD_GAP }}
-        renderItem={({ item, index }) => (
-          <View style={itemStyle}>
-            <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
-          </View>
-        )}
-      />
-    </View>
+    <ScrollView
+      horizontal
+      {...HIDE_SCROLL_INDICATORS}
+      contentContainerStyle={scrollContentStyle}
+    >
+      {listings.map((item, index) => (
+        <View key={item.id} style={itemStyle}>
+          <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
+        </View>
+      ))}
+    </ScrollView>
   );
 }

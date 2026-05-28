@@ -7,7 +7,8 @@ const mockSeller: UserProfile = {
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop",
   bio: "Curated Swiss timepieces since 2018",
   verified: true,
-  stripe_account_id: null,
+  stripe_account_id: "acct_mock_seller",
+  stripe_onboarding_status: "complete",
   seller_rating: 4.9,
   created_at: "2024-01-15T00:00:00Z",
 };
@@ -101,6 +102,7 @@ export const MOCK_LISTINGS: Listing[] = [
       id: "seller-3",
       username: "cartier_atelier",
       verified: false,
+      stripe_onboarding_status: "not_started",
     },
   },
   {

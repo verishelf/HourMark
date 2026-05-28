@@ -19,6 +19,7 @@ import { WatchCardSkeleton } from "@/components/SkeletonLoader";
 import { FILTER_CHIPS, CONDITIONS } from "@/constants/brands";
 import { useListings } from "@/hooks/useListings";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { tabContentPadding, gridItemStyle, screenContentPadding } from "@/styles/layout";
@@ -128,7 +129,7 @@ export default function SearchScreen() {
       >
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
+          {...HIDE_SCROLL_INDICATORS}
           contentContainerStyle={{
             gap: 6,
             alignItems: "center",
@@ -205,7 +206,7 @@ export default function SearchScreen() {
             data={sortedListings}
             numColumns={2}
             keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
+            {...HIDE_SCROLL_INDICATORS}
             contentContainerStyle={tabContentPadding(insets.bottom)}
             ListHeaderComponent={listHeader}
             onScroll={handleScroll}

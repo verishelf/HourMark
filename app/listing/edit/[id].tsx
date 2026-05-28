@@ -16,6 +16,7 @@ import { LuxuryButton } from "@/components/LuxuryButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { LUXURY_BRANDS, CONDITIONS } from "@/constants/brands";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
@@ -130,7 +131,7 @@ export default function EditListingScreen() {
         contentContainerStyle={{
           ...screenContentPadding(insets.bottom),
         }}
-        showsVerticalScrollIndicator={false}
+        {...HIDE_SCROLL_INDICATORS}
       >
         <ScreenHeader title="Edit Listing" subtitle="Update your listing details" padded={false} />
 
@@ -163,7 +164,7 @@ export default function EditListingScreen() {
 
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={false}
+            {...HIDE_SCROLL_INDICATORS}
             style={{ marginBottom: 12 }}
             contentContainerStyle={{ gap: 8 }}
           >
@@ -237,7 +238,7 @@ export default function EditListingScreen() {
           </Text>
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={false}
+            {...HIDE_SCROLL_INDICATORS}
             contentContainerStyle={{ gap: 8 }}
           >
             {CONDITIONS.map((c) => (

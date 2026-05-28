@@ -15,13 +15,15 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session?.user) {
-        loadProfile(data.session.user.id);
-      }
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        if (data.session?.user) {
+          loadProfile(data.session.user.id);
+        }
+      })
+      .finally(() => setLoading(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {

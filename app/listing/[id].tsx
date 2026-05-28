@@ -5,11 +5,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ListingGallery } from "@/components/ListingGallery";
+import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { SellerCard } from "@/components/SellerCard";
-import { WatchCard } from "@/components/WatchCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { CARD_GAP } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { formatPrice } from "@/lib/stripe";
@@ -53,7 +54,7 @@ export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [listing, setListing] = useState<Listing | null>(null);
   const [related, setRelated] = useState<Listing[]>([]);
   const { favorited, toggle } = useFavorite(user?.id, id ?? "");
@@ -74,10 +75,29 @@ export default function ListingDetailScreen() {
     );
   }
 
+  const handleBuyNow = () => {
+    if (authLoading) return;
+
+    const checkoutPath = `/checkout?listingId=${listing.id}`;
+
+    if (!isAuthenticated) {
+      router.push({
+        pathname: "/auth/login",
+        params: { redirect: checkoutPath },
+      });
+      return;
+    }
+
+    router.push({
+      pathname: "/checkout",
+      params: { listingId: listing.id },
+    });
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
       >
         <ListingGallery images={listing.images} />
@@ -127,11 +147,14 @@ export default function ListingDetailScreen() {
           )}
 
           {related.length > 0 && (
-            <View style={{ marginTop: 40, paddingTop: 8, gap: CARD_GAP }}>
-              <SectionHeader title="You May Also Like" />
-              {related.map((l, i) => (
-                <WatchCard key={l.id} listing={l} variant="compact" index={i} />
-              ))}
+            <View style={{ marginTop: 40, marginHorizontal: -20 }}>
+              <View style={{ paddingHorizontal: 20, marginBottom: CARD_GAP }}>
+                <SectionHeader title="You May Also Like" />
+              </View>
+              <HorizontalListingScroll
+                listings={related}
+                contentContainerStyle={{ paddingLeft: 20, paddingRight: 20 }}
+              />
             </View>
           )}
         </View>
@@ -176,15 +199,7 @@ export default function ListingDetailScreen() {
           borderTopColor: Colors.border,
         }}
       >
-        <LuxuryButton
-          label="Buy Now"
-          onPress={() =>
-            router.push({
-              pathname: "/checkout",
-              params: { listingId: listing.id },
-            })
-          }
-        />
+        <LuxuryButton label="Buy Now" size="large" onPress={handleBuyNow} />
       </View>
     </View>
   );

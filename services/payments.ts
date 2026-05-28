@@ -1,17 +1,39 @@
 import { calculateCommission, calculateSellerPayout } from "@/lib/stripe";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { Order } from "@/types";
+import type { Order, ShippingDetails } from "@/types";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "";
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+function getFunctionsBaseUrl(): string {
+  if (API_URL) return API_URL.replace(/\/$/, "");
+
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
+  if (supabaseUrl) {
+    return `${supabaseUrl.replace(/\/$/, "")}/functions/v1`;
+  }
+
+  return "";
+}
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const { data } = await supabase.auth.getSession();
-  if (data.session?.access_token) {
-    headers.Authorization = `Bearer ${data.session.access_token}`;
+
+  if (SUPABASE_ANON_KEY) {
+    headers.apikey = SUPABASE_ANON_KEY;
   }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else {
+    throw new Error("You must be signed in to continue");
+  }
+
   return headers;
 }
 
@@ -28,13 +50,17 @@ export async function createPaymentIntent(params: {
   listingId: string;
   buyerId: string;
   amountCents: number;
+  paymentMethod?: "card" | "apple_pay";
+  shipping: ShippingDetails;
 }): Promise<{
   clientSecret: string;
   orderId: string;
-  commissionFee: number;
-  sellerPayout: number;
+  commissionFee?: number;
+  sellerPayout?: number;
 }> {
-  if (!isSupabaseConfigured || !API_URL) {
+  const baseUrl = getFunctionsBaseUrl();
+
+  if (!isSupabaseConfigured || !baseUrl) {
     return {
       clientSecret: "mock_client_secret",
       orderId: `order-${Date.now()}`,
@@ -43,13 +69,15 @@ export async function createPaymentIntent(params: {
     };
   }
 
-  const response = await fetch(`${API_URL}/api/payments/create-intent`, {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${baseUrl}/create-payment-intent`, {
     method: "POST",
-    headers: await getAuthHeaders(),
+    headers,
     body: JSON.stringify({
       listingId: params.listingId,
-      buyerId: params.buyerId,
       amount: params.amountCents,
+      paymentMethod: params.paymentMethod ?? "card",
+      shipping: params.shipping,
     }),
   });
 
@@ -61,38 +89,77 @@ export async function createPaymentIntent(params: {
   return response.json();
 }
 
-export async function createConnectAccountLink(
-  userId: string,
-  returnUrl: string
-): Promise<string> {
-  if (!API_URL) {
-    return returnUrl;
+export type WireOrderResult = {
+  orderId: string;
+  wireReference: string;
+  bankName: string;
+  accountName: string;
+  routingNumber: string;
+  accountNumber: string;
+  swiftCode: string;
+  bankAddress: string;
+};
+
+export async function createWireTransferOrder(params: {
+  listingId: string;
+  amountCents: number;
+  shipping: ShippingDetails;
+}): Promise<WireOrderResult> {
+  const baseUrl = getFunctionsBaseUrl();
+
+  if (!isSupabaseConfigured || !baseUrl) {
+    return {
+      orderId: `order-${Date.now()}`,
+      wireReference: "HM-DEMO1234",
+      bankName: "Demo Bank",
+      accountName: "HourMark Inc.",
+      routingNumber: "021000021",
+      accountNumber: "Demo mode — configure wire details",
+      swiftCode: "CHASUS33",
+      bankAddress: "New York, NY",
+    };
   }
 
-  const response = await fetch(`${API_URL}/api/connect/onboard`, {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${baseUrl}/create-wire-order`, {
     method: "POST",
-    headers: await getAuthHeaders(),
-    body: JSON.stringify({ userId, returnUrl }),
+    headers,
+    body: JSON.stringify({
+      listingId: params.listingId,
+      amount: params.amountCents,
+      shipping: params.shipping,
+    }),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.message ?? "Failed to create Connect onboarding link");
+    throw new Error(err.message ?? "Failed to create wire transfer order");
   }
 
-  const { url } = await response.json();
-  return url;
+  return response.json();
+}
+
+/** @deprecated Use startSellerVerification from services/verification instead */
+export async function createConnectAccountLink(
+  _userId: string,
+  returnUrl: string
+): Promise<string> {
+  const { startSellerVerification } = await import("@/services/verification");
+  const returnPath = returnUrl.includes("sell") ? "sell" : "profile";
+  return startSellerVerification(returnPath);
 }
 
 export async function getConnectStatus(): Promise<ConnectStatus | null> {
-  if (!API_URL) return null;
+  const { getSellerVerificationStatus } = await import("@/services/verification");
+  const status = await getSellerVerificationStatus();
 
-  const response = await fetch(`${API_URL}/api/stripe/connect/status`, {
-    headers: await getAuthHeaders(),
-  });
-
-  if (!response.ok) return null;
-  return response.json();
+  return {
+    hasAccount: status.status !== "not_started",
+    onboardingComplete: status.status === "verified",
+    chargesEnabled: status.chargesEnabled,
+    payoutsEnabled: status.payoutsEnabled,
+    detailsSubmitted: status.status === "verified" || status.status === "pending",
+  };
 }
 
 export async function getOrders(userId: string): Promise<Order[]> {
@@ -146,7 +213,6 @@ export async function completeOrder(orderId: string): Promise<void> {
       amount: order.amount,
       commission_fee: order.commission_fee,
       seller_payout: sellerPayout,
-      status: "completed",
     });
   }
 
@@ -157,3 +223,5 @@ export async function completeOrder(orderId: string): Promise<void> {
     .update({ status: "sold" })
     .eq("id", order.listing_id);
 }
+
+export { calculateCommission };

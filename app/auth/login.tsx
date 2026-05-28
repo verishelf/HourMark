@@ -9,17 +9,19 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { Href, useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { signInWithEmail, signInWithApple } from "@/services/auth";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,17 +36,25 @@ export default function LoginScreen() {
     marginBottom: 20,
   };
 
+  const afterSignIn = () => {
+    if (typeof redirect === "string" && redirect.startsWith("/")) {
+      router.replace(redirect as Href);
+      return;
+    }
+    router.replace("/(tabs)");
+  };
+
   const handleLogin = async () => {
     setLoading(true);
     try {
       await signInWithEmail(email, password);
-      router.replace("/(tabs)");
+      afterSignIn();
     } catch (e) {
       Alert.alert(
         "Sign In",
         e instanceof Error ? e.message : "Check your credentials or use demo mode without Supabase."
       );
-      router.replace("/(tabs)");
+      afterSignIn();
     } finally {
       setLoading(false);
     }
@@ -68,7 +78,7 @@ export default function LoginScreen() {
 
       if (credential.identityToken) {
         await signInWithApple(credential.identityToken, nonce);
-        router.replace("/(tabs)");
+        afterSignIn();
       }
     } catch (e) {
       if ((e as { code?: string }).code !== "ERR_REQUEST_CANCELED") {
@@ -83,6 +93,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           flexGrow: 1,
           paddingTop: insets.top + 40,

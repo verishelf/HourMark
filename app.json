@@ -46,7 +46,8 @@
           "enableGooglePay": true
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

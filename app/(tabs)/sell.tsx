@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
   Dimensions,
@@ -13,13 +13,15 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { EmptyState } from "@/components/EmptyState";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { LUXURY_BRANDS, CONDITIONS } from "@/constants/brands";
 import { Colors } from "@/constants/colors";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,7 +31,7 @@ import { dollarsToCents } from "@/lib/stripe";
 const STEPS = ["Photos", "Details", "Review"] as const;
 type Step = (typeof STEPS)[number];
 
-const FOOTER_HEIGHT = 88;
+const FOOTER_HEIGHT = 104;
 const PHOTO_GAP = 10;
 
 function StepProgress({ current }: { current: Step }) {
@@ -71,7 +73,7 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
 export default function SellScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated, refreshProfile } = useAuth();
   const [images, setImages] = useState<string[]>([]);
   const [brand, setBrand] = useState("");
   const [model, setModel] = useState("");
@@ -83,6 +85,16 @@ export default function SellScreen() {
   const [serialNumber, setSerialNumber] = useState("");
   const [step, setStep] = useState<Step>("Photos");
   const [loading, setLoading] = useState(false);
+
+  const handleStartVerification = () => {
+    router.push("/verify?returnPath=sell");
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+    }, [refreshProfile])
+  );
 
   const photoSize = useMemo(() => {
     const screenWidth = Dimensions.get("window").width;
@@ -138,6 +150,13 @@ export default function SellScreen() {
       router.push("/auth/login");
       return;
     }
+    if (!profile?.verified) {
+      Alert.alert(
+        "Verification required",
+        "Complete seller verification before publishing a listing."
+      );
+      return;
+    }
     if (!images.length || !brand || !model || !price) {
       Alert.alert("Missing fields", "Please add photos, brand, model, and price.");
       return;
@@ -191,18 +210,35 @@ export default function SellScreen() {
     );
   }
 
+  if (!profile?.verified) {
+    return (
+      <View style={styles.screen}>
+        <ScreenHeader title="Sell on HourMark" />
+        <View style={styles.loggedOutBody}>
+          <EmptyState
+            icon="shield-checkmark-outline"
+            title="Complete seller verification"
+            body="Verify your identity with name, address, and SSN, and connect payouts before listing watches."
+            actionLabel="Start Verification"
+            onAction={handleStartVerification}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           paddingHorizontal: SPACING.screen,
           paddingTop: insets.top + 16,
           paddingBottom: footerBottom + FOOTER_HEIGHT + 24,
         }}
-        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.pageTitle}>List a Watch</Text>
@@ -259,7 +295,7 @@ export default function SellScreen() {
               <Text style={styles.fieldLabel}>Brand</Text>
               <ScrollView
                 horizontal
-                showsHorizontalScrollIndicator={false}
+                {...HIDE_SCROLL_INDICATORS}
                 style={styles.chipScroll}
                 contentContainerStyle={styles.chipRow}
               >
@@ -309,7 +345,7 @@ export default function SellScreen() {
             <FormSection title="Condition">
               <ScrollView
                 horizontal
-                showsHorizontalScrollIndicator={false}
+                {...HIDE_SCROLL_INDICATORS}
                 contentContainerStyle={styles.chipRow}
               >
                 {CONDITIONS.map((c) => (
@@ -377,25 +413,25 @@ export default function SellScreen() {
         )}
       </ScrollView>
 
-      <View style={[styles.footer, { bottom: footerBottom, paddingBottom: 12 }]}>
+      <View style={[styles.footer, { bottom: footerBottom, paddingBottom: 16 }]}>
         {step === "Photos" && (
-          <LuxuryButton label="Next" onPress={goNext} variant="primary" />
+          <LuxuryButton label="Next" onPress={goNext} variant="primary" size="large" />
         )}
         {step === "Details" && (
           <View style={styles.footerRow}>
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Back" onPress={goBack} variant="outline" />
+              <LuxuryButton label="Back" onPress={goBack} variant="outline" size="large" />
             </View>
             <View style={styles.footerSpacer} />
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Next" onPress={goNext} variant="primary" />
+              <LuxuryButton label="Next" onPress={goNext} variant="primary" size="large" />
             </View>
           </View>
         )}
         {step === "Review" && (
           <View style={styles.footerRow}>
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Back" onPress={goBack} variant="outline" />
+              <LuxuryButton label="Back" onPress={goBack} variant="outline" size="large" />
             </View>
             <View style={styles.footerSpacer} />
             <View style={styles.footerBtn}>
@@ -404,6 +440,7 @@ export default function SellScreen() {
                 onPress={handlePublish}
                 loading={loading}
                 variant="primary"
+                size="large"
               />
             </View>
           </View>
@@ -613,7 +650,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: SPACING.screen,
-    paddingTop: 12,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.background,

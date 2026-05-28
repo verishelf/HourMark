@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { signUpWithEmail } from "@/services/auth";
 
 export default function SignupScreen() {
@@ -56,6 +57,7 @@ export default function SignupScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           flexGrow: 1,
           paddingTop: insets.top + 40,

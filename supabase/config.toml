@@ -1,0 +1,17 @@
+[functions.create-wire-order]
+verify_jwt = true
+
+[functions.connect-return]
+verify_jwt = false
+
+[functions.connect-onboard]
+verify_jwt = true
+
+[functions.connect-status]
+verify_jwt = true
+
+[functions.create-payment-intent]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false

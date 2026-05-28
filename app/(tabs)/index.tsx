@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
@@ -25,23 +26,33 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setLoading(true);
-      const [feat, all] = await Promise.all([
-        getFeaturedListings(),
-        getListings(),
-      ]);
-      setFeatured(feat);
-      setNewArrivals(all.slice(0, 6));
-      setVerified(all.filter((l) => l.seller?.verified).slice(0, 6));
-      setRareCollections(
-        all
-          .filter((l) => l.authenticated || (l.price ?? 0) > 5000000)
-          .slice(0, 6)
-      );
-      setLoading(false);
+      try {
+        const [feat, all] = await Promise.all([
+          getFeaturedListings(),
+          getListings(),
+        ]);
+        if (cancelled) return;
+        setFeatured(feat);
+        setNewArrivals(all.slice(0, 6));
+        setVerified(all.filter((l) => l.seller?.verified).slice(0, 6));
+        setRareCollections(
+          all
+            .filter((l) => l.authenticated || (l.price ?? 0) > 5000000)
+            .slice(0, 6)
+        );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
+
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const goToSearchWithBrand = (brand: string) => {
@@ -51,7 +62,7 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={tabContentPadding(insets.bottom)}
       >
         <ScreenHeader
@@ -72,7 +83,7 @@ export default function HomeScreen() {
           <SectionHeader title="Shop by Brand" subtitle="Explore top maisons" />
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={false}
+            {...HIDE_SCROLL_INDICATORS}
             contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
             style={{ marginBottom: 24 }}
           >

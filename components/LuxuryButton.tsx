@@ -1,14 +1,23 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
 
 type Variant = "primary" | "secondary" | "ghost" | "outline";
+type Size = "default" | "large";
 
 type Props = {
   label: string;
   onPress: () => void;
   variant?: Variant;
+  size?: Size;
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
@@ -45,16 +54,47 @@ const VARIANT_STYLES: Record<
   },
 };
 
+const SIZE_STYLES: Record<Size, { button: ViewStyle; label: TextStyle }> = {
+  default: {
+    button: {
+      paddingVertical: 14,
+      paddingHorizontal: 28,
+      minHeight: 50,
+      minWidth: 120,
+    },
+    label: {
+      fontSize: 15,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+  },
+  large: {
+    button: {
+      paddingVertical: 18,
+      paddingHorizontal: 32,
+      minHeight: 58,
+      minWidth: 140,
+    },
+    label: {
+      fontSize: 17,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+  },
+};
+
 export function LuxuryButton({
   label,
   onPress,
   variant = "outline",
+  size = "default",
   loading = false,
   disabled = false,
   fullWidth = true,
   style,
 }: Props) {
   const v = VARIANT_STYLES[variant];
+  const sizing = SIZE_STYLES[size];
 
   const handlePress = () => {
     if (disabled || loading) return;
@@ -68,6 +108,7 @@ export function LuxuryButton({
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.base,
+        sizing.button,
         {
           width: fullWidth ? "100%" : "auto",
           backgroundColor: v.backgroundColor,
@@ -81,7 +122,7 @@ export function LuxuryButton({
       {loading ? (
         <ActivityIndicator color={v.textColor} />
       ) : (
-        <Text style={[styles.label, { color: v.textColor }]}>{label}</Text>
+        <Text style={[sizing.label, { color: v.textColor }]}>{label}</Text>
       )}
     </Pressable>
   );
@@ -89,17 +130,8 @@ export function LuxuryButton({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: RADIUS.pill,
-    minHeight: 50,
-    minWidth: 120,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    textAlign: "center",
   },
 });

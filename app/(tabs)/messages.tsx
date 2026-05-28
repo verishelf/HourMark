@@ -10,6 +10,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useAuth } from "@/hooks/useAuth";
 import { getConversations } from "@/services/messaging";
 import { tabContentPadding } from "@/styles/layout";
@@ -55,6 +56,7 @@ export default function MessagesScreen() {
       <FlashList
         data={conversations}
         keyExtractor={(item) => item.id}
+        {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           ...tabContentPadding(insets.bottom),
           paddingHorizontal: SPACING.screen,
