@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { MOCK_LISTINGS } from "@/data/mockListings";
+import { getProfile } from "@/services/auth";
 import type { Conversation, Message } from "@/types";
 
 const mockListing = MOCK_LISTINGS[0];
@@ -63,7 +64,32 @@ export async function getConversations(userId: string): Promise<Conversation[]> 
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Conversation[];
+
+  const conversations = (data ?? []) as Conversation[];
+  const otherUserIds = Array.from(
+    new Set(
+      conversations
+        .map((conv) => (conv.buyer_id === userId ? conv.seller_id : conv.buyer_id))
+        .filter(Boolean)
+    )
+  );
+
+  if (!otherUserIds.length) return conversations;
+
+  const { data: users, error: usersError } = await supabase
+    .from("users")
+    .select("*")
+    .in("id", otherUserIds);
+  if (usersError) throw usersError;
+
+  const userMap = new Map((users ?? []).map((u) => [u.id as string, u]));
+  return conversations.map((conv) => {
+    const otherUserId = conv.buyer_id === userId ? conv.seller_id : conv.buyer_id;
+    return {
+      ...conv,
+      other_user: (userMap.get(otherUserId) as Conversation["other_user"]) ?? conv.other_user,
+    };
+  });
 }
 
 export async function getOrCreateConversation(params: {
@@ -118,6 +144,49 @@ export async function getOrCreateConversation(params: {
   return created as Conversation;
 }
 
+export async function getConversationById(
+  conversationId: string,
+  currentUserId: string
+): Promise<Conversation | null> {
+  if (!isSupabaseConfigured) {
+    const conv = MOCK_CONVERSATIONS.find((c) => c.id === conversationId) ?? null;
+    if (!conv) return null;
+    const otherId = conv.buyer_id === currentUserId ? conv.seller_id : conv.buyer_id;
+    return {
+      ...conv,
+      other_user:
+        conv.other_user ??
+        ({
+          id: otherId,
+          username: otherId === "seller-1" ? "seller" : "buyer",
+          avatar_url: mockListing.seller.avatar_url ?? null,
+          bio: null,
+          verified: false,
+          stripe_account_id: null,
+          stripe_onboarding_status: "not_started",
+          seller_rating: null,
+          created_at: new Date().toISOString(),
+        } as Conversation["other_user"]),
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const conv = data as Conversation;
+  const otherUserId = conv.buyer_id === currentUserId ? conv.seller_id : conv.buyer_id;
+  const otherUser = await getProfile(otherUserId);
+  return {
+    ...conv,
+    other_user: otherUser ?? undefined,
+  };
+}
+
 export async function getMessages(conversationId: string): Promise<Message[]> {
   if (!isSupabaseConfigured) {
     return MOCK_MESSAGES[conversationId] ?? [];
@@ -170,8 +239,9 @@ export function subscribeToMessages(
 ) {
   if (!isSupabaseConfigured) return () => {};
 
+  const channelName = `messages:${conversationId}:${Date.now()}`;
   const channel = supabase
-    .channel(`messages:${conversationId}`)
+    .channel(channelName)
     .on(
       "postgres_changes",
       {

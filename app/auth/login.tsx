@@ -93,7 +93,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <Image
-        source={{ uri: LOGGED_OUT_GATE_IMAGES.login }}
+        source={{ uri: LOGGED_OUT_GATE_IMAGES.signup }}
         style={styles.background}
         contentFit="cover"
       />
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 16,
-    backgroundColor: Colors.card,
+    backgroundColor: "rgba(10, 10, 10, 0.78)",
     padding: 20,
   },
 });

@@ -5,14 +5,17 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
+import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { Typography } from "@/constants/typography";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { signUpWithEmail } from "@/services/auth";
@@ -53,64 +56,119 @@ export default function SignupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: Colors.background }}
+      style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <Image
+        source={{ uri: LOGGED_OUT_GATE_IMAGES.signup }}
+        style={styles.background}
+        contentFit="cover"
+      />
+      <View style={styles.overlay} />
       <ScrollView
         {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingTop: insets.top + 40,
+          paddingTop: insets.top + 24,
           paddingHorizontal: 20,
-          paddingBottom: insets.bottom + 40,
+          paddingBottom: insets.bottom + 24,
           justifyContent: "center",
         }}
       >
-        <Pressable onPress={() => router.back()} style={{ marginBottom: 32 }}>
-          <Text style={{ color: Colors.textSecondary, fontSize: 24 }}>←</Text>
-        </Pressable>
-
-        <Text style={{ ...Typography.hero, color: Colors.textPrimary, fontSize: 36, marginBottom: 8 }}>
-          Join HourMark
-        </Text>
-        <Text style={{ ...Typography.body, color: Colors.textSecondary, marginBottom: 40 }}>
-          Create your collector account
-        </Text>
-
-        <TextInput
-          placeholder="Username"
-          placeholderTextColor={Colors.textMuted}
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          style={inputStyle}
-        />
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor={Colors.textMuted}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={inputStyle}
-        />
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor={Colors.textMuted}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={inputStyle}
-        />
-
-        <LuxuryButton label="Create Account" onPress={handleSignup} loading={loading} />
-
-        <Pressable onPress={() => router.push("/auth/login")} style={{ marginTop: 32, alignItems: "center" }}>
-          <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
-            Already have an account? Sign in
+        <View style={styles.card}>
+          <Text
+            style={{
+              ...Typography.hero,
+              color: Colors.textPrimary,
+              fontSize: 36,
+              marginBottom: 8,
+              textAlign: "center",
+            }}
+          >
+            Join HourMark
           </Text>
-        </Pressable>
+          <Text
+            style={{
+              ...Typography.body,
+              color: Colors.textSecondary,
+              marginBottom: 28,
+              textAlign: "center",
+            }}
+          >
+            Create your collector account
+          </Text>
+
+          <TextInput
+            placeholder="Username"
+            placeholderTextColor={Colors.textMuted}
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+            style={inputStyle}
+          />
+          <TextInput
+            placeholder="Email"
+            placeholderTextColor={Colors.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={inputStyle}
+          />
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor={Colors.textMuted}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={inputStyle}
+          />
+
+          <LuxuryButton label="Create Account" onPress={handleSignup} loading={loading} size="large" />
+
+          <Pressable
+            onPress={() => router.push("/auth/login")}
+            style={{ marginTop: 20, alignItems: "center" }}
+          >
+            <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
+              Already have an account? Sign in
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.replace("/(tabs)")}
+            style={{ marginTop: 12, alignItems: "center" }}
+          >
+            <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
+              Browse as guest
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.62)",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 16,
+    backgroundColor: "rgba(10, 10, 10, 0.78)",
+    padding: 20,
+  },
+});
