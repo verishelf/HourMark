@@ -21,7 +21,7 @@ export function PartnerMarquee() {
         direction="right"
         durationSeconds={55}
         className="border-t-0"
-        logoHeightClass="h-6 md:h-7"
+        slotClassName="h-6 w-20 md:h-7 md:w-24"
       />
     </section>
   );

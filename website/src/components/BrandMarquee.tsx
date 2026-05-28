@@ -8,7 +8,7 @@ export function BrandMarquee() {
         items={brandLogos}
         direction="left"
         durationSeconds={50}
-        logoHeightClass="h-7 md:h-9"
+        slotClassName="h-6 w-[5.5rem] sm:h-7 sm:w-24 md:h-8 md:w-28"
       />
     </section>
   );
