@@ -236,7 +236,7 @@ export default function CheckoutScreen() {
       }
 
       await completeOrder(orderId);
-      router.replace({ pathname: "/checkout/success", params: { orderId } });
+      router.replace(`/checkout/success?orderId=${orderId}` as const);
     } catch (e) {
       Alert.alert("Payment Failed", e instanceof Error ? e.message : "Try again");
     } finally {
@@ -284,7 +284,7 @@ export default function CheckoutScreen() {
       }
 
       await completeOrder(orderId);
-      router.replace({ pathname: "/checkout/success", params: { orderId } });
+      router.replace(`/checkout/success?orderId=${orderId}` as const);
     } catch (e) {
       Alert.alert("Apple Pay Failed", e instanceof Error ? e.message : "Try again");
     } finally {

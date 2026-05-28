@@ -182,7 +182,6 @@ export default function ProfileScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
   const [tab, setTab] = useState<TabKey>("listings");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
     status: "not_started",
