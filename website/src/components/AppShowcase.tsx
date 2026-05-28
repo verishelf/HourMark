@@ -85,23 +85,6 @@ export function AppShowcase() {
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-24 flex flex-wrap items-center justify-center gap-12 border border-[#1a1a1a] bg-[#0a0a0a] px-8 py-10"
-        >
-          {["Rolex", "Audemars Piguet", "Patek Philippe", "Cartier", "Omega", "Richard Mille"].map(
-            (brand) => (
-              <span
-                key={brand}
-                className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#71717a]"
-              >
-                {brand}
-              </span>
-            )
-          )}
-        </motion.div>
       </div>
     </section>
   );
