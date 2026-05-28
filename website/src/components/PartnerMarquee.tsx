@@ -1,16 +1,10 @@
 import { LogoMarquee, type LogoMarqueeItem } from "@/components/LogoMarquee";
 
 const PARTNER_LOGOS: LogoMarqueeItem[] = [
-  { name: "Stripe", src: "/logos/partners/stripe.svg", width: 80, height: 28 },
-  {
-    name: "Stripe Connect",
-    src: "/logos/partners/stripe-connect.svg",
-    width: 148,
-    height: 28,
-  },
-  { name: "Apple Pay", src: "/logos/partners/apple-pay.svg", width: 120, height: 28 },
-  { name: "Supabase", src: "/logos/partners/supabase.svg", width: 80, height: 28 },
-  { name: "Expo", src: "/logos/partners/expo.svg", width: 80, height: 28 },
+  { name: "Stripe", src: "/logos/partners/stripe-wordmark.svg", width: 132, height: 32 },
+  { name: "Apple", src: "/logos/partners/apple-wordmark.svg", width: 132, height: 32 },
+  { name: "Supabase", src: "/logos/partners/supabase-wordmark.svg", width: 152, height: 32 },
+  { name: "Expo", src: "/logos/partners/expo-wordmark.svg", width: 132, height: 32 },
 ];
 
 export function PartnerMarquee() {
@@ -24,7 +18,7 @@ export function PartnerMarquee() {
         direction="right"
         durationSeconds={55}
         className="border-t-0"
-        slotClassName="h-6 w-20 md:h-7 md:w-24"
+        slotClassName="h-7 w-32 md:h-8 md:w-36"
       />
     </section>
   );
