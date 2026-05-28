@@ -1,5 +1,8 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
+import { BrandMarquee } from "@/components/BrandMarquee";
+import { PartnerMarquee } from "@/components/PartnerMarquee";
+import { RichardMilleSlider } from "@/components/RichardMilleSlider";
 import { Features } from "@/components/Features";
 import { AppShowcase } from "@/components/AppShowcase";
 import { HowItWorks } from "@/components/HowItWorks";
@@ -12,6 +15,9 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <BrandMarquee />
+        <PartnerMarquee />
+        <RichardMilleSlider />
         <Features />
         <AppShowcase />
         <HowItWorks />
