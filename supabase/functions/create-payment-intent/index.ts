@@ -81,7 +81,9 @@ Deno.serve(async (req) => {
 
     const { data: listing, error: listingError } = await supabase
       .from("listings")
-      .select("id, seller_id, status, seller:users(stripe_account_id, verified)")
+      .select(
+        "id, seller_id, status, authentication_status, seller:users(stripe_account_id, verified, is_verified_seller, kyc_status)"
+      )
       .eq("id", listingId)
       .single();
 
@@ -93,6 +95,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "Listing is not available" }, 400);
     }
 
+    if (listing.authentication_status !== "auto_verified") {
+      return jsonResponse({ message: "Listing has not passed authentication" }, 400);
+    }
+
     if (listing.seller_id === user.id) {
       return jsonResponse({ message: "You cannot buy your own listing" }, 400);
     }
@@ -100,9 +106,16 @@ Deno.serve(async (req) => {
     const seller = listing.seller as {
       stripe_account_id: string | null;
       verified: boolean;
+      is_verified_seller?: boolean;
+      kyc_status?: string;
     } | null;
 
-    if (!seller?.verified || !seller?.stripe_account_id) {
+    const sellerOk =
+      Boolean(seller?.stripe_account_id) &&
+      Boolean(seller?.is_verified_seller ?? seller?.verified) &&
+      (seller?.kyc_status === "approved" || seller?.verified);
+
+    if (!sellerOk) {
       return jsonResponse({ message: "Seller is not verified for payouts" }, 400);
     }
 
@@ -118,7 +131,8 @@ Deno.serve(async (req) => {
         listing_id: listingId,
         amount,
         commission_fee: commissionFee,
-        status: "pending",
+        status: "awaiting_payment",
+        escrow_status: "none",
         payment_method: resolvedPaymentMethod,
         ...mapShippingColumns(shipping),
       })
@@ -132,10 +146,7 @@ Deno.serve(async (req) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
-      application_fee_amount: commissionFee,
-      transfer_data: {
-        destination: seller.stripe_account_id,
-      },
+      capture_method: "manual",
       automatic_payment_methods: {
         enabled: true,
       },
@@ -143,8 +154,10 @@ Deno.serve(async (req) => {
         listing_id: listingId,
         buyer_id: user.id,
         seller_id: listing.seller_id,
+        seller_stripe_account_id: seller!.stripe_account_id!,
         order_id: order.id,
         payment_method: resolvedPaymentMethod,
+        commission_fee: String(commissionFee),
       },
     });
 

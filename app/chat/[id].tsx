@@ -1,18 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  FlatList,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { AnimatePresence, MotiView } from "moti";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MessageBubble } from "@/components/MessageBubble";
+import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
@@ -22,15 +25,28 @@ import {
   sendMessage,
   subscribeToMessages,
   markMessagesAsRead,
+  deleteMessage,
   getConversationById,
 } from "@/services/messaging";
-import type { Message, UserProfile } from "@/types";
+import {
+  CONVERSATION_DEFAULT_AVATAR,
+  getConversationAvatarUri,
+  getConversationPrimaryTitle,
+  getConversationSubtitle,
+  isWatchConversation,
+} from "@/lib/conversationDisplay";
+import type { Conversation, Message } from "@/types";
 
-const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200";
+const MESSAGE_ENTER_TRANSITION = { type: "timing" as const, duration: 220 };
+const MESSAGE_EXIT_TRANSITION = { type: "timing" as const, duration: 280 };
 
 function upsertMessageById(list: Message[], incoming: Message): Message[] {
   if (list.some((item) => item.id === incoming.id)) return list;
   return [...list, incoming];
+}
+
+function removeMessageById(list: Message[], messageId: string): Message[] {
+  return list.filter((m) => m.id !== messageId);
 }
 
 export default function ChatScreen() {
@@ -39,17 +55,17 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [text, setText] = useState("");
-  const listRef = useRef<FlatList>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (!id || !user) return;
     getMessages(id).then(setMessages);
     markMessagesAsRead(id, user.id);
     getConversationById(id, user.id)
-      .then((conversation) => setOtherUser(conversation?.other_user ?? null))
-      .catch(() => setOtherUser(null));
+      .then((conv) => setConversation(conv))
+      .catch(() => setConversation(null));
 
     const unsubscribe = subscribeToMessages(id, (msg) => {
       setMessages((prev) => upsertMessageById(prev, msg));
@@ -63,8 +79,39 @@ export default function ChatScreen() {
     const msg = await sendMessage(id, user.id, text.trim());
     setMessages((prev) => upsertMessageById(prev, msg));
     setText("");
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   };
+
+  const handleDeleteMessage = (message: Message) => {
+    if (!user) return;
+    Alert.alert("Delete message", "Remove this message from the conversation?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const previous = messages;
+          setMessages((prev) => removeMessageById(prev, message.id));
+          try {
+            await deleteMessage(message.id, user.id);
+          } catch (e) {
+            setMessages(previous);
+            Alert.alert("Error", e instanceof Error ? e.message : "Could not delete message");
+          }
+        },
+      },
+    ]);
+  };
+
+  const otherUser = conversation?.other_user ?? null;
+  const aboutWatch = conversation ? isWatchConversation(conversation) : false;
+  const headerImageUri = conversation
+    ? getConversationAvatarUri(conversation)
+    : CONVERSATION_DEFAULT_AVATAR;
+  const headerTitle = conversation
+    ? getConversationPrimaryTitle(conversation)
+    : "Conversation";
+  const headerSubtitle = conversation ? getConversationSubtitle(conversation) : null;
 
   return (
     <KeyboardAvoidingView
@@ -76,51 +123,89 @@ export default function ChatScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
           <Text style={{ color: Colors.textPrimary, fontSize: 24 }}>←</Text>
         </Pressable>
-        <Image
-          source={{ uri: otherUser?.avatar_url ?? DEFAULT_AVATAR }}
-          style={styles.headerAvatar}
-          contentFit="cover"
-        />
-        <View>
-          <Text style={{ ...Typography.h3, color: Colors.textPrimary }}>
-            {otherUser?.username ? `@${otherUser.username}` : "Conversation"}
+        <Pressable
+          onPress={() => {
+            if (!otherUser) return;
+            if (otherUser.id === user?.id) {
+              router.push("/(tabs)/profile");
+              return;
+            }
+            router.push(`/seller/${otherUser.id}`);
+          }}
+          style={styles.headerThumbPress}
+        >
+          <Image
+            source={{ uri: headerImageUri }}
+            style={aboutWatch ? styles.headerListingThumb : styles.headerAvatar}
+            contentFit="cover"
+          />
+        </Pressable>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ ...Typography.h3, color: Colors.textPrimary }} numberOfLines={1}>
+            {headerTitle}
           </Text>
-          <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
-            Chat
+          <Text style={{ ...Typography.caption, color: Colors.textMuted }} numberOfLines={1}>
+            {headerSubtitle ?? (otherUser?.username ? `@${otherUser.username}` : "Chat")}
           </Text>
         </View>
       </View>
 
-      <FlatList
-        ref={listRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
+      <ScrollView
+        ref={scrollRef}
         {...HIDE_SCROLL_INDICATORS}
-        contentContainerStyle={{
-          padding: 20,
-          paddingBottom: 16,
-          flexGrow: 1,
-        }}
-        renderItem={({ item }) => (
-          <MessageBubble
-            message={item}
-            isOwn={item.sender_id === (user?.id ?? "buyer-1")}
-            avatarUri={
-              item.sender_id === (user?.id ?? "buyer-1")
-                ? (profile?.avatar_url ?? undefined)
-                : (otherUser?.avatar_url ?? undefined)
-            }
-            onAvatarPress={() => {
-              if (item.sender_id === user?.id) {
-                router.push("/(tabs)/profile");
-                return;
-              }
-              router.push(`/seller/${item.sender_id}`);
-            }}
-          />
-        )}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-      />
+        contentContainerStyle={[
+          styles.listContent,
+          messages.length === 0 && styles.listContentEmpty,
+        ]}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AnimatePresence initial={false}>
+          {messages.map((item) => {
+            const isOwn = item.sender_id === user?.id;
+            const bubble = (
+              <MessageBubble
+                message={item}
+                isOwn={isOwn}
+                avatarUri={
+                  isOwn
+                    ? (profile?.avatar_url ?? undefined)
+                    : (otherUser?.avatar_url ?? undefined)
+                }
+                onAvatarPress={() => {
+                  if (isOwn) {
+                    router.push("/(tabs)/profile");
+                    return;
+                  }
+                  router.push(`/seller/${item.sender_id}`);
+                }}
+              />
+            );
+
+            return (
+              <MotiView
+                key={item.id}
+                from={{ opacity: 0, translateY: 12 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                exit={{ opacity: 0, translateY: -8, height: 0, marginBottom: 0 }}
+                transition={{
+                  enter: MESSAGE_ENTER_TRANSITION,
+                  exit: MESSAGE_EXIT_TRANSITION,
+                }}
+                style={styles.messageRow}
+              >
+                {isOwn ? (
+                  <SwipeToDeleteRow onDelete={() => handleDeleteMessage(item)}>
+                    {bubble}
+                  </SwipeToDeleteRow>
+                ) : (
+                  bubble
+                )}
+              </MotiView>
+            );
+          })}
+        </AnimatePresence>
+      </ScrollView>
 
       <View
         style={{
@@ -180,12 +265,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  headerAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  headerThumbPress: {
     marginRight: 10,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  headerListingThumb: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: Colors.cardElevated,
+  },
+  listContent: {
+    padding: 20,
+    paddingBottom: 16,
+  },
+  listContentEmpty: {
+    flexGrow: 1,
+  },
+  messageRow: {
+    width: "100%",
+    marginBottom: 12,
+    overflow: "hidden",
   },
 });

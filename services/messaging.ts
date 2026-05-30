@@ -1,3 +1,4 @@
+import { toUserFacingError } from "@/lib/supabaseErrors";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { MOCK_LISTINGS } from "@/data/mockListings";
 import { getProfile } from "@/services/auth";
@@ -144,6 +145,54 @@ export async function getOrCreateConversation(params: {
   return created as Conversation;
 }
 
+export async function getOrCreateConversationWithSeller(params: {
+  buyerId: string;
+  sellerId: string;
+  listingId?: string | null;
+}): Promise<Conversation> {
+  if (!isSupabaseConfigured) {
+    const existing = MOCK_CONVERSATIONS.find(
+      (c) => c.buyer_id === params.buyerId && c.seller_id === params.sellerId
+    );
+    if (existing) return existing;
+
+    const created: Conversation = {
+      id: `conv-${Date.now()}`,
+      listing_id: params.listingId ?? MOCK_CONVERSATIONS[0]?.listing_id ?? null,
+      buyer_id: params.buyerId,
+      seller_id: params.sellerId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    return created;
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("buyer_id", params.buyerId)
+    .eq("seller_id", params.sellerId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existing) return existing as Conversation;
+
+  const { data: created, error: createError } = await supabase
+    .from("conversations")
+    .insert({
+      listing_id: params.listingId ?? null,
+      buyer_id: params.buyerId,
+      seller_id: params.sellerId,
+    })
+    .select("*")
+    .single();
+
+  if (createError) throw createError;
+  return created as Conversation;
+}
+
 export async function getConversationById(
   conversationId: string,
   currentUserId: string
@@ -271,4 +320,80 @@ export async function markMessagesAsRead(
     .eq("conversation_id", conversationId)
     .neq("sender_id", userId)
     .is("read_at", null);
+}
+
+async function touchConversationUpdatedAt(conversationId: string) {
+  await supabase
+    .from("conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", conversationId);
+}
+
+export async function deleteMessage(
+  messageId: string,
+  senderId: string
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    for (const convId of Object.keys(MOCK_MESSAGES)) {
+      const list = MOCK_MESSAGES[convId];
+      const index = list.findIndex((m) => m.id === messageId && m.sender_id === senderId);
+      if (index >= 0) {
+        list.splice(index, 1);
+        const conv = MOCK_CONVERSATIONS.find((c) => c.id === convId);
+        if (conv) {
+          conv.last_message = list[list.length - 1] ?? undefined;
+          conv.updated_at = new Date().toISOString();
+        }
+        return;
+      }
+    }
+    throw new Error("Message not found");
+  }
+
+  const { data, error } = await supabase
+    .from("messages")
+    .delete()
+    .eq("id", messageId)
+    .eq("sender_id", senderId)
+    .select("id, conversation_id");
+
+  if (error) {
+    throw new Error(toUserFacingError(error, "Could not delete message"));
+  }
+
+  const deleted = data ?? [];
+  if (deleted.length === 0) {
+    throw new Error(
+      "Message could not be deleted. Apply the message delete migration in Supabase, or sign in again."
+    );
+  }
+
+  const conversationId = deleted[0].conversation_id as string;
+  if (conversationId) {
+    await touchConversationUpdatedAt(conversationId);
+  }
+}
+
+export async function deleteConversation(
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const index = MOCK_CONVERSATIONS.findIndex((c) => c.id === conversationId);
+    if (index >= 0) {
+      const conv = MOCK_CONVERSATIONS[index];
+      if (conv.buyer_id === userId || conv.seller_id === userId) {
+        MOCK_CONVERSATIONS.splice(index, 1);
+        delete MOCK_MESSAGES[conversationId];
+      }
+    }
+    return;
+  }
+
+  const { error } = await supabase
+    .from("conversations")
+    .delete()
+    .eq("id", conversationId)
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
+  if (error) throw error;
 }

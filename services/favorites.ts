@@ -1,3 +1,4 @@
+import { shouldFallbackToMock } from "@/lib/supabaseErrors";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Listing } from "@/types";
 import { MOCK_LISTINGS } from "@/data/mockListings";
@@ -5,17 +6,27 @@ import { MOCK_LISTINGS } from "@/data/mockListings";
 const mockFavorites = new Set<string>(["1", "3"]);
 
 export async function getFavorites(userId: string): Promise<Listing[]> {
+  const mockResult = () => MOCK_LISTINGS.filter((l) => mockFavorites.has(l.id));
+
   if (!isSupabaseConfigured) {
-    return MOCK_LISTINGS.filter((l) => mockFavorites.has(l.id));
+    return mockResult();
   }
 
-  const { data, error } = await supabase
-    .from("favorites")
-    .select("listing:listings(*, seller:users(*))")
-    .eq("user_id", userId);
-  if (error) throw error;
-  const rows = (data ?? []) as unknown as { listing: Listing }[];
-  return rows.map((f) => f.listing).filter(Boolean);
+  try {
+    const { data, error } = await supabase
+      .from("favorites")
+      .select("listing:listings(*, seller:users(*))")
+      .eq("user_id", userId);
+    if (error) {
+      if (shouldFallbackToMock(error)) return mockResult();
+      throw error;
+    }
+    const rows = (data ?? []) as unknown as { listing: Listing }[];
+    return rows.map((f) => f.listing).filter(Boolean);
+  } catch (error) {
+    if (shouldFallbackToMock(error)) return mockResult();
+    throw error;
+  }
 }
 
 export async function isFavorite(

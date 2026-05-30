@@ -8,6 +8,7 @@ export async function getPublicProfile(userId: string): Promise<UserProfile | nu
 }
 
 export type ProfileUpdateInput = {
+  fullName: string;
   username: string;
   bio: string;
   avatarUri?: string | null;
@@ -86,6 +87,7 @@ export async function saveProfile(
 
   return updateProfile(userId, {
     username,
+    full_name: input.fullName.trim() || null,
     bio: input.bio.trim() || null,
     ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
   });

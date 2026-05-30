@@ -27,7 +27,9 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { notifyContentRefresh } from "@/lib/contentRefresh";
 import { createListing, uploadListingImage } from "@/services/listings";
+import { isSellerKycApproved } from "@/services/kyc";
 import { dollarsToCents } from "@/lib/stripe";
 
 const STEPS = ["Photos", "Details", "Review"] as const;
@@ -170,7 +172,7 @@ export default function SellScreen() {
         images.map((uri, i) => uploadListingImage(user!.id, uri, i))
       );
 
-      await createListing(user!.id, {
+      const listing = await createListing(user!.id, {
         brand,
         model,
         reference_number: referenceNumber || undefined,
@@ -182,7 +184,12 @@ export default function SellScreen() {
         serial_number: serialNumber || undefined,
       });
 
-      Alert.alert("Published", "Your listing is now live on HourMark.");
+      notifyContentRefresh();
+      router.push(`/listing/trust-verify/${listing.id}`);
+      Alert.alert(
+        "Almost there",
+        "Complete AI authentication uploads to publish your listing."
+      );
       setStep("Photos");
       setImages([]);
       setBrand("");
@@ -221,6 +228,23 @@ export default function SellScreen() {
             body="Verify your identity with name, address, and SSN, and connect payouts before listing watches."
             actionLabel="Start Verification"
             onAction={handleStartVerification}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  if (!isSellerKycApproved(profile)) {
+    return (
+      <View style={styles.screen}>
+        <ScreenHeader title="Sell on HourMark" />
+        <View style={styles.loggedOutBody}>
+          <EmptyState
+            icon="id-card-outline"
+            title="Government ID verification"
+            body="Upload your ID and selfie for automated KYC. Verified sellers can publish listings."
+            actionLabel="Verify identity"
+            onAction={() => router.push("/kyc")}
           />
         </View>
       </View>

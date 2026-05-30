@@ -26,12 +26,12 @@ const FEATURES = [
   {
     title: "Checkout",
     description:
-      "Pay with Apple Pay through Stripe. Destination charges route funds to sellers automatically — with a transparent 3% platform fee.",
+      "Pay with Apple Pay through Stripe Connect escrow. Funds stay held until delivery and inspection — then release to verified sellers.",
   },
   {
     title: "Verify",
     description:
-      "Identity verification, authentication badges, seller ratings, and order tracking — so every transaction feels safe.",
+      "Automated KYC, AI watch authentication, serial intelligence, trust scores, and dynamic badges on every listing.",
   },
 ];
 

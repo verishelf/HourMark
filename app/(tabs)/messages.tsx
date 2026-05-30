@@ -1,12 +1,20 @@
-import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { Alert, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { EmptyState } from "@/components/EmptyState";
+import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import {
+  CONVERSATION_DEFAULT_AVATAR,
+  getConversationAvatarUri,
+  getConversationPrimaryTitle,
+  getConversationSubtitle,
+  isWatchConversation,
+} from "@/lib/conversationDisplay";
 import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
 import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
@@ -14,7 +22,7 @@ import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useAuth } from "@/hooks/useAuth";
-import { getConversations } from "@/services/messaging";
+import { deleteConversation, getConversations } from "@/services/messaging";
 import { tabContentPadding } from "@/styles/layout";
 import type { Conversation } from "@/types";
 
@@ -24,10 +32,39 @@ export default function MessagesScreen() {
   const { user, isAuthenticated, loading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
-  useEffect(() => {
+  const loadConversations = useCallback(async () => {
     if (!user) return;
-    getConversations(user.id).then(setConversations);
+    try {
+      setConversations(await getConversations(user.id));
+    } catch {
+      setConversations([]);
+    }
   }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadConversations();
+    }, [loadConversations])
+  );
+
+  const confirmDeleteConversation = (conversationId: string) => {
+    if (!user) return;
+    Alert.alert("Delete conversation", "This will remove the entire thread and all messages.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteConversation(conversationId, user.id);
+            setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+          } catch (e) {
+            Alert.alert("Error", e instanceof Error ? e.message : "Could not delete conversation");
+          }
+        },
+      },
+    ]);
+  };
 
   if (!isAuthenticated && !loading) {
     return (
@@ -69,12 +106,13 @@ export default function MessagesScreen() {
         }
         renderItem={({ item }) => {
           const unread = isUnread(item);
-          const listingTitle = item.listing
-            ? `${item.listing.brand} ${item.listing.model}`
-            : "Conversation";
-          const otherUser = item.other_user?.username ?? "User";
+          const aboutWatch = isWatchConversation(item);
+          const avatarUri = getConversationAvatarUri(item);
+          const primaryTitle = getConversationPrimaryTitle(item);
+          const subtitle = getConversationSubtitle(item);
 
           return (
+            <SwipeToDeleteRow onDelete={() => confirmDeleteConversation(item.id)}>
             <Pressable
               onPress={() => router.push(`/chat/${item.id}`)}
               style={({ pressed }) => ({
@@ -82,33 +120,23 @@ export default function MessagesScreen() {
                 paddingVertical: 14,
                 borderBottomWidth: 1,
                 borderBottomColor: Colors.border,
+                backgroundColor: Colors.background,
                 opacity: pressed ? 0.8 : 1,
                 gap: 12,
               })}
             >
-              {item.listing?.images[0] ? (
-                <Image
-                  source={{ uri: item.listing.images[0] }}
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: RADIUS.sm,
-                    backgroundColor: Colors.cardElevated,
-                  }}
-                  contentFit="cover"
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: RADIUS.sm,
-                    backgroundColor: Colors.cardElevated,
-                    borderWidth: 1,
-                    borderColor: Colors.border,
-                  }}
-                />
-              )}
+              <Image
+                source={{ uri: avatarUri || CONVERSATION_DEFAULT_AVATAR }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: aboutWatch ? RADIUS.sm : 28,
+                  backgroundColor: Colors.cardElevated,
+                  borderWidth: aboutWatch ? 0 : 1,
+                  borderColor: Colors.border,
+                }}
+                contentFit="cover"
+              />
               <View style={{ flex: 1 }}>
                 <View
                   style={{
@@ -126,7 +154,7 @@ export default function MessagesScreen() {
                     }}
                     numberOfLines={1}
                   >
-                    {listingTitle}
+                    {primaryTitle}
                   </Text>
                   {item.last_message && (
                     <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
@@ -134,15 +162,17 @@ export default function MessagesScreen() {
                     </Text>
                   )}
                 </View>
-                <Text
-                  style={{
-                    ...Typography.caption,
-                    color: Colors.textSecondary,
-                    marginTop: 2,
-                  }}
-                >
-                  @{otherUser}
-                </Text>
+                {subtitle ? (
+                  <Text
+                    style={{
+                      ...Typography.caption,
+                      color: Colors.textSecondary,
+                      marginTop: 2,
+                    }}
+                  >
+                    {subtitle}
+                  </Text>
+                ) : null}
                 {item.last_message && (
                   <Text
                     style={{
@@ -170,6 +200,7 @@ export default function MessagesScreen() {
                 />
               )}
             </Pressable>
+            </SwipeToDeleteRow>
           );
         }}
       />

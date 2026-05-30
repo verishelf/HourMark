@@ -3,17 +3,17 @@
 import { motion } from "framer-motion";
 
 const FOR_BUYERS = [
-  { title: "Verified sellers", detail: "Every seller completes identity verification before listing." },
-  { title: "Secure checkout", detail: "Pay with Apple Pay — powered by Stripe destination charges." },
-  { title: "Direct messaging", detail: "Ask questions, negotiate, and build trust before you buy." },
-  { title: "Order tracking", detail: "Follow your purchase from payment through delivery." },
+  { title: "Verified sellers", detail: "KYC with government ID, selfie match, and phone verification." },
+  { title: "Escrow checkout", detail: "Funds stay held until delivery and a 3-day inspection window ends." },
+  { title: "AI authentication", detail: "Trust scores, serial checks, and badges on every verified listing." },
+  { title: "Order tracking", detail: "Follow payment hold, shipping, inspection, and payout release." },
 ];
 
 const FOR_SELLERS = [
-  { title: "List in minutes", detail: "Upload photos, add details, and publish your watch instantly." },
-  { title: "Stripe Connect", detail: "Onboard with Express in the app and connect your payout account." },
-  { title: "Low 3% fee", detail: "Keep more of every sale with transparent platform pricing." },
-  { title: "Automatic payouts", detail: "Receive earnings directly to your connected account after each sale." },
+  { title: "List with proof", detail: "Serial, movement, papers, and rotating video for automated review." },
+  { title: "Stripe Connect", detail: "Express onboarding with delayed payout after buyer inspection." },
+  { title: "Low 3% fee", detail: "Transparent platform pricing on every escrow-protected sale." },
+  { title: "Trust badges", detail: "Earn Verified Seller and AI Authenticated status as scores improve." },
 ];
 
 export function HowItWorks() {

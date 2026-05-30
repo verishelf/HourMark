@@ -7,7 +7,7 @@ import {
   View,
   type ViewToken,
 } from "react-native";
-import { Image } from "expo-image";
+import { ListingImage } from "@/components/ListingImage";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { formatPrice } from "@/lib/stripe";
@@ -20,6 +20,7 @@ import type { Listing } from "@/types";
 const { width } = Dimensions.get("window");
 const SLIDE_HEIGHT = 520;
 const AUTO_ADVANCE_MS = 5500;
+const SLIDER_TOP_RADIUS = 20;
 
 type Props = {
   listings: Listing[];
@@ -66,13 +67,22 @@ function FeaturedSlide({
   const coverImage = getListingCoverImage(item.images);
 
   return (
-    <Pressable onPress={onPress} style={{ width, height: SLIDE_HEIGHT }}>
+    <Pressable
+      onPress={onPress}
+      style={{
+        width,
+        height: SLIDE_HEIGHT,
+        overflow: "hidden",
+        borderTopLeftRadius: SLIDER_TOP_RADIUS,
+        borderTopRightRadius: SLIDER_TOP_RADIUS,
+      }}
+    >
       {coverImage ? (
-        <Image
-          source={{ uri: coverImage }}
+        <ListingImage
+          uri={coverImage}
           style={{ width: "100%", height: "100%" }}
           contentFit="cover"
-          transition={400}
+          recyclingKey={`${item.id}-${coverImage}`}
         />
       ) : (
         <View style={{ width: "100%", height: "100%", backgroundColor: Colors.cardElevated }} />
@@ -167,7 +177,14 @@ export function FeaturedCarousel({ listings }: Props) {
   if (!listings.length) return null;
 
   return (
-    <View style={{ marginBottom: 48 }}>
+    <View
+      style={{
+        marginBottom: 48,
+        overflow: "hidden",
+        borderTopLeftRadius: SLIDER_TOP_RADIUS,
+        borderTopRightRadius: SLIDER_TOP_RADIUS,
+      }}
+    >
       <FlatList
         ref={listRef}
         data={listings}
@@ -175,6 +192,7 @@ export function FeaturedCarousel({ listings }: Props) {
         pagingEnabled
         {...HIDE_SCROLL_INDICATORS}
         keyExtractor={(item) => item.id}
+        extraData={listings.map((l) => l.id).join(",")}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         getItemLayout={(_, index) => ({

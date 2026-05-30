@@ -1,5 +1,6 @@
 import { MOCK_LISTINGS } from "@/data/mockListings";
-import { getImageContentType } from "@/lib/listingImages";
+import { getImageContentType, resolveListingImageUrl } from "@/lib/listingImages";
+import { shouldFallbackToMock } from "@/lib/supabaseErrors";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { CreateListingInput, Listing } from "@/types";
 
@@ -24,6 +25,23 @@ function applyMockListingState(listings: Listing[]): Listing[] {
     .map((l) => ({ ...l, ...mockListingUpdates.get(l.id) }));
 }
 
+function normalizeListing(listing: Listing): Listing {
+  const images = (listing.images ?? [])
+    .map((uri) => resolveListingImageUrl(uri))
+    .filter((uri): uri is string => Boolean(uri));
+  return { ...listing, images };
+}
+
+function normalizeListings(listings: Listing[]): Listing[] {
+  return listings.map(normalizeListing);
+}
+
+function getMockListings(filters?: Parameters<typeof getListings>[0]): Listing[] {
+  return normalizeListings(
+    filterMockListings(applyMockListingState(allMockListings()), filters)
+  );
+}
+
 export async function getListings(filters?: {
   brand?: string;
   minPrice?: number;
@@ -32,7 +50,7 @@ export async function getListings(filters?: {
   search?: string;
 }): Promise<Listing[]> {
   if (!isSupabaseConfigured) {
-    return filterMockListings(applyMockListingState(allMockListings()), filters);
+    return getMockListings(filters);
   }
 
   let query = supabase
@@ -56,9 +74,17 @@ export async function getListings(filters?: {
     );
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []) as Listing[];
+  try {
+    const { data, error } = await query;
+    if (error) {
+      if (shouldFallbackToMock(error)) return getMockListings(filters);
+      throw error;
+    }
+    return normalizeListings((data ?? []) as Listing[]);
+  } catch (error) {
+    if (shouldFallbackToMock(error)) return getMockListings(filters);
+    throw error;
+  }
 }
 
 export async function getListingById(id: string): Promise<Listing | null> {
@@ -72,8 +98,14 @@ export async function getListingById(id: string): Promise<Listing | null> {
     .select("*, seller:users(*)")
     .eq("id", id)
     .single();
-  if (error) return null;
-  return data as Listing;
+  if (error) {
+    if (shouldFallbackToMock(error)) {
+      const listing = applyMockListingState(allMockListings()).find((l) => l.id === id);
+      return listing ? normalizeListing(listing) : null;
+    }
+    return null;
+  }
+  return normalizeListing(data as Listing);
 }
 
 export async function getFeaturedListings(): Promise<Listing[]> {
@@ -115,7 +147,11 @@ export async function createListing(
     .insert({
       seller_id: sellerId,
       ...input,
-      status: "active",
+      status: "draft",
+      authentication_status: "pending",
+      ai_trust_score: 0,
+      fraud_flags: [],
+      trust_badges: ["escrow_protected"],
     })
     .select()
     .single();
@@ -124,37 +160,57 @@ export async function createListing(
 }
 
 export async function getSellerActiveListings(sellerId: string): Promise<Listing[]> {
-  if (!isSupabaseConfigured) {
-    return applyMockListingState(allMockListings()).filter(
+  const mockResult = () =>
+    applyMockListingState(allMockListings()).filter(
       (l) => l.seller_id === sellerId && l.status === "active"
     );
+
+  if (!isSupabaseConfigured) {
+    return mockResult();
   }
 
-  const { data, error } = await supabase
-    .from("listings")
-    .select("*, seller:users(*)")
-    .eq("seller_id", sellerId)
-    .eq("status", "active")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as Listing[];
+  try {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*, seller:users(*)")
+      .eq("seller_id", sellerId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+    if (error) {
+      if (shouldFallbackToMock(error)) return mockResult();
+      throw error;
+    }
+    return (data ?? []) as Listing[];
+  } catch (error) {
+    if (shouldFallbackToMock(error)) return mockResult();
+    throw error;
+  }
 }
 
 export async function getUserListings(userId: string): Promise<Listing[]> {
+  const mockResult = () =>
+    applyMockListingState(allMockListings().filter((l) => l.seller_id === userId));
+
   if (!isSupabaseConfigured) {
-    return applyMockListingState(
-      allMockListings().filter((l) => l.seller_id === userId)
-    );
+    return mockResult();
   }
 
-  const { data, error } = await supabase
-    .from("listings")
-    .select("*")
-    .eq("seller_id", userId)
-    .neq("status", "archived")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as Listing[];
+  try {
+    const { data, error } = await supabase
+      .from("listings")
+      .select("*")
+      .eq("seller_id", userId)
+      .neq("status", "archived")
+      .order("created_at", { ascending: false });
+    if (error) {
+      if (shouldFallbackToMock(error)) return mockResult();
+      throw error;
+    }
+    return (data ?? []) as Listing[];
+  } catch (error) {
+    if (shouldFallbackToMock(error)) return mockResult();
+    throw error;
+  }
 }
 
 export async function updateListing(

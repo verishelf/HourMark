@@ -1,0 +1,22 @@
+-- User follow relationships
+create table if not exists public.user_follows (
+  follower_id uuid references public.users(id) on delete cascade not null,
+  following_id uuid references public.users(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  primary key (follower_id, following_id),
+  check (follower_id <> following_id)
+);
+
+alter table public.user_follows enable row level security;
+
+create policy "Follows are viewable by everyone"
+  on public.user_follows for select
+  using (true);
+
+create policy "Users can follow others"
+  on public.user_follows for insert
+  with check (auth.uid() = follower_id and follower_id <> following_id);
+
+create policy "Users can unfollow"
+  on public.user_follows for delete
+  using (auth.uid() = follower_id);

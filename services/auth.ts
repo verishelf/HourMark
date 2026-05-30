@@ -84,7 +84,7 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 
 export async function updateProfile(
   userId: string,
-  updates: Partial<Pick<UserProfile, "username" | "avatar_url" | "bio">>
+  updates: Partial<Pick<UserProfile, "username" | "full_name" | "avatar_url" | "bio">>
 ) {
   const { data, error } = await supabase
     .from("users")

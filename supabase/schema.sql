@@ -9,6 +9,7 @@ create extension if not exists "uuid-ossp";
 create table public.users (
   id uuid references auth.users on delete cascade primary key,
   username text unique,
+  full_name text,
   avatar_url text,
   bio text,
   verified boolean default false,
@@ -73,6 +74,92 @@ alter table public.favorites enable row level security;
 create policy "Users manage own favorites"
   on public.favorites for all using (auth.uid() = user_id);
 
+-- User follows
+create table public.user_follows (
+  follower_id uuid references public.users(id) on delete cascade not null,
+  following_id uuid references public.users(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  primary key (follower_id, following_id),
+  check (follower_id <> following_id)
+);
+
+alter table public.user_follows enable row level security;
+
+create policy "Follows are viewable by everyone"
+  on public.user_follows for select using (true);
+
+create policy "Users can follow others"
+  on public.user_follows for insert
+  with check (auth.uid() = follower_id and follower_id <> following_id);
+
+create policy "Users can unfollow"
+  on public.user_follows for delete using (auth.uid() = follower_id);
+
+-- User posts (profile feed, separate from listings)
+create table public.user_posts (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.users(id) on delete cascade not null,
+  caption text,
+  image_url text not null,
+  created_at timestamptz default now()
+);
+
+create index user_posts_user_id_created_at_idx
+  on public.user_posts (user_id, created_at desc);
+
+alter table public.user_posts enable row level security;
+
+create policy "Posts are viewable by everyone"
+  on public.user_posts for select using (true);
+
+create policy "Users can create own posts"
+  on public.user_posts for insert with check (auth.uid() = user_id);
+
+create policy "Users can delete own posts"
+  on public.user_posts for delete using (auth.uid() = user_id);
+
+-- Post likes
+create table public.user_post_likes (
+  post_id uuid references public.user_posts(id) on delete cascade not null,
+  user_id uuid references public.users(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  primary key (post_id, user_id)
+);
+
+alter table public.user_post_likes enable row level security;
+
+create policy "Post likes are viewable by everyone"
+  on public.user_post_likes for select using (true);
+
+create policy "Users can like posts"
+  on public.user_post_likes for insert with check (auth.uid() = user_id);
+
+create policy "Users can unlike posts"
+  on public.user_post_likes for delete using (auth.uid() = user_id);
+
+-- Post comments
+create table public.user_post_comments (
+  id uuid default uuid_generate_v4() primary key,
+  post_id uuid references public.user_posts(id) on delete cascade not null,
+  user_id uuid references public.users(id) on delete cascade not null,
+  text text not null,
+  created_at timestamptz default now()
+);
+
+create index user_post_comments_post_id_idx
+  on public.user_post_comments (post_id, created_at asc);
+
+alter table public.user_post_comments enable row level security;
+
+create policy "Post comments are viewable by everyone"
+  on public.user_post_comments for select using (true);
+
+create policy "Users can comment on posts"
+  on public.user_post_comments for insert with check (auth.uid() = user_id);
+
+create policy "Users can delete own comments"
+  on public.user_post_comments for delete using (auth.uid() = user_id);
+
 -- Conversations
 create table public.conversations (
   id uuid default uuid_generate_v4() primary key,
@@ -91,6 +178,10 @@ create policy "Participants can view conversations"
 
 create policy "Buyers can create conversations"
   on public.conversations for insert with check (auth.uid() = buyer_id);
+
+create policy "Participants can delete conversations"
+  on public.conversations for delete
+  using (auth.uid() = buyer_id or auth.uid() = seller_id);
 
 -- Messages
 create table public.messages (
@@ -124,6 +215,10 @@ create policy "Participants can send messages"
       and (c.buyer_id = auth.uid() or c.seller_id = auth.uid())
     )
   );
+
+create policy "Senders can delete own messages"
+  on public.messages for delete
+  using (auth.uid() = sender_id);
 
 -- Sellers (Stripe Connect)
 create table public.sellers (
@@ -279,6 +374,29 @@ create policy "Users can delete own avatar"
   on storage.objects for delete
   using (
     bucket_id = 'avatars'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- Storage bucket for profile posts
+insert into storage.buckets (id, name, public)
+values ('post-images', 'post-images', true)
+on conflict do nothing;
+
+create policy "Anyone can view post images"
+  on storage.objects for select using (bucket_id = 'post-images');
+
+create policy "Users can upload post images"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'post-images'
+    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "Users can delete own post images"
+  on storage.objects for delete
+  using (
+    bucket_id = 'post-images'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 

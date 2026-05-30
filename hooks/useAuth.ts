@@ -10,8 +10,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (userId: string) => {
-    const p = await getProfile(userId);
-    setProfile(p);
+    try {
+      const p = await getProfile(userId);
+      setProfile(p);
+    } catch {
+      // Ignore transient Supabase/network errors; keep existing profile state.
+    }
   }, []);
 
   useEffect(() => {
@@ -20,8 +24,11 @@ export function useAuth() {
       .then(({ data }) => {
         setSession(data.session);
         if (data.session?.user) {
-          loadProfile(data.session.user.id);
+          void loadProfile(data.session.user.id);
         }
+      })
+      .catch(() => {
+        // Session fetch failed (e.g. Supabase 522); user can retry after reconnect.
       })
       .finally(() => setLoading(false));
 

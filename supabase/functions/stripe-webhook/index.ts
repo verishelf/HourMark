@@ -52,6 +52,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (event.type === "payment_intent.succeeded") {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const orderId = pi.metadata?.order_id;
+      if (orderId) {
+        await supabase
+          .from("orders")
+          .update({
+            status: pi.capture_method === "manual" ? "payment_held" : "paid",
+            escrow_status: "held",
+          })
+          .eq("id", orderId)
+          .in("status", ["pending", "awaiting_payment"]);
+      }
+    }
+
+    if (event.type === "payment_intent.amount_capturable_updated") {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const orderId = pi.metadata?.order_id;
+      if (orderId && pi.status === "requires_capture") {
+        await supabase
+          .from("orders")
+          .update({ status: "payment_held", escrow_status: "held" })
+          .eq("id", orderId);
+      }
+    }
+
     if (event.type === "account.application.deauthorized") {
       const account = event.data.object as Stripe.Account;
       const { data: userRow } = await supabase

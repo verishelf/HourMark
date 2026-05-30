@@ -4,12 +4,21 @@ export type StripeOnboardingStatus =
   | "complete"
   | "restricted";
 
+export type KycStatus = "not_started" | "pending" | "approved" | "rejected";
+
 export type UserProfile = {
   id: string;
   username: string | null;
+  full_name: string | null;
   avatar_url: string | null;
   bio: string | null;
   verified: boolean;
+  is_verified_seller?: boolean;
+  kyc_status?: KycStatus;
+  phone_number?: string | null;
+  kyc_provider_id?: string | null;
+  account_trust_score?: number;
+  fraud_risk_score?: number;
   stripe_account_id: string | null;
   stripe_onboarding_status: StripeOnboardingStatus;
   seller_rating: number | null;
@@ -17,6 +26,13 @@ export type UserProfile = {
 };
 
 export type ListingStatus = "draft" | "active" | "sold" | "archived";
+
+export type AuthenticationStatus =
+  | "pending"
+  | "analyzing"
+  | "auto_verified"
+  | "manual_review"
+  | "rejected";
 
 export type Listing = {
   id: string;
@@ -32,6 +48,12 @@ export type Listing = {
   serial_number: string | null;
   status: ListingStatus;
   authenticated: boolean;
+  authentication_status?: AuthenticationStatus;
+  ai_trust_score?: number;
+  fraud_flags?: string[];
+  extracted_serial_number?: string | null;
+  verification_confidence?: number;
+  trust_badges?: string[];
   created_at: string;
   seller?: UserProfile;
 };
@@ -66,9 +88,14 @@ export type Message = {
 
 export type OrderStatus =
   | "pending"
+  | "awaiting_payment"
+  | "payment_held"
   | "paid"
   | "shipped"
   | "delivered"
+  | "inspection_period"
+  | "completed"
+  | "disputed"
   | "cancelled"
   | "refunded";
 
@@ -107,6 +134,10 @@ export type Order = {
   shipping_state: string | null;
   shipping_postal_code: string | null;
   shipping_country: string | null;
+  inspection_ends_at?: string | null;
+  delivery_confirmed_at?: string | null;
+  funds_released_at?: string | null;
+  escrow_status?: "none" | "held" | "released" | "disputed";
   created_at: string;
   listing?: Listing;
 };
@@ -176,4 +207,38 @@ export type CreateListingInput = {
   description?: string;
   images: string[];
   serial_number?: string;
+};
+
+export type UserPost = {
+  id: string;
+  user_id: string;
+  caption: string | null;
+  image_url: string;
+  created_at: string;
+  author?: Pick<UserProfile, "username" | "avatar_url">;
+};
+
+export type UserPostDetail = UserPost & {
+  like_count: number;
+  comment_count: number;
+  liked_by_me: boolean;
+};
+
+export type UserPostComment = {
+  id: string;
+  post_id: string;
+  user_id: string;
+  text: string;
+  created_at: string;
+  author?: Pick<UserProfile, "username" | "avatar_url">;
+};
+
+export type CreatePostInput = {
+  caption?: string;
+  image_url: string;
+};
+
+export type UpdatePostInput = {
+  caption?: string | null;
+  image_url?: string;
 };

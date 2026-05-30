@@ -1,5 +1,4 @@
 import { Pressable, Text, View } from "react-native";
-import { MotiView } from "moti";
 import { Image } from "expo-image";
 import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
@@ -17,16 +16,12 @@ const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1472099645785-5658abf4
 
 export function MessageBubble({ message, isOwn, avatarUri, onAvatarPress }: Props) {
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 8 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 250 }}
+    <View
       style={{
         flexDirection: "row",
         alignSelf: isOwn ? "flex-end" : "flex-start",
         alignItems: "flex-end",
         maxWidth: "92%",
-        marginBottom: 12,
         gap: 8,
       }}
     >
@@ -92,6 +87,6 @@ export function MessageBubble({ message, isOwn, avatarUri, onAvatarPress }: Prop
           />
         </Pressable>
       )}
-    </MotiView>
+    </View>
   );
 }

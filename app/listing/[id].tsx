@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { HeaderIconButton } from "@/components/HeaderIconButton";
 import { ListingGallery } from "@/components/ListingGallery";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { SellerCard } from "@/components/SellerCard";
+import { TrustBadgeRow } from "@/components/TrustBadgeRow";
+import { TrustScoreIndicator } from "@/components/TrustScoreIndicator";
+import { FraudWarningBanner } from "@/components/FraudWarningBanner";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
@@ -19,37 +22,6 @@ import { useFavorite } from "@/hooks/useFavorite";
 import { getListingById, getRelatedListings } from "@/services/listings";
 import { getOrCreateConversation } from "@/services/messaging";
 import type { Listing } from "@/types";
-
-function FixedHeaderButton({
-  onPress,
-  icon,
-  filled,
-}: {
-  onPress: () => void;
-  icon: keyof typeof Ionicons.glyphMap;
-  filled?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: Colors.overlay,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Ionicons
-        name={icon}
-        size={22}
-        color={filled ? Colors.textPrimary : Colors.textSecondary}
-      />
-    </Pressable>
-  );
-}
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -148,10 +120,22 @@ export default function ListingDetailScreen() {
             </Text>
           )}
 
-          <View style={{ flexDirection: "row", gap: 12, marginTop: 20, marginBottom: 24 }}>
+          <View style={{ marginTop: 16, marginBottom: 12 }}>
+            <TrustBadgeRow badges={listing.trust_badges} />
+          </View>
+
+          {listing.ai_trust_score != null && listing.ai_trust_score > 0 && (
+            <View style={{ marginBottom: 20 }}>
+              <TrustScoreIndicator score={listing.ai_trust_score} />
+            </View>
+          )}
+
+          <FraudWarningBanner flags={listing.fraud_flags} />
+
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 12, marginBottom: 24 }}>
             {listing.authenticated && (
               <View style={{ borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 12, paddingVertical: 6 }}>
-                <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>Authenticated</Text>
+                <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>AI Authenticated</Text>
               </View>
             )}
             <View style={{ borderWidth: 1, borderColor: Colors.border, paddingHorizontal: 12, paddingVertical: 6 }}>
@@ -210,10 +194,10 @@ export default function ListingDetailScreen() {
           alignItems: "center",
         }}
       >
-        <FixedHeaderButton icon="chevron-back" onPress={() => router.back()} />
+        <HeaderIconButton icon="chevron-back" onPress={() => router.back()} />
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <FixedHeaderButton icon="chatbubble-ellipses-outline" onPress={handleMessageSeller} />
-          <FixedHeaderButton
+          <HeaderIconButton icon="chatbubble-ellipses-outline" onPress={handleMessageSeller} />
+          <HeaderIconButton
             icon={favorited ? "heart" : "heart-outline"}
             filled={favorited}
             onPress={() => {

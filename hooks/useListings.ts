@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { subscribeContentRefresh } from "@/lib/contentRefresh";
 import { getListings } from "@/services/listings";
 import type { Listing } from "@/types";
 
@@ -29,6 +30,8 @@ export function useListings(filters?: ListingFilters) {
   useEffect(() => {
     fetch();
   }, [fetch]);
+
+  useEffect(() => subscribeContentRefresh(fetch), [fetch]);
 
   return { listings, loading, refetch: fetch };
 }

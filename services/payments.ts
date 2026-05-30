@@ -1,4 +1,5 @@
 import { calculateCommission, calculateSellerPayout } from "@/lib/stripe";
+import { shouldFallbackToMock } from "@/lib/supabaseErrors";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Order, ShippingDetails } from "@/types";
 
@@ -165,13 +166,21 @@ export async function getConnectStatus(): Promise<ConnectStatus | null> {
 export async function getOrders(userId: string): Promise<Order[]> {
   if (!isSupabaseConfigured) return [];
 
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, listing:listings(*)")
-    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as Order[];
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, listing:listings(*)")
+      .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+      .order("created_at", { ascending: false });
+    if (error) {
+      if (shouldFallbackToMock(error)) return [];
+      throw error;
+    }
+    return (data ?? []) as Order[];
+  } catch (error) {
+    if (shouldFallbackToMock(error)) return [];
+    throw error;
+  }
 }
 
 export async function getOrderById(orderId: string): Promise<Order | null> {
@@ -197,7 +206,7 @@ export async function completeOrder(orderId: string): Promise<void> {
     .eq("id", orderId)
     .single();
 
-  if (!order || order.status === "paid") return;
+  if (!order || ["paid", "payment_held", "completed"].includes(order.status)) return;
 
   const sellerPayout = calculateSellerPayout(order.amount);
 
@@ -216,12 +225,10 @@ export async function completeOrder(orderId: string): Promise<void> {
     });
   }
 
-  await supabase.from("orders").update({ status: "paid" }).eq("id", orderId);
-
   await supabase
-    .from("listings")
-    .update({ status: "sold" })
-    .eq("id", order.listing_id);
+    .from("orders")
+    .update({ status: "payment_held", escrow_status: "held" })
+    .eq("id", orderId);
 }
 
 export { calculateCommission };

@@ -4,6 +4,7 @@ import { BrandMarquee } from "@/components/BrandMarquee";
 import { PartnerMarquee } from "@/components/PartnerMarquee";
 import { RichardMilleSlider } from "@/components/RichardMilleSlider";
 import { Features } from "@/components/Features";
+import { TrustPlatform } from "@/components/TrustPlatform";
 import { AppShowcase } from "@/components/AppShowcase";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Download } from "@/components/Download";
@@ -19,6 +20,7 @@ export default function Home() {
         <PartnerMarquee />
         <RichardMilleSlider />
         <Features />
+        <TrustPlatform />
         <AppShowcase />
         <HowItWorks />
         <Download />

@@ -46,6 +46,22 @@ export default function RootLayout() {
             options={{ animation: "slide_from_bottom", presentation: "modal" }}
           />
           <Stack.Screen
+            name="profile/connections"
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="post/create"
+            options={{ animation: "slide_from_bottom", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="post/edit/[id]"
+            options={{ animation: "slide_from_bottom", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="post/[id]"
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
             name="checkout/success"
             options={{ animation: "fade", gestureEnabled: false }}
           />

@@ -1,9 +1,10 @@
 import { Pressable, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { ListingImage } from "@/components/ListingImage";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Badge } from "@/components/Badge";
+import { TrustBadgeRow } from "@/components/TrustBadgeRow";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
@@ -97,8 +98,8 @@ export function WatchCard({
             style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
           >
             {coverImage ? (
-              <Image
-                source={{ uri: coverImage }}
+              <ListingImage
+                uri={coverImage}
                 style={{
                   width: "100%",
                   height: imageHeight,
@@ -106,8 +107,7 @@ export function WatchCard({
                   borderTopRightRadius: cardRadius,
                 }}
                 contentFit="cover"
-                transition={300}
-                recyclingKey={coverImage}
+                recyclingKey={`${listing.id}-${coverImage}`}
               />
             ) : (
               <View
@@ -203,6 +203,11 @@ export function WatchCard({
                 <Badge label={listing.condition} variant="muted" />
               </View>
             )}
+            {!isGrid && !isCompact && listing.trust_badges?.length ? (
+              <View style={{ marginBottom: 10 }}>
+                <TrustBadgeRow badges={listing.trust_badges} compact />
+              </View>
+            ) : null}
             <View
               style={{
                 flexDirection: "row",

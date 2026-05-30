@@ -31,6 +31,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, profile, refreshProfile } = useAuth();
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export default function EditProfileScreen() {
 
   useEffect(() => {
     if (!profile) return;
+    setFullName(profile.full_name ?? "");
     setUsername(profile.username ?? "");
     setBio(profile.bio ?? "");
     setAvatarUri(profile.avatar_url);
@@ -72,6 +74,7 @@ export default function EditProfileScreen() {
     setSaving(true);
     try {
       await saveProfile(user.id, {
+        fullName,
         username,
         bio,
         avatarUri: pickedAvatar ? avatarUri : null,
@@ -129,6 +132,17 @@ export default function EditProfileScreen() {
           </Pressable>
 
           <View style={styles.formSection}>
+            <Text style={styles.label}>Name</Text>
+            <TextInput
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Your name"
+              placeholderTextColor={Colors.textMuted}
+              autoCapitalize="words"
+              autoCorrect={false}
+              style={inputStyle}
+            />
+
             <Text style={styles.label}>Username</Text>
             <TextInput
               value={username}

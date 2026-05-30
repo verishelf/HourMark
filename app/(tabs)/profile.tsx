@@ -8,6 +8,9 @@ import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { MyListingCard } from "@/components/MyListingCard";
+import { PostGrid } from "@/components/PostGrid";
+import { ProfileCard } from "@/components/ProfileCard";
+import { ProfileTabs, profileTabStyles } from "@/components/ProfileTabs";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
 import { formatPrice } from "@/lib/stripe";
@@ -19,17 +22,20 @@ import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { getFavorites } from "@/services/favorites";
 import { deleteListing, getUserListings } from "@/services/listings";
+import { subscribeContentRefresh, notifyContentRefresh } from "@/lib/contentRefresh";
+import { deletePost, getUserPosts } from "@/services/posts";
 import { getOrders } from "@/services/payments";
 import { signOut } from "@/services/auth";
+import { getFollowCounts } from "@/services/follows";
 import {
   getSellerVerificationStatus,
   getVerificationStatusLabel,
 } from "@/services/verification";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { tabContentPadding, GRID_GAP } from "@/styles/layout";
-import type { Listing, Order, VerificationStatus } from "@/types";
+import type { Listing, Order, UserPost, VerificationStatus } from "@/types";
 
-type TabKey = "listings" | "favorites" | "orders";
+type TabKey = "posts" | "listings" | "favorites" | "orders";
 
 function chunkListings<T>(items: T[]): T[][] {
   const rows: T[][] = [];
@@ -69,65 +75,6 @@ function ListingGrid({
   );
 }
 
-function ProfileHeader({
-  username,
-  avatarUrl,
-  verified,
-  bio,
-  onEdit,
-}: {
-  username: string;
-  avatarUrl: string;
-  verified: boolean;
-  bio?: string | null;
-  onEdit: () => void;
-}) {
-  return (
-    <View style={styles.header}>
-      <Pressable onPress={onEdit} style={styles.avatarPressable}>
-        <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-        <View style={styles.avatarEditDot}>
-          <Ionicons name="pencil" size={12} color={Colors.textPrimary} />
-        </View>
-      </Pressable>
-      <View style={styles.headerMeta}>
-        <Text style={styles.username} numberOfLines={1}>
-          @{username}
-        </Text>
-        {verified ? <Badge label="Verified" variant="success" /> : null}
-        {bio ? <Text style={styles.bio}>{bio}</Text> : null}
-      </View>
-    </View>
-  );
-}
-
-function ProfileTabs({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: { key: TabKey; label: string }[];
-  active: TabKey;
-  onChange: (key: TabKey) => void;
-}) {
-  return (
-    <View style={styles.tabsRow}>
-      {tabs.map((t) => {
-        const selected = active === t.key;
-        return (
-          <Pressable
-            key={t.key}
-            onPress={() => onChange(t.key)}
-            style={[styles.tabButton, selected && styles.tabButtonActive]}
-          >
-            <Text style={[styles.tabLabel, selected && styles.tabLabelActive]}>{t.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
 function ListingRow({ listing }: { listing: Listing }) {
   const router = useRouter();
   const coverImage = getListingCoverImage(listing.images);
@@ -157,13 +104,19 @@ function ListingRow({ listing }: { listing: Listing }) {
 }
 
 function OrderRow({ order }: { order: Order }) {
+  const router = useRouter();
   const listing = order.listing;
   const coverImage = getListingCoverImage(listing?.images);
   const statusVariant =
-    order.status === "delivered" || order.status === "paid" ? "success" : "muted";
+    order.status === "completed" ||
+    order.status === "delivered" ||
+    order.status === "paid" ||
+    order.status === "payment_held"
+      ? "success"
+      : "muted";
 
   return (
-    <View style={styles.listCard}>
+    <Pressable onPress={() => router.push(`/order/${order.id}`)} style={styles.listCard}>
       <View style={styles.listRow}>
         {coverImage ? (
           <Image source={{ uri: coverImage }} style={styles.listThumb} contentFit="cover" />
@@ -179,7 +132,7 @@ function OrderRow({ order }: { order: Order }) {
           <Badge label={order.status} variant={statusVariant} />
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -187,10 +140,11 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, profile, isAuthenticated, loading, refreshProfile } = useAuth();
+  const [posts, setPosts] = useState<UserPost[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [tab, setTab] = useState<TabKey>("listings");
+  const [tab, setTab] = useState<TabKey>("posts");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
     status: "not_started",
     chargesEnabled: false,
@@ -198,6 +152,7 @@ export default function ProfileScreen() {
     requirementsDue: [],
     rejectionReason: null,
   });
+  const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
 
   const loadVerificationStatus = useCallback(async () => {
     if (!user) return;
@@ -219,23 +174,64 @@ export default function ProfileScreen() {
     router.push("/profile/edit");
   };
 
+  const loadPosts = useCallback(async () => {
+    if (!user) return;
+    try {
+      setPosts(await getUserPosts(user.id));
+    } catch {
+      setPosts([]);
+    }
+  }, [user]);
+
   const loadListings = useCallback(async () => {
     if (!user) return;
-    setListings(await getUserListings(user.id));
+    try {
+      setListings(await getUserListings(user.id));
+    } catch {
+      setListings([]);
+    }
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    getFavorites(user.id).then(setFavorites);
-    getOrders(user.id).then(setOrders);
+    getFavorites(user.id)
+      .then(setFavorites)
+      .catch(() => setFavorites([]));
+    getOrders(user.id)
+      .then(setOrders)
+      .catch(() => setOrders([]));
   }, [user]);
+
+  const refreshProfileData = useCallback(() => {
+    loadPosts();
+    loadListings();
+    loadVerificationStatus();
+    if (user) {
+      getFollowCounts(user.id)
+        .then(setFollowCounts)
+        .catch(() => setFollowCounts({ followers: 0, following: 0 }));
+    }
+  }, [loadPosts, loadListings, loadVerificationStatus, user]);
 
   useFocusEffect(
     useCallback(() => {
-      loadListings();
-      loadVerificationStatus();
-    }, [loadListings, loadVerificationStatus])
+      refreshProfileData();
+      return subscribeContentRefresh(refreshProfileData);
+    }, [refreshProfileData])
   );
+
+  const handleDeletePost = (post: UserPost) => {
+    if (!user) return;
+    void (async () => {
+      try {
+        await deletePost(post.id, user.id);
+        setPosts((prev) => prev.filter((p) => p.id !== post.id));
+        notifyContentRefresh();
+      } catch (e) {
+        Alert.alert("Error", e instanceof Error ? e.message : "Failed to delete post");
+      }
+    })();
+  };
 
   const handleDeleteListing = (listing: Listing) => {
     if (!user) return;
@@ -251,6 +247,7 @@ export default function ProfileScreen() {
             try {
               await deleteListing(listing.id, user.id);
               setListings((prev) => prev.filter((l) => l.id !== listing.id));
+              notifyContentRefresh();
             } catch (e) {
               Alert.alert("Error", e instanceof Error ? e.message : "Failed to delete");
             }
@@ -273,6 +270,7 @@ export default function ProfileScreen() {
   }
 
   const tabs: { key: TabKey; label: string }[] = [
+    { key: "posts", label: "Posts" },
     { key: "listings", label: "Listings" },
     { key: "favorites", label: "Saved" },
     { key: "orders", label: "Orders" },
@@ -304,20 +302,70 @@ export default function ProfileScreen() {
       />
 
       <View style={styles.content}>
-        <ProfileHeader
+        <View style={{ marginBottom: 24 }}>
+        <ProfileCard
+          fullName={profile?.full_name}
           username={profile?.username ?? "collector"}
+          usernamePlacement="belowAvatar"
+          namePlacement="aboveBio"
           avatarUrl={
             profile?.avatar_url ??
             "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200"
           }
           verified={Boolean(profile?.verified)}
           bio={profile?.bio}
-          onEdit={handleEditProfile}
+          posts={posts.length}
+          followers={followCounts.followers}
+          following={followCounts.following}
+          onPostsPress={() => setTab("posts")}
+          onFollowersPress={() =>
+            user &&
+            router.push({
+              pathname: "/profile/connections",
+              params: { userId: user.id, type: "followers" },
+            })
+          }
+          onFollowingPress={() =>
+            user &&
+            router.push({
+              pathname: "/profile/connections",
+              params: { userId: user.id, type: "following" },
+            })
+          }
+          onAvatarPress={handleEditProfile}
+          showAvatarEdit
         />
+        </View>
 
         <ProfileTabs tabs={tabs} active={tab} onChange={setTab} />
 
-        <View style={styles.tabContent}>
+        <View
+          style={[
+            profileTabStyles.tabContent,
+            tab !== "posts" || !posts.length ? profileTabStyles.tabContentPadded : null,
+          ]}
+        >
+          {tab === "posts" &&
+            (posts.length ? (
+              <PostGrid
+                posts={posts}
+                editable
+                variant="compact"
+                flushTop
+                onEdit={(post) => router.push(`/post/edit/${post.id}`)}
+                onDelete={handleDeletePost}
+              />
+            ) : (
+              <EmptyState
+                compact
+                icon="images-outline"
+                title="No posts yet"
+                body="Share a photo from the + button on Home."
+                actionLabel="Create Post"
+                onAction={() => router.push("/post/create")}
+              />
+            ))}
+
           {tab === "listings" &&
             (listings.length ? (
               <ListingGrid
@@ -393,35 +441,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: SPACING.screen,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  avatarPressable: {
-    position: "relative",
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.cardElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  avatarEditDot: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   editButton: {
     paddingTop: 4,
     paddingHorizontal: 4,
@@ -431,53 +450,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontSize: 14,
     fontWeight: "500",
-  },
-  headerMeta: {
-    flex: 1,
-    marginLeft: 14,
-    gap: 6,
-  },
-  username: {
-    ...Typography.h2,
-    color: Colors.textPrimary,
-    fontSize: 20,
-    lineHeight: 26,
-  },
-  bio: {
-    ...Typography.body,
-    color: Colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  tabsRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    marginBottom: 16,
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-    marginBottom: -1,
-  },
-  tabButtonActive: {
-    borderBottomColor: Colors.textPrimary,
-  },
-  tabLabel: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontWeight: "400",
-    fontSize: 13,
-  },
-  tabLabelActive: {
-    color: Colors.textPrimary,
-    fontWeight: "600",
-  },
-  tabContent: {
-    minHeight: 100,
   },
   listingsGrid: {
     gap: GRID_GAP,
