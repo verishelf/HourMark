@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthImageSlider } from "@/components/AuthImageSlider";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { SPACING } from "@/constants/layout";
@@ -60,7 +61,7 @@ export function AuthScreenShell({
         ) : (
           <View style={{ width: 28 }} />
         )}
-        <Text style={styles.brand}>Crownly</Text>
+        <CrownlyLogo width={88} />
         <Pressable
           onPress={onTopAction ?? onSecondary}
           hitSlop={8}
@@ -119,12 +120,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontSize: 24,
     width: 28,
-  },
-  brand: {
-    ...Typography.label,
-    color: Colors.textPrimary,
-    letterSpacing: 2,
-    fontSize: 12,
   },
   topAction: {
     paddingHorizontal: 14,

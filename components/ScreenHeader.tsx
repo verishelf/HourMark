@@ -1,12 +1,15 @@
 import { ReactNode } from "react";
 import { Text, View, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { Colors } from "@/constants/colors";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 
 type Props = {
   label?: string;
+  /** Renders the Crownly mark above the title instead of a text label. */
+  logo?: boolean;
   title: string;
   subtitle?: string;
   rightAction?: ReactNode;
@@ -18,6 +21,7 @@ type Props = {
 
 export function ScreenHeader({
   label,
+  logo,
   title,
   subtitle,
   rightAction,
@@ -46,7 +50,9 @@ export function ScreenHeader({
         }}
       >
         <View style={{ flex: 1, paddingRight: rightAction ? 12 : 0 }}>
-          {label && (
+          {logo ? (
+            <CrownlyLogo width={108} style={{ marginBottom: 10, alignSelf: "flex-start" }} />
+          ) : label ? (
             <Text
               style={{
                 ...Typography.label,
@@ -56,7 +62,7 @@ export function ScreenHeader({
             >
               {label}
             </Text>
-          )}
+          ) : null}
           <Text style={{ ...Typography.h2, color: Colors.textPrimary, fontSize: 26 }}>
             {title}
           </Text>

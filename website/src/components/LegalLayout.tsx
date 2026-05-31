@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { LEGAL } from "@/lib/legal";
@@ -23,6 +24,7 @@ export function LegalLayout({ title, description, children }: LegalLayoutProps) 
           </Link>
 
           <header className="mt-10 border-b border-[#1a1a1a] pb-10">
+            <CrownlyLogo size={56} className="mb-6" />
             <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-[#71717a]">
               Legal
             </p>

@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MotiView } from "moti";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
@@ -59,6 +60,19 @@ export default function OnboardingScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
+      <View
+        style={{
+          position: "absolute",
+          top: insets.top + 16,
+          left: 0,
+          right: 0,
+          zIndex: 2,
+          alignItems: "center",
+        }}
+        pointerEvents="none"
+      >
+        <CrownlyLogo width={100} />
+      </View>
       <FlatList
         ref={listRef}
         data={loopData}

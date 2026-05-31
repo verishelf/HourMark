@@ -11,6 +11,7 @@ import {
 import { Image } from "expo-image";
 import { MotiView } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { AUTH_SLIDE_IMAGES } from "@/constants/authSlides";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
@@ -117,7 +118,7 @@ export function FullScreenAuthSlider({ images = AUTH_SLIDE_IMAGES }: Props) {
         style={[styles.brandHeader, { paddingTop: insets.top + 20 }]}
         pointerEvents="none"
       >
-        <Text style={styles.brand}>Crownly</Text>
+        <CrownlyLogo width={120} />
       </View>
       <AnimatedSlideCopy index={realIndex} />
       <View style={styles.dots} pointerEvents="none">
@@ -153,13 +154,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 3,
     alignItems: "center",
-  },
-  brand: {
-    ...Typography.label,
-    color: Colors.textPrimary,
-    letterSpacing: 2.5,
-    fontSize: 13,
-    textAlign: "center",
   },
   copy: {
     position: "absolute",

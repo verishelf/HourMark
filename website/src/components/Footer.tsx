@@ -1,14 +1,13 @@
 import Link from "next/link";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 
 export function Footer() {
   return (
     <footer className="border-t border-[#1a1a1a] py-12">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 px-6 md:flex-row">
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#71717a]">
-            Crownly
-          </p>
-          <p className="mt-1 text-sm text-[#a1a1aa]">
+        <div className="flex flex-col items-center md:items-start">
+          <CrownlyLogo size={40} />
+          <p className="mt-3 text-sm text-[#a1a1aa]">
             Luxury watch marketplace · © {new Date().getFullYear()}
           </p>
         </div>

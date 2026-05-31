@@ -11,6 +11,15 @@ Marketing site for the Crownly luxury watch marketplace iOS app. Built with Next
 
 Update contact emails and effective date in `src/lib/legal.ts` before production launch.
 
+## Brand assets
+
+| Asset | Path |
+|-------|------|
+| Master logo | `public/crownly-logo.png` |
+| Favicon / Apple touch | `public/favicon.png`, `public/apple-touch-icon.png` |
+
+Expo app icons and splash use the same mark in `/assets/` (`crownly-logo.png`, `icon.png`, `splash-icon.png`).
+
 Copy and feature highlights align with the mobile app and Stripe Connect marketplace backend (`apps/api/`).
 
 Brand marquee logos are sourced from Wikimedia Commons and committed under `public/logos/brands/`. Regenerate with `npm run logos`.

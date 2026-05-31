@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 
 const NAV = [
   { href: "#richard-mille", label: "Richard Mille" },
@@ -38,11 +39,13 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="group flex flex-col" onClick={() => setMenuOpen(false)}>
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#a1a1aa]">
-            Crownly
-          </span>
-          <span className="text-lg font-light tracking-tight text-white transition-opacity group-hover:opacity-80">
+        <Link
+          href="/"
+          className="group flex items-center gap-3 transition-opacity hover:opacity-90"
+          onClick={() => setMenuOpen(false)}
+        >
+          <CrownlyLogo size={44} priority />
+          <span className="hidden text-lg font-light tracking-tight text-[#a1a1aa] transition-colors group-hover:text-white sm:inline">
             Curated Timepieces
           </span>
         </Link>

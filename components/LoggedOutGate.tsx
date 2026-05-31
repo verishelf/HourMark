@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { SPACING } from "@/constants/layout";
@@ -25,8 +26,11 @@ export function LoggedOutGate({
       <Image source={{ uri: backgroundImage }} style={styles.background} contentFit="cover" />
       <View style={styles.overlay} />
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <CrownlyLogo width={140} style={{ marginBottom: 20 }} />
+        {title !== "Crownly" ? <Text style={styles.title}>{title}</Text> : null}
+        <Text style={[styles.subtitle, title === "Crownly" && styles.subtitleTight]}>
+          {subtitle}
+        </Text>
         <View style={styles.buttons}>
           <LuxuryButton label="Sign In" onPress={onSignIn} variant="primary" size="large" />
           <View style={styles.gap} />
@@ -70,6 +74,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: 320,
     marginBottom: 26,
+  },
+  subtitleTight: {
+    marginTop: 0,
   },
   buttons: {
     width: "100%",

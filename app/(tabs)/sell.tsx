@@ -230,7 +230,7 @@ export default function SellScreen() {
   if (!profile?.verified) {
     return (
       <View style={styles.screen}>
-        <ScreenHeader title="Sell on Crownly" />
+        <ScreenHeader logo title="Sell" subtitle="List your timepieces to collectors worldwide" />
         <View style={styles.loggedOutBody}>
           <EmptyState
             icon="shield-checkmark-outline"
@@ -247,7 +247,7 @@ export default function SellScreen() {
   if (!isSellerKycApproved(profile)) {
     return (
       <View style={styles.screen}>
-        <ScreenHeader title="Sell on Crownly" />
+        <ScreenHeader logo title="Sell" subtitle="List your timepieces to collectors worldwide" />
         <View style={styles.loggedOutBody}>
           <EmptyState
             icon="id-card-outline"
