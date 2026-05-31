@@ -47,7 +47,7 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="mt-8 max-w-lg text-base leading-relaxed text-[#a1a1aa] md:text-lg"
         >
-          HourMark is the premium iOS marketplace to buy, sell, and discover
+          Crownly is the premium iOS marketplace to buy, sell, and discover
           authenticated luxury watches — with verified sellers, Stripe-powered
           checkout, and automatic seller payouts on every sale.
         </motion.p>

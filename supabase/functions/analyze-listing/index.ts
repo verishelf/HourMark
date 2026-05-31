@@ -143,6 +143,9 @@ Deno.serve(async (req) => {
     const listingStatus =
       authStatus === "auto_verified" ? "active" : authStatus === "rejected" ? "archived" : "draft";
 
+    const includesBox = Boolean(listing.includes_box) || hasBoxPapers;
+    const includesPapers = Boolean(listing.includes_papers) || hasBoxPapers;
+
     await supabase
       .from("listings")
       .update({
@@ -154,6 +157,8 @@ Deno.serve(async (req) => {
         trust_badges: badges,
         authenticated: authStatus === "auto_verified",
         status: listingStatus,
+        includes_box: includesBox,
+        includes_papers: includesPapers,
       })
       .eq("id", listingId);
 

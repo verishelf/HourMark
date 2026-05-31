@@ -29,11 +29,11 @@ export const env = {
 
   stripeConnectRefreshUrl: optionalEnv(
     "STRIPE_CONNECT_REFRESH_URL",
-    "hourmark://profile"
+    "crownly://profile"
   ),
   stripeConnectReturnUrl: optionalEnv(
     "STRIPE_CONNECT_RETURN_URL",
-    "hourmark://profile"
+    "crownly://profile"
   ),
 };
 

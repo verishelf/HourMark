@@ -12,8 +12,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
       <StripeProvider
         publishableKey={STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder"}
-        merchantIdentifier="merchant.com.hourmark.app"
-        urlScheme="hourmark"
+        merchantIdentifier="merchant.com.crownly.app"
+        urlScheme="crownly"
       >
         <StatusBar style="light" />
         <Stack
@@ -50,6 +50,10 @@ export default function RootLayout() {
             options={{ animation: "slide_from_right" }}
           />
           <Stack.Screen
+            name="profile/posts"
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
             name="post/create"
             options={{ animation: "slide_from_bottom", presentation: "modal" }}
           />
@@ -65,8 +69,9 @@ export default function RootLayout() {
             name="checkout/success"
             options={{ animation: "fade", gestureEnabled: false }}
           />
-          <Stack.Screen name="auth/login" options={{ animation: "fade" }} />
-          <Stack.Screen name="auth/signup" options={{ animation: "fade" }} />
+          <Stack.Screen name="auth/welcome" options={{ animation: "fade" }} />
+          <Stack.Screen name="auth/login" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="auth/signup" options={{ animation: "slide_from_right" }} />
           <Stack.Screen
             name="chat/[id]"
             options={{ animation: "slide_from_right" }}

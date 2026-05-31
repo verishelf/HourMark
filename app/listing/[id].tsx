@@ -8,6 +8,7 @@ import { ListingGallery } from "@/components/ListingGallery";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { SellerCard } from "@/components/SellerCard";
+import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { TrustBadgeRow } from "@/components/TrustBadgeRow";
 import { TrustScoreIndicator } from "@/components/TrustScoreIndicator";
 import { FraudWarningBanner } from "@/components/FraudWarningBanner";
@@ -55,7 +56,7 @@ export default function ListingDetailScreen() {
 
     if (!isAuthenticated) {
       router.push({
-        pathname: "/auth/login",
+        pathname: "/auth/welcome",
         params: { redirect: checkoutPath },
       });
       return;
@@ -72,7 +73,7 @@ export default function ListingDetailScreen() {
 
     if (!isAuthenticated) {
       router.push({
-        pathname: "/auth/login",
+        pathname: "/auth/welcome",
         params: { redirect: `/listing/${listing.id}` },
       });
       return;
@@ -131,6 +132,13 @@ export default function ListingDetailScreen() {
           )}
 
           <FraudWarningBanner flags={listing.fraud_flags} />
+
+          <View style={{ marginTop: 16, marginBottom: 8 }}>
+            <Text style={{ ...Typography.label, color: Colors.textMuted, marginBottom: 10 }}>
+              Included
+            </Text>
+            <ListingSetIcons listing={listing} />
+          </View>
 
           <View style={{ flexDirection: "row", gap: 12, marginTop: 12, marginBottom: 24 }}>
             {listing.authenticated && (

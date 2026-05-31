@@ -28,6 +28,7 @@ import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { notifyContentRefresh } from "@/lib/contentRefresh";
+import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { createListing, uploadListingImage } from "@/services/listings";
 import { isSellerKycApproved } from "@/services/kyc";
 import { dollarsToCents } from "@/lib/stripe";
@@ -87,6 +88,9 @@ export default function SellScreen() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
+  const [includesBox, setIncludesBox] = useState(true);
+  const [includesPapers, setIncludesPapers] = useState(true);
+  const [includesWarrantyCard, setIncludesWarrantyCard] = useState(false);
   const [step, setStep] = useState<Step>("Photos");
   const [loading, setLoading] = useState(false);
 
@@ -151,7 +155,7 @@ export default function SellScreen() {
 
   const handlePublish = async () => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      router.push("/auth/welcome");
       return;
     }
     if (!profile?.verified) {
@@ -182,6 +186,9 @@ export default function SellScreen() {
         price: dollarsToCents(parseFloat(price)),
         images: uploaded,
         serial_number: serialNumber || undefined,
+        includes_box: includesBox,
+        includes_papers: includesPapers,
+        includes_warranty_card: includesWarrantyCard,
       });
 
       notifyContentRefresh();
@@ -196,6 +203,9 @@ export default function SellScreen() {
       setModel("");
       setPrice("");
       setDescription("");
+      setIncludesBox(true);
+      setIncludesPapers(true);
+      setIncludesWarrantyCard(false);
     } catch (e) {
       Alert.alert("Error", e instanceof Error ? e.message : "Failed to publish");
     } finally {
@@ -208,10 +218,10 @@ export default function SellScreen() {
   if (!isAuthenticated && !authLoading) {
     return (
       <LoggedOutGate
-        title="Sell on HourMark"
+        title="Sell on Crownly"
         subtitle="List your timepieces to collectors worldwide."
         backgroundImage={LOGGED_OUT_GATE_IMAGES.sell}
-        onSignIn={() => router.push("/auth/login")}
+        onSignIn={() => router.push("/auth/welcome")}
         onSignUp={() => router.push("/auth/signup")}
       />
     );
@@ -220,7 +230,7 @@ export default function SellScreen() {
   if (!profile?.verified) {
     return (
       <View style={styles.screen}>
-        <ScreenHeader title="Sell on HourMark" />
+        <ScreenHeader title="Sell on Crownly" />
         <View style={styles.loggedOutBody}>
           <EmptyState
             icon="shield-checkmark-outline"
@@ -237,7 +247,7 @@ export default function SellScreen() {
   if (!isSellerKycApproved(profile)) {
     return (
       <View style={styles.screen}>
-        <ScreenHeader title="Sell on HourMark" />
+        <ScreenHeader title="Sell on Crownly" />
         <View style={styles.loggedOutBody}>
           <EmptyState
             icon="id-card-outline"
@@ -386,6 +396,76 @@ export default function SellScreen() {
               </ScrollView>
             </FormSection>
 
+            <FormSection title="What's included">
+              <Text style={styles.fieldLabel}>Tap to toggle — faded items are not included</Text>
+              <View style={[styles.chipRow, { marginTop: 8, flexWrap: "wrap" }]}>
+                <Pressable
+                  onPress={() => setIncludesBox((v) => !v)}
+                  style={[styles.chip, styles.accessoryChip, includesBox && styles.chipActive]}
+                >
+                  <Ionicons
+                    name="cube-outline"
+                    size={16}
+                    color={includesBox ? Colors.textPrimary : Colors.textMuted}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.chipText,
+                      includesBox && styles.chipTextActive,
+                      !includesBox && { opacity: 0.5 },
+                    ]}
+                  >
+                    Box
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setIncludesPapers((v) => !v)}
+                  style={[styles.chip, styles.accessoryChip, includesPapers && styles.chipActive]}
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={16}
+                    color={includesPapers ? Colors.textPrimary : Colors.textMuted}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.chipText,
+                      includesPapers && styles.chipTextActive,
+                      !includesPapers && { opacity: 0.5 },
+                    ]}
+                  >
+                    Papers
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setIncludesWarrantyCard((v) => !v)}
+                  style={[
+                    styles.chip,
+                    styles.accessoryChip,
+                    includesWarrantyCard && styles.chipActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="ribbon-outline"
+                    size={16}
+                    color={includesWarrantyCard ? Colors.textPrimary : Colors.textMuted}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.chipText,
+                      includesWarrantyCard && styles.chipTextActive,
+                      !includesWarrantyCard && { opacity: 0.5 },
+                    ]}
+                  >
+                    Warranty card
+                  </Text>
+                </Pressable>
+              </View>
+            </FormSection>
+
             <FormSection title="Description">
               <TextInput
                 placeholder="Describe your watch, box & papers, service history…"
@@ -433,6 +513,13 @@ export default function SellScreen() {
               ${parseFloat(price || "0").toLocaleString()}
             </Text>
             {description ? <Text style={styles.previewDesc}>{description}</Text> : null}
+            <ListingSetIcons
+              listing={{
+                includes_box: includesBox,
+                includes_papers: includesPapers,
+                includes_warranty_card: includesWarrantyCard,
+              }}
+            />
           </>
         )}
       </ScrollView>
@@ -592,6 +679,10 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: "row",
     paddingRight: 8,
+  },
+  accessoryChip: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   chip: {
     paddingHorizontal: 14,

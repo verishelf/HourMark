@@ -55,7 +55,7 @@ export default function VerifyScreen() {
     (navState: WebViewNavigation) => {
       const url = navState.url;
 
-      if (url.startsWith(redirectPrefix) || url.startsWith("hourmark://")) {
+      if (url.startsWith(redirectPrefix) || url.startsWith("crownly://")) {
         finishVerification();
       }
     },
@@ -111,7 +111,7 @@ export default function VerifyScreen() {
         onShouldStartLoadWithRequest={(request) => {
           if (
             request.url.startsWith(redirectPrefix) ||
-            request.url.startsWith("hourmark://")
+            request.url.startsWith("crownly://")
           ) {
             finishVerification();
             return false;

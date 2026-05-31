@@ -24,7 +24,7 @@ app.post(
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "hourmark-api" });
+  res.json({ status: "ok", service: "crownly-api" });
 });
 
 app.use("/api/stripe", stripeRoutes);
@@ -45,7 +45,7 @@ app.use(
 );
 
 app.listen(env.port, () => {
-  console.log(`HourMark API listening on port ${env.port}`);
+  console.log(`Crownly API listening on port ${env.port}`);
 });
 
 export default app;

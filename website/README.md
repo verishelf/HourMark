@@ -1,6 +1,15 @@
-# HourMark Website
+# Crownly Website
 
-Marketing site for the HourMark luxury watch marketplace iOS app. Built with Next.js 16, TypeScript, Tailwind CSS, and Framer Motion.
+Marketing site for the Crownly luxury watch marketplace iOS app. Built with Next.js 16, TypeScript, Tailwind CSS, and Framer Motion.
+
+## Legal pages
+
+| Page | Path |
+|------|------|
+| Privacy Policy | `/privacy` |
+| Terms of Service & EULA | `/terms` (EULA anchor: `/terms#eula`) |
+
+Update contact emails and effective date in `src/lib/legal.ts` before production launch.
 
 Copy and feature highlights align with the mobile app and Stripe Connect marketplace backend (`apps/api/`).
 

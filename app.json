@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "HourMark",
-    "slug": "hourmark",
+    "name": "Crownly",
+    "slug": "crownly",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "hourmark",
+    "scheme": "crownly",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,11 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hourmark.app",
+      "bundleIdentifier": "com.crownly.app",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "HourMark needs camera access to photograph your watch listings.",
-        "NSPhotoLibraryUsageDescription": "HourMark needs photo library access to upload watch images."
+        "NSCameraUsageDescription": "Crownly needs camera access to photograph your watch listings.",
+        "NSPhotoLibraryUsageDescription": "Crownly needs photo library access to upload watch images."
       }
     },
     "android": {
@@ -29,7 +29,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.hourmark.app"
+      "package": "com.crownly.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -42,7 +42,7 @@
       [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "merchant.com.hourmark.app",
+          "merchantIdentifier": "merchant.com.crownly.app",
           "enableGooglePay": true
         }
       ],
@@ -57,7 +57,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "hourmark"
+        "projectId": "crownly"
       }
     }
   }

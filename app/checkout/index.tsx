@@ -112,7 +112,7 @@ export default function CheckoutScreen() {
 
     if (!isAuthenticated && listingId) {
       router.replace({
-        pathname: "/auth/login",
+        pathname: "/auth/welcome",
         params: { redirect: `/checkout?listingId=${listingId}` },
       });
     }
@@ -205,7 +205,7 @@ export default function CheckoutScreen() {
 
       const { error: initError } = await initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: "HourMark",
+        merchantDisplayName: "Crownly",
         allowsDelayedPaymentMethods: false,
         applePay: {
           merchantCountryCode: MERCHANT_COUNTRY,

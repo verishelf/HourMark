@@ -1,30 +1,23 @@
 import { useCallback, useState } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { Alert, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
+import { ConversationRow } from "@/components/ConversationRow";
 import { EmptyState } from "@/components/EmptyState";
 import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import {
-  CONVERSATION_DEFAULT_AVATAR,
-  getConversationAvatarUri,
-  getConversationPrimaryTitle,
-  getConversationSubtitle,
-  isWatchConversation,
-} from "@/lib/conversationDisplay";
-import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
 import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
-import { RADIUS, SPACING } from "@/constants/layout";
-import { Typography } from "@/constants/typography";
+import { SPACING } from "@/constants/layout";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useAuth } from "@/hooks/useAuth";
 import { deleteConversation, getConversations } from "@/services/messaging";
 import { tabContentPadding } from "@/styles/layout";
 import type { Conversation } from "@/types";
+
+const ROW_ESTIMATED_HEIGHT = 96;
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
@@ -72,7 +65,7 @@ export default function MessagesScreen() {
         title="Messages"
         subtitle="Sign in to connect with buyers and sellers about listings."
         backgroundImage={LOGGED_OUT_GATE_IMAGES.messages}
-        onSignIn={() => router.push("/auth/login")}
+        onSignIn={() => router.push("/auth/welcome")}
         onSignUp={() => router.push("/auth/signup")}
       />
     );
@@ -87,122 +80,39 @@ export default function MessagesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <ScreenHeader title="Messages" subtitle="Your conversations" />
+      <ScreenHeader
+        title="Messages"
+        subtitle="Your conversations"
+        style={{ paddingBottom: SPACING.screen / 2 }}
+      />
 
       <FlashList
         data={conversations}
         keyExtractor={(item) => item.id}
+        estimatedItemSize={ROW_ESTIMATED_HEIGHT}
         {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
           ...tabContentPadding(insets.bottom),
-          paddingHorizontal: SPACING.screen,
+          paddingTop: 4,
         }}
         ListEmptyComponent={
-          <EmptyState
-            icon="chatbubble-outline"
-            title="No conversations yet"
-            body="Message a seller from any listing to start a conversation."
-          />
+          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 48 }}>
+            <EmptyState
+              icon="chatbubble-outline"
+              title="No conversations yet"
+              body="Message a seller from any listing to start a conversation."
+            />
+          </View>
         }
-        renderItem={({ item }) => {
-          const unread = isUnread(item);
-          const aboutWatch = isWatchConversation(item);
-          const avatarUri = getConversationAvatarUri(item);
-          const primaryTitle = getConversationPrimaryTitle(item);
-          const subtitle = getConversationSubtitle(item);
-
-          return (
-            <SwipeToDeleteRow onDelete={() => confirmDeleteConversation(item.id)}>
-            <Pressable
+        renderItem={({ item }) => (
+          <SwipeToDeleteRow onDelete={() => confirmDeleteConversation(item.id)}>
+            <ConversationRow
+              conversation={item}
+              unread={isUnread(item)}
               onPress={() => router.push(`/chat/${item.id}`)}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                paddingVertical: 14,
-                borderBottomWidth: 1,
-                borderBottomColor: Colors.border,
-                backgroundColor: Colors.background,
-                opacity: pressed ? 0.8 : 1,
-                gap: 12,
-              })}
-            >
-              <Image
-                source={{ uri: avatarUri || CONVERSATION_DEFAULT_AVATAR }}
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: aboutWatch ? RADIUS.sm : 28,
-                  backgroundColor: Colors.cardElevated,
-                  borderWidth: aboutWatch ? 0 : 1,
-                  borderColor: Colors.border,
-                }}
-                contentFit="cover"
-              />
-              <View style={{ flex: 1 }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      ...Typography.h3,
-                      color: Colors.textPrimary,
-                      fontSize: 15,
-                      flex: 1,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {primaryTitle}
-                  </Text>
-                  {item.last_message && (
-                    <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
-                      {formatRelativeTime(item.last_message.created_at)}
-                    </Text>
-                  )}
-                </View>
-                {subtitle ? (
-                  <Text
-                    style={{
-                      ...Typography.caption,
-                      color: Colors.textSecondary,
-                      marginTop: 2,
-                    }}
-                  >
-                    {subtitle}
-                  </Text>
-                ) : null}
-                {item.last_message && (
-                  <Text
-                    style={{
-                      ...Typography.body,
-                      color: unread ? Colors.textPrimary : Colors.textMuted,
-                      marginTop: 4,
-                      fontSize: 14,
-                      fontWeight: unread ? "500" : "400",
-                    }}
-                    numberOfLines={1}
-                  >
-                    {item.last_message.text}
-                  </Text>
-                )}
-              </View>
-              {unread && (
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: Colors.textPrimary,
-                    alignSelf: "center",
-                  }}
-                />
-              )}
-            </Pressable>
-            </SwipeToDeleteRow>
-          );
-        }}
+            />
+          </SwipeToDeleteRow>
+        )}
       />
     </View>
   );

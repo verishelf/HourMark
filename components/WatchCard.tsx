@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Badge } from "@/components/Badge";
+import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { TrustBadgeRow } from "@/components/TrustBadgeRow";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
@@ -60,7 +61,7 @@ export function WatchCard({
 
   const handleFavorite = () => {
     if (!user) {
-      router.push("/auth/login");
+      router.push("/auth/welcome");
       return;
     }
     toggle();
@@ -80,7 +81,7 @@ export function WatchCard({
     <View
       style={{
         marginBottom: isGrid || isCompact ? 0 : CARD_GAP,
-        flex: isGrid ? 1 : undefined,
+        width: isGrid ? "100%" : undefined,
       }}
     >
       <View
@@ -168,17 +169,27 @@ export function WatchCard({
             >
               {listing.brand}
             </Text>
-            <Text
+            <View
               style={{
-                ...Typography.h3,
-                color: Colors.textPrimary,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: isGrid ? 6 : 8,
                 marginBottom: 4,
-                fontSize: isGrid ? 14 : isCompact ? 16 : 18,
               }}
-              numberOfLines={isGrid ? 2 : 1}
             >
-              {listing.model}
-            </Text>
+              <Text
+                style={{
+                  ...Typography.h3,
+                  color: Colors.textPrimary,
+                  flex: 1,
+                  fontSize: isGrid ? 14 : isCompact ? 16 : 18,
+                }}
+                numberOfLines={isGrid ? 2 : 1}
+              >
+                {listing.model}
+              </Text>
+              <ListingSetIcons listing={listing} compact inline />
+            </View>
             {listing.reference_number && !isCompact && !isGrid && (
               <Text
                 style={{

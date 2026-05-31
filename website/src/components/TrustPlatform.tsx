@@ -52,7 +52,7 @@ export function TrustPlatform() {
             Automated authentication buyers can trust.
           </h2>
           <p className="mt-6 max-w-xl text-sm leading-relaxed text-[#a1a1aa]">
-            HourMark combines AI listing verification, seller KYC, serial intelligence, and
+            Crownly combines AI listing verification, seller KYC, serial intelligence, and
             escrow-backed checkout — so collectors trade with confidence, not guesswork.
           </p>
         </motion.div>

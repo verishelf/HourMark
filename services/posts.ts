@@ -114,7 +114,7 @@ export async function getUserPosts(userId: string): Promise<UserPost[]> {
   try {
     const { data, error } = await supabase
       .from("user_posts")
-      .select("*")
+      .select("*, author:users!user_id(username, avatar_url)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 

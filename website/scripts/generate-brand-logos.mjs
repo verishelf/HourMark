@@ -133,7 +133,7 @@ async function downloadBrand(brand, attempt = 1) {
   }
 
   const response = await fetch(wikiUrl(brand.wiki), {
-    headers: { "User-Agent": "HourMark-Website/1.0 (logo build script)" },
+    headers: { "User-Agent": "Crownly-Website/1.0 (logo build script)" },
   });
 
   if (response.status === 429 && attempt < 5) {

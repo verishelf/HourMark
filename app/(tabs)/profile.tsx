@@ -25,7 +25,7 @@ import { deleteListing, getUserListings } from "@/services/listings";
 import { subscribeContentRefresh, notifyContentRefresh } from "@/lib/contentRefresh";
 import { deletePost, getUserPosts } from "@/services/posts";
 import { getOrders } from "@/services/payments";
-import { signOut } from "@/services/auth";
+import { deleteAccount, signOut } from "@/services/auth";
 import { getFollowCounts } from "@/services/follows";
 import {
   getSellerVerificationStatus,
@@ -55,7 +55,7 @@ function ListingGrid({
   onDelete: (listing: Listing) => void;
 }) {
   return (
-    <View style={styles.listingsGrid}>
+    <View style={[styles.listingsGrid, styles.listingsGridBelowTabs]}>
       {chunkListings(listings).map((row, rowIndex) => (
         <View key={row.map((listing) => listing.id).join("-")} style={styles.listingsRow}>
           {row.map((listing, columnIndex) => (
@@ -144,7 +144,7 @@ export default function ProfileScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [tab, setTab] = useState<TabKey>("posts");
+  const [tab, setTab] = useState<TabKey>("listings");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
     status: "not_started",
     chargesEnabled: false,
@@ -153,6 +153,7 @@ export default function ProfileScreen() {
     rejectionReason: null,
   });
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const loadVerificationStatus = useCallback(async () => {
     if (!user) return;
@@ -233,6 +234,47 @@ export default function ProfileScreen() {
     })();
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete account",
+      "This permanently removes your profile, listings, posts, messages, and orders from Crownly. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Confirm deletion",
+              "Your account will be deleted from our servers immediately.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Delete account",
+                  style: "destructive",
+                  onPress: async () => {
+                    setDeletingAccount(true);
+                    try {
+                      await deleteAccount();
+                      router.replace("/auth/welcome");
+                    } catch (e) {
+                      Alert.alert(
+                        "Error",
+                        e instanceof Error ? e.message : "Failed to delete account"
+                      );
+                    } finally {
+                      setDeletingAccount(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   const handleDeleteListing = (listing: Listing) => {
     if (!user) return;
     Alert.alert(
@@ -260,18 +302,18 @@ export default function ProfileScreen() {
   if (!isAuthenticated && !loading) {
     return (
       <LoggedOutGate
-        title="HourMark"
+        title="Crownly"
         subtitle="Join the private marketplace for authenticated luxury timepieces."
         backgroundImage={LOGGED_OUT_GATE_IMAGES.profile}
-        onSignIn={() => router.push("/auth/login")}
+        onSignIn={() => router.push("/auth/welcome")}
         onSignUp={() => router.push("/auth/signup")}
       />
     );
   }
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "posts", label: "Posts" },
     { key: "listings", label: "Listings" },
+    { key: "posts", label: "Posts" },
     { key: "favorites", label: "Saved" },
     { key: "orders", label: "Orders" },
   ];
@@ -342,30 +384,11 @@ export default function ProfileScreen() {
         <View
           style={[
             profileTabStyles.tabContent,
-            tab !== "posts" || !posts.length ? profileTabStyles.tabContentPadded : null,
+            (tab === "posts" && posts.length) || (tab === "listings" && listings.length)
+              ? null
+              : profileTabStyles.tabContentPadded,
           ]}
         >
-          {tab === "posts" &&
-            (posts.length ? (
-              <PostGrid
-                posts={posts}
-                editable
-                variant="compact"
-                flushTop
-                onEdit={(post) => router.push(`/post/edit/${post.id}`)}
-                onDelete={handleDeletePost}
-              />
-            ) : (
-              <EmptyState
-                compact
-                icon="images-outline"
-                title="No posts yet"
-                body="Share a photo from the + button on Home."
-                actionLabel="Create Post"
-                onAction={() => router.push("/post/create")}
-              />
-            ))}
-
           {tab === "listings" &&
             (listings.length ? (
               <ListingGrid
@@ -381,6 +404,28 @@ export default function ProfileScreen() {
                 body="List your first timepiece to start selling."
                 actionLabel="List a Watch"
                 onAction={() => router.push("/sell")}
+              />
+            ))}
+
+          {tab === "posts" &&
+            (posts.length ? (
+              <PostGrid
+                posts={posts}
+                editable
+                variant="compact"
+                flushTop
+                feedUserId={user?.id}
+                onEdit={(post) => router.push(`/post/edit/${post.id}`)}
+                onDelete={handleDeletePost}
+              />
+            ) : (
+              <EmptyState
+                compact
+                icon="images-outline"
+                title="No posts yet"
+                body="Share a photo from the + button on Home."
+                actionLabel="Create Post"
+                onAction={() => router.push("/post/create")}
               />
             ))}
 
@@ -418,11 +463,20 @@ export default function ProfileScreen() {
             onPress={handleStartVerification}
           />
           <SettingsRow
+            label="Delete Account"
+            icon="trash-outline"
+            subtitle="Permanently remove your account and all data."
+            onPress={handleDeleteAccount}
+            destructive
+            loading={deletingAccount}
+            disabled={deletingAccount}
+          />
+          <SettingsRow
             label="Sign Out"
             icon="log-out-outline"
             onPress={async () => {
               await signOut();
-              router.replace("/auth/login");
+              router.replace("/auth/welcome");
             }}
             destructive
             isLast
@@ -453,6 +507,9 @@ const styles = StyleSheet.create({
   },
   listingsGrid: {
     gap: GRID_GAP,
+  },
+  listingsGridBelowTabs: {
+    marginTop: 16,
   },
   listingsRow: {
     flexDirection: "row",

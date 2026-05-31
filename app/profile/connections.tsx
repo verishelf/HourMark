@@ -155,7 +155,7 @@ export default function ProfileConnectionsScreen() {
   const handleMessage = useCallback(
     async (profile: UserProfile) => {
       if (!user) {
-        router.push("/auth/login");
+        router.push("/auth/welcome");
         return;
       }
 

@@ -1,5 +1,9 @@
 import { MOCK_LISTINGS } from "@/data/mockListings";
-import { getImageContentType, resolveListingImageUrl } from "@/lib/listingImages";
+import {
+  getImageContentType,
+  isDisplayableListing,
+  resolveListingImageUrl,
+} from "@/lib/listingImages";
 import { shouldFallbackToMock } from "@/lib/supabaseErrors";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { CreateListingInput, Listing } from "@/types";
@@ -57,6 +61,7 @@ export async function getListings(filters?: {
     .from("listings")
     .select("*, seller:users(*)")
     .eq("status", "active")
+    .eq("authentication_status", "auto_verified")
     .order("created_at", { ascending: false });
 
   if (filters?.brand && filters.brand !== "All") {
@@ -336,5 +341,5 @@ function filterMockListings(
     result = result.filter((l) => l.condition === filters.condition);
   }
 
-  return result;
+  return result.filter(isDisplayableListing);
 }

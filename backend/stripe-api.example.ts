@@ -1,5 +1,5 @@
 /**
- * HourMark Stripe Connect — reference only.
+ * Crownly Stripe Connect — reference only.
  *
  * Production implementation:
  * - Supabase Edge Functions: supabase/functions/*

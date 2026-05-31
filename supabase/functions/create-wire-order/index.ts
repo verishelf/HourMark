@@ -136,13 +136,13 @@ Deno.serve(async (req) => {
     return jsonResponse({
       orderId: order.id,
       wireReference,
-      bankName: Deno.env.get("HOURMARK_WIRE_BANK_NAME") ?? "Chase Bank, N.A.",
-      accountName: Deno.env.get("HOURMARK_WIRE_ACCOUNT_NAME") ?? "HourMark Inc.",
-      routingNumber: Deno.env.get("HOURMARK_WIRE_ROUTING") ?? "021000021",
-      accountNumber: Deno.env.get("HOURMARK_WIRE_ACCOUNT") ?? "Contact support for account details",
-      swiftCode: Deno.env.get("HOURMARK_WIRE_SWIFT") ?? "CHASUS33",
+      bankName: Deno.env.get("CROWNLY_WIRE_BANK_NAME") ?? "Chase Bank, N.A.",
+      accountName: Deno.env.get("CROWNLY_WIRE_ACCOUNT_NAME") ?? "Crownly Inc.",
+      routingNumber: Deno.env.get("CROWNLY_WIRE_ROUTING") ?? "021000021",
+      accountNumber: Deno.env.get("CROWNLY_WIRE_ACCOUNT") ?? "Contact support for account details",
+      swiftCode: Deno.env.get("CROWNLY_WIRE_SWIFT") ?? "CHASUS33",
       bankAddress:
-        Deno.env.get("HOURMARK_WIRE_BANK_ADDRESS") ??
+        Deno.env.get("CROWNLY_WIRE_BANK_ADDRESS") ??
         "383 Madison Avenue, New York, NY 10179, USA",
     });
   } catch (error) {

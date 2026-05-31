@@ -18,6 +18,7 @@ import { MessageBubble } from "@/components/MessageBubble";
 import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Colors } from "@/constants/colors";
+import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -258,8 +259,9 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingHorizontal: SPACING.screen,
+    paddingBottom: 14,
+    gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
     flexDirection: "row",
@@ -282,7 +284,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardElevated,
   },
   listContent: {
-    padding: 20,
+    paddingHorizontal: SPACING.screen,
+    paddingTop: 16,
     paddingBottom: 16,
   },
   listContentEmpty: {

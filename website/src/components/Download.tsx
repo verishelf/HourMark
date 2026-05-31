@@ -24,14 +24,14 @@ export function Download() {
               Start buying &amp; selling
             </h2>
             <p className="mx-auto mt-6 max-w-md text-[#a1a1aa]">
-              HourMark is launching soon on the App Store. Discover authenticated
+              Crownly is launching soon on the App Store. Discover authenticated
               luxury watches, checkout with Apple Pay, and sell with Stripe
               Connect payouts — all from your iPhone.
             </p>
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="mailto:hello@hourmark.app?subject=HourMark%20Waitlist"
+                href="mailto:hello@crownly.app?subject=Crownly%20Waitlist"
                 className="w-full max-w-xs bg-white px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-black transition-opacity hover:opacity-90 sm:w-auto"
               >
                 Join the Waitlist

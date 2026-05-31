@@ -113,7 +113,7 @@ export async function createWireTransferOrder(params: {
       orderId: `order-${Date.now()}`,
       wireReference: "HM-DEMO1234",
       bankName: "Demo Bank",
-      accountName: "HourMark Inc.",
+      accountName: "Crownly Inc.",
       routingNumber: "021000021",
       accountNumber: "Demo mode — configure wire details",
       swiftCode: "CHASUS33",

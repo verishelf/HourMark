@@ -54,6 +54,9 @@ export type Listing = {
   extracted_serial_number?: string | null;
   verification_confidence?: number;
   trust_badges?: string[];
+  includes_box?: boolean;
+  includes_papers?: boolean;
+  includes_warranty_card?: boolean;
   created_at: string;
   seller?: UserProfile;
 };
@@ -207,6 +210,9 @@ export type CreateListingInput = {
   description?: string;
   images: string[];
   serial_number?: string;
+  includes_box?: boolean;
+  includes_papers?: boolean;
+  includes_warranty_card?: boolean;
 };
 
 export type UserPost = {

@@ -114,7 +114,7 @@ export default function SellerProfileScreen() {
 
   const handleMessage = async () => {
     if (!user || !id) {
-      router.push("/auth/login");
+      router.push("/auth/welcome");
       return;
     }
 
@@ -136,7 +136,7 @@ export default function SellerProfileScreen() {
 
   const handleToggleFollow = async () => {
     if (!user || !id) {
-      router.push("/auth/login");
+      router.push("/auth/welcome");
       return;
     }
     setFollowLoading(true);
@@ -258,7 +258,7 @@ export default function SellerProfileScreen() {
           >
             {tab === "posts" &&
               (posts.length ? (
-                <PostGrid posts={posts} variant="compact" flushTop />
+                <PostGrid posts={posts} variant="compact" flushTop feedUserId={id} />
               ) : (
                 <EmptyState
                   compact

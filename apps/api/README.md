@@ -1,6 +1,6 @@
-# HourMark API
+# Crownly API
 
-Stripe Connect marketplace backend for HourMark. Handles Express account onboarding, destination charges with a **3% platform commission**, and webhooks that sync Supabase.
+Stripe Connect marketplace backend for Crownly. Handles Express account onboarding, destination charges with a **3% platform commission**, and webhooks that sync Supabase.
 
 ## Setup
 

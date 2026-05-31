@@ -27,6 +27,8 @@ type Props = {
   variant?: "compact" | "default";
   /** No top gap — sits flush under profile tabs */
   flushTop?: boolean;
+  /** Opens vertical profile feed (Instagram-style) instead of single post */
+  feedUserId?: string;
 };
 
 export function PostGrid({
@@ -36,8 +38,20 @@ export function PostGrid({
   onDelete,
   variant = "default",
   flushTop = false,
+  feedUserId,
 }: Props) {
   const router = useRouter();
+
+  const openPost = (post: UserPost) => {
+    if (feedUserId) {
+      router.push({
+        pathname: "/profile/posts",
+        params: { userId: feedUserId, postId: post.id },
+      });
+      return;
+    }
+    router.push(`/post/${post.id}`);
+  };
   const { width: screenWidth } = useWindowDimensions();
   const isCompact = variant === "compact";
   const gap = isCompact ? COMPACT_GAP : GRID_GAP;
@@ -75,7 +89,7 @@ export function PostGrid({
           {row.map((post) => (
             <View key={post.id} style={{ width: cellSize, height: cellSize }}>
               <Pressable
-                onPress={() => router.push(`/post/${post.id}`)}
+                onPress={() => openPost(post)}
                 style={({ pressed }) => [
                   styles.cell,
                   { width: cellSize, height: cellSize, borderRadius: cellRadius },

@@ -1,4 +1,4 @@
--- HourMark Supabase Schema
+-- Crownly Supabase Schema
 -- Fresh install only: run in Supabase SQL Editor on a new project.
 -- Existing project? Run supabase/migrations/20260527180000_seller_verification.sql instead.
 

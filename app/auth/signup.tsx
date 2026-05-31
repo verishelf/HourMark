@@ -85,7 +85,7 @@ export default function SignupScreen() {
               textAlign: "center",
             }}
           >
-            Join HourMark
+            Join Crownly
           </Text>
           <Text
             style={{

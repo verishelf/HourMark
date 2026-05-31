@@ -92,7 +92,7 @@ export default function CreatePostScreen() {
 
   const handlePublish = async () => {
     if (!user) {
-      router.push("/auth/login");
+      router.push("/auth/welcome");
       return;
     }
     if (!imageUri) {
@@ -119,10 +119,10 @@ export default function CreatePostScreen() {
   if (!isAuthenticated && !authLoading) {
     return (
       <LoggedOutGate
-        title="Share on HourMark"
+        title="Share on Crownly"
         subtitle="Sign in to post photos to your profile."
         backgroundImage={LOGGED_OUT_GATE_IMAGES.profile}
-        onSignIn={() => router.push("/auth/login")}
+        onSignIn={() => router.push("/auth/welcome")}
         onSignUp={() => router.push("/auth/signup")}
       />
     );

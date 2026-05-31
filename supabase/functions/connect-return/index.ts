@@ -1,4 +1,4 @@
-const APP_SCHEME = "hourmark";
+const APP_SCHEME = "crownly";
 
 function sanitizePath(value: string | null): string {
   if (value === "sell") return "sell";
@@ -28,7 +28,7 @@ Deno.serve((req) => {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Returning to HourMark</title>
+    <title>Returning to Crownly</title>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -50,8 +50,8 @@ Deno.serve((req) => {
   <body>
     <div>
       <h1>Verification complete</h1>
-      <p>Return to the HourMark app to continue.</p>
-      <p><a href="${deepLink}">Open HourMark</a></p>
+      <p>Return to the Crownly app to continue.</p>
+      <p><a href="${deepLink}">Open Crownly</a></p>
     </div>
   </body>
 </html>`;

@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import {
   Dimensions,
   FlatList,
+  Platform,
   View,
   ViewToken,
 } from "react-native";
@@ -9,6 +10,7 @@ import { Image } from "expo-image";
 import { MotiView } from "moti";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
+import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
 import { resolveListingImageUrl } from "@/lib/listingImages";
 
 const { width, height } = Dimensions.get("window");
@@ -18,29 +20,48 @@ type Props = {
 };
 
 export function ListingGallery({ images }: Props) {
-  const [activeIndex, setActiveIndex] = useState(0);
   const resolvedImages = images
     .map((image) => resolveListingImageUrl(image))
     .filter((image): image is string => Boolean(image));
 
+  const {
+    listRef,
+    loopData,
+    realCount,
+    realIndex,
+    onMomentumScrollEnd,
+    onViewableLoopIndexChanged,
+    getItemLayout,
+  } = useInfiniteCarousel(resolvedImages, width, { initialScroll: true });
+
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems[0]?.index != null) {
-        setActiveIndex(viewableItems[0].index);
-      }
+      const index = viewableItems[0]?.index;
+      if (index != null) onViewableLoopIndexChanged(index);
     }
   ).current;
 
   return (
     <View>
       <FlatList
-        data={resolvedImages}
+        ref={listRef}
+        data={loopData}
         horizontal
         pagingEnabled
         {...HIDE_SCROLL_INDICATORS}
+        decelerationRate={Platform.OS === "ios" ? "fast" : "normal"}
+        overScrollMode="never"
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        getItemLayout={getItemLayout}
         keyExtractor={(_, i) => String(i)}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            listRef.current?.scrollToIndex({ index: info.index, animated: true });
+          }, 80);
+        }}
         renderItem={({ item }) => (
           <Image
             source={{ uri: item }}
@@ -50,7 +71,7 @@ export function ListingGallery({ images }: Props) {
           />
         )}
       />
-      {resolvedImages.length > 1 && (
+      {realCount > 1 && (
         <View
           style={{
             flexDirection: "row",
@@ -63,10 +84,10 @@ export function ListingGallery({ images }: Props) {
             <MotiView
               key={i}
               animate={{
-                opacity: i === activeIndex ? 1 : 0.25,
+                opacity: i === realIndex ? 1 : 0.25,
               }}
               style={{
-                width: i === activeIndex ? 20 : 6,
+                width: i === realIndex ? 20 : 6,
                 height: 2,
                 backgroundColor: Colors.textPrimary,
               }}

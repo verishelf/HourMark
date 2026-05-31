@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
   Dimensions,
   FlatList,
+  Platform,
   Pressable,
   Text,
   View,
@@ -15,6 +16,7 @@ import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Typography } from "@/constants/typography";
+import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
 import type { Listing } from "@/types";
 
 const { width } = Dimensions.get("window");
@@ -145,36 +147,33 @@ function FeaturedSlide({
 
 export function FeaturedCarousel({ listings }: Props) {
   const router = useRouter();
-  const listRef = useRef<FlatList<Listing>>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const activeIndexRef = useRef(0);
+  const {
+    listRef,
+    loopData,
+    realCount,
+    realIndex,
+    onMomentumScrollEnd,
+    onViewableLoopIndexChanged,
+    advance,
+    getItemLayout,
+  } = useInfiniteCarousel(listings, width, { initialScroll: true });
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       const index = viewableItems[0]?.index;
-      if (index != null) {
-        activeIndexRef.current = index;
-        setActiveIndex(index);
-      }
+      if (index != null) onViewableLoopIndexChanged(index);
     }
   ).current;
 
   useEffect(() => {
-    activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
-
-  useEffect(() => {
-    if (listings.length <= 1) return;
-
-    const timer = setInterval(() => {
-      const next = (activeIndexRef.current + 1) % listings.length;
-      listRef.current?.scrollToIndex({ index: next, animated: true });
-    }, AUTO_ADVANCE_MS);
-
+    if (realCount <= 1) return;
+    const timer = setInterval(advance, AUTO_ADVANCE_MS);
     return () => clearInterval(timer);
-  }, [listings.length, activeIndex]);
+  }, [realCount, advance]);
 
   if (!listings.length) return null;
+
+  const activeListingId = listings[realIndex]?.id;
 
   return (
     <View
@@ -187,19 +186,19 @@ export function FeaturedCarousel({ listings }: Props) {
     >
       <FlatList
         ref={listRef}
-        data={listings}
+        data={loopData}
         horizontal
         pagingEnabled
         {...HIDE_SCROLL_INDICATORS}
-        keyExtractor={(item) => item.id}
+        decelerationRate={Platform.OS === "ios" ? "fast" : "normal"}
+        overScrollMode="never"
+        scrollEventThrottle={16}
+        keyExtractor={(item, i) => `${item.id}-${i}`}
         extraData={listings.map((l) => l.id).join(",")}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-        getItemLayout={(_, index) => ({
-          length: width,
-          offset: width * index,
-          index,
-        })}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        getItemLayout={getItemLayout}
         onScrollToIndexFailed={(info) => {
           setTimeout(() => {
             listRef.current?.scrollToIndex({
@@ -208,10 +207,10 @@ export function FeaturedCarousel({ listings }: Props) {
             });
           }, 100);
         }}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }) => (
           <FeaturedSlide
             item={item}
-            isActive={index === activeIndex}
+            isActive={item.id === activeListingId}
             onPress={() => router.push(`/listing/${item.id}`)}
           />
         )}
@@ -228,8 +227,8 @@ export function FeaturedCarousel({ listings }: Props) {
           <MotiView
             key={i}
             animate={{
-              width: i === activeIndex ? 24 : 6,
-              opacity: i === activeIndex ? 1 : 0.3,
+              width: i === realIndex ? 24 : 6,
+              opacity: i === realIndex ? 1 : 0.3,
             }}
             transition={{ type: "timing", duration: 300 }}
             style={{

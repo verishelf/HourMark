@@ -49,4 +49,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
   },
+  swipeContainer: {
+    backgroundColor: Colors.background,
+  },
+  rowContent: {
+    flex: 1,
+  },
 });

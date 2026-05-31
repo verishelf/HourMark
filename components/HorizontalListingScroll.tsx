@@ -1,14 +1,16 @@
-import { ScrollView, View } from "react-native";
+import { FlatList, View, type ListRenderItem } from "react-native";
 import { WatchCard } from "@/components/WatchCard";
 import { WatchCardSkeleton } from "@/components/SkeletonLoader";
-import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { HORIZONTAL_CARD_GAP, SPACING } from "@/constants/layout";
+import { smoothHorizontalScrollProps } from "@/constants/scroll";
 import type { Listing } from "@/types";
 
-const CARD_WIDTH = 260;
+export const HORIZONTAL_LISTING_CARD_WIDTH = 260;
+
+const SNAP_INTERVAL = HORIZONTAL_LISTING_CARD_WIDTH + HORIZONTAL_CARD_GAP;
 
 const itemStyle = {
-  width: CARD_WIDTH,
+  width: HORIZONTAL_LISTING_CARD_WIDTH,
   marginRight: HORIZONTAL_CARD_GAP,
 };
 
@@ -36,35 +38,55 @@ export function HorizontalListingScroll({
     paddingRight: contentContainerStyle?.paddingRight ?? SPACING.screen,
     marginBottom: contentContainerStyle?.marginBottom ?? 24,
   };
+
+  const scrollProps = smoothHorizontalScrollProps(SNAP_INTERVAL);
+
+  const getItemLayout = (_: Listing[] | null | undefined, index: number) => ({
+    length: SNAP_INTERVAL,
+    offset: SNAP_INTERVAL * index,
+    index,
+  });
+
+  const renderListing: ListRenderItem<Listing> = ({ item, index }) => (
+    <View style={itemStyle}>
+      <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
+    </View>
+  );
+
   if (loading) {
+    const placeholders = Array.from({ length: loadingCount }, (_, i) => ({ id: `sk-${i}` }));
     return (
-      <ScrollView
+      <FlatList
+        data={placeholders}
         horizontal
-        {...HIDE_SCROLL_INDICATORS}
-        contentContainerStyle={scrollContentStyle}
-      >
-        {Array.from({ length: loadingCount }, (_, i) => (
-          <View key={i} style={itemStyle}>
+        keyExtractor={(item) => item.id}
+        renderItem={() => (
+          <View style={itemStyle}>
             <WatchCardSkeleton variant="compact" />
           </View>
-        ))}
-      </ScrollView>
+        )}
+        getItemLayout={getItemLayout}
+        contentContainerStyle={scrollContentStyle}
+        {...scrollProps}
+      />
     );
   }
 
   if (!listings.length) return null;
 
   return (
-    <ScrollView
+    <FlatList
+      data={listings}
       horizontal
-      {...HIDE_SCROLL_INDICATORS}
+      keyExtractor={(item) => item.id}
+      renderItem={renderListing}
+      getItemLayout={getItemLayout}
       contentContainerStyle={scrollContentStyle}
-    >
-      {listings.map((item, index) => (
-        <View key={item.id} style={itemStyle}>
-          <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
-        </View>
-      ))}
-    </ScrollView>
+      removeClippedSubviews
+      initialNumToRender={4}
+      maxToRenderPerBatch={6}
+      windowSize={5}
+      {...scrollProps}
+    />
   );
 }

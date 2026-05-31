@@ -67,6 +67,26 @@ export async function getConversations(userId: string): Promise<Conversation[]> 
   if (error) throw error;
 
   const conversations = (data ?? []) as Conversation[];
+
+  const conversationIds = conversations.map((c) => c.id);
+  const lastMessageByConversation = new Map<string, Message>();
+
+  if (conversationIds.length > 0) {
+    const { data: recentMessages, error: messagesError } = await supabase
+      .from("messages")
+      .select("*")
+      .in("conversation_id", conversationIds)
+      .order("created_at", { ascending: false });
+
+    if (messagesError) throw messagesError;
+
+    for (const message of (recentMessages ?? []) as Message[]) {
+      if (!lastMessageByConversation.has(message.conversation_id)) {
+        lastMessageByConversation.set(message.conversation_id, message);
+      }
+    }
+  }
+
   const otherUserIds = Array.from(
     new Set(
       conversations
@@ -75,20 +95,24 @@ export async function getConversations(userId: string): Promise<Conversation[]> 
     )
   );
 
-  if (!otherUserIds.length) return conversations;
+  const userMap = new Map<string, Conversation["other_user"]>();
+  if (otherUserIds.length > 0) {
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("*")
+      .in("id", otherUserIds);
+    if (usersError) throw usersError;
+    for (const u of users ?? []) {
+      userMap.set(u.id as string, u as Conversation["other_user"]);
+    }
+  }
 
-  const { data: users, error: usersError } = await supabase
-    .from("users")
-    .select("*")
-    .in("id", otherUserIds);
-  if (usersError) throw usersError;
-
-  const userMap = new Map((users ?? []).map((u) => [u.id as string, u]));
   return conversations.map((conv) => {
     const otherUserId = conv.buyer_id === userId ? conv.seller_id : conv.buyer_id;
     return {
       ...conv,
-      other_user: (userMap.get(otherUserId) as Conversation["other_user"]) ?? conv.other_user,
+      other_user: userMap.get(otherUserId) ?? conv.other_user,
+      last_message: lastMessageByConversation.get(conv.id),
     };
   });
 }

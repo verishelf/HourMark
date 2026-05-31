@@ -34,7 +34,7 @@ export function HowItWorks() {
             Buy and sell with confidence.
           </h2>
           <p className="mx-auto mt-6 max-w-md text-[#a1a1aa]">
-            HourMark connects serious collectors with authenticated listings,
+            Crownly connects serious collectors with authenticated listings,
             secure payments, and a marketplace built for luxury watches.
           </p>
         </motion.div>

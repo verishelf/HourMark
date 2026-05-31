@@ -42,7 +42,29 @@ export function resolveListingImageUrl(uri: string | undefined | null): string |
 
 export function getListingCoverImage(images: string[] | undefined | null): string | null {
   if (!images?.length) return null;
-  return resolveListingImageUrl(images[0]);
+  for (const raw of images) {
+    const resolved = resolveListingImageUrl(raw);
+    if (resolved) return resolved;
+  }
+  return null;
+}
+
+/** Skip empty grid cells in browse/search feeds. */
+export function isDisplayableListing(listing: {
+  brand?: string | null;
+  model?: string | null;
+  images?: string[] | null;
+  authenticated?: boolean;
+  authentication_status?: string | null;
+}): boolean {
+  if (listing.authentication_status) {
+    if (listing.authentication_status !== "auto_verified") return false;
+  } else if ("authenticated" in listing && !listing.authenticated) {
+    return false;
+  }
+  const hasMeta = Boolean(listing.brand?.trim() && listing.model?.trim());
+  const hasImage = Boolean(getListingCoverImage(listing.images));
+  return hasMeta && hasImage;
 }
 
 /** Cache-bust Supabase public URLs after re-uploads. */

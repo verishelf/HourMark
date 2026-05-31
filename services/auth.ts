@@ -66,6 +66,34 @@ export async function signOut() {
   if (error) throw error;
 }
 
+async function functionInvokeErrorMessage(error: unknown): Promise<string> {
+  const err = error as { context?: Response; message?: string };
+  if (err?.context && typeof err.context.json === "function") {
+    try {
+      const body = (await err.context.json()) as { message?: string };
+      if (body?.message) return body.message;
+    } catch {
+      // Response body not JSON
+    }
+  }
+  return err?.message ?? "Failed to delete account";
+}
+
+export async function deleteAccount() {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const { data, error } = await supabase.functions.invoke("delete-account", {
+    method: "POST",
+  });
+
+  if (error) throw new Error(await functionInvokeErrorMessage(error));
+  if (data?.message) throw new Error(data.message as string);
+
+  await signOut();
+}
+
 export async function getSession() {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;

@@ -1,4 +1,4 @@
--- Seller verification migration (safe to run on existing HourMark databases)
+-- Seller verification migration (safe to run on existing Crownly databases)
 -- Run this in Supabase SQL Editor if tables already exist.
 -- Do NOT re-run supabase/schema.sql on an existing project.
 

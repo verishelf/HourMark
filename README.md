@@ -1,11 +1,11 @@
-# HourMark
+# Crownly
 
 Luxury watch marketplace — Expo React Native iOS app + Next.js marketing site in one repo.
 
 ## Project structure
 
 ```
-HourMark/                 ← repo root (Expo app)
+Crownly/                 ← repo root (Expo app)
 ├── app/                  ← mobile screens (Expo Router)
 ├── components/
 ├── website/              ← Next.js marketing site

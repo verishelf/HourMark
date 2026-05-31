@@ -6,28 +6,34 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-8 px-6 md:flex-row">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#71717a]">
-            HourMark
+            Crownly
           </p>
           <p className="mt-1 text-sm text-[#a1a1aa]">
             Luxury watch marketplace · © {new Date().getFullYear()}
           </p>
         </div>
 
-        <div className="flex gap-8">
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 md:justify-end">
           <Link
-            href="#how-it-works"
+            href="/privacy"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >
-            For Buyers
+            Privacy
           </Link>
           <Link
-            href="#how-it-works"
+            href="/terms"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >
-            For Sellers
+            Terms &amp; EULA
           </Link>
           <Link
-            href="#download"
+            href="/#how-it-works"
+            className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
+          >
+            Buyers
+          </Link>
+          <Link
+            href="/#download"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >
             Download

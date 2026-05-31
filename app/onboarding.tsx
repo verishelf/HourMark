@@ -1,7 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import {
   Dimensions,
   FlatList,
+  Platform,
   Pressable,
   Text,
   View,
@@ -14,6 +15,7 @@ import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Typography } from "@/constants/typography";
+import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
 
 const { width } = Dimensions.get("window");
 
@@ -35,26 +37,46 @@ const SLIDES = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [index, setIndex] = useState(0);
-  const listRef = useRef<FlatList>(null);
+  const {
+    listRef,
+    loopData,
+    realCount,
+    realIndex,
+    onMomentumScrollEnd,
+    onViewableLoopIndexChanged,
+    advance,
+    getItemLayout,
+  } = useInfiniteCarousel(SLIDES, width, { initialScroll: true });
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems[0]?.index != null) setIndex(viewableItems[0].index);
+      const index = viewableItems[0]?.index;
+      if (index != null) onViewableLoopIndexChanged(index);
     }
   ).current;
+
+  const onLastSlide = realIndex === SLIDES.length - 1;
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <FlatList
         ref={listRef}
-        data={SLIDES}
+        data={loopData}
         horizontal
         pagingEnabled
         {...HIDE_SCROLL_INDICATORS}
+        decelerationRate={Platform.OS === "ios" ? "fast" : "normal"}
+        overScrollMode="never"
         keyExtractor={(_, i) => String(i)}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        getItemLayout={getItemLayout}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            listRef.current?.scrollToIndex({ index: info.index, animated: true });
+          }, 80);
+        }}
         renderItem={({ item }) => (
           <View
             style={{
@@ -111,25 +133,20 @@ export default function OnboardingScreen() {
             <View
               key={i}
               style={{
-                width: i === index ? 24 : 6,
+                width: i === realIndex ? 24 : 6,
                 height: 2,
                 backgroundColor: Colors.textPrimary,
-                opacity: i === index ? 1 : 0.25,
+                opacity: i === realIndex ? 1 : 0.25,
               }}
             />
           ))}
         </View>
 
-        {index < SLIDES.length - 1 ? (
-          <LuxuryButton
-            label="Continue"
-            onPress={() =>
-              listRef.current?.scrollToIndex({ index: index + 1, animated: true })
-            }
-          />
+        {realCount > 1 && !onLastSlide ? (
+          <LuxuryButton label="Continue" onPress={advance} />
         ) : (
           <LuxuryButton
-            label="Enter HourMark"
+            label="Enter Crownly"
             onPress={() => router.replace("/(tabs)")}
           />
         )}

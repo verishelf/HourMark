@@ -1,4 +1,4 @@
--- HourMark Stripe Connect migration
+-- Crownly Stripe Connect migration
 -- Run after base schema.sql
 
 -- Sellers profile (1:1 with users)

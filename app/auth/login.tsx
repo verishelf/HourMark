@@ -128,7 +128,7 @@ export default function LoginScreen() {
               textAlign: "center",
             }}
           >
-            Sign in to HourMark
+            Sign in to Crownly
           </Text>
 
           <TextInput

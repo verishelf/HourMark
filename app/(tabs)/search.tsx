@@ -5,6 +5,7 @@ import {
   NativeSyntheticEvent,
   ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
@@ -20,9 +21,10 @@ import { FILTER_CHIPS, CONDITIONS } from "@/constants/brands";
 import { useListings } from "@/hooks/useListings";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
-import { SPACING } from "@/constants/layout";
+import { CARD_GAP, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { tabContentPadding, gridItemStyle, screenContentPadding } from "@/styles/layout";
+import { isDisplayableListing } from "@/lib/listingImages";
+import { tabContentPadding } from "@/styles/layout";
 import type { Listing } from "@/types";
 
 const PRICE_OPTIONS = [
@@ -51,9 +53,13 @@ function sortListings(listings: Listing[], sort: SortKey): Listing[] {
   );
 }
 
+const GRID_ESTIMATED_ITEM_HEIGHT = 268;
+
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const { brand: brandParam } = useLocalSearchParams<{ brand?: string }>();
+  const columnWidth = (screenWidth - SPACING.screen * 2 - CARD_GAP) / 2;
   const [search, setSearch] = useState("");
   const [brand, setBrand] = useState("All");
   const [maxPrice, setMaxPrice] = useState<number | undefined>();
@@ -81,7 +87,7 @@ export default function SearchScreen() {
 
   const { listings, loading } = useListings(filters);
   const sortedListings = useMemo(
-    () => sortListings(listings, sort),
+    () => sortListings(listings, sort).filter(isDisplayableListing),
     [listings, sort]
   );
 
@@ -200,15 +206,24 @@ export default function SearchScreen() {
 
       <View style={{ flex: 1, paddingHorizontal: SPACING.screen }}>
         {loading ? (
-          <>
+          <ScrollView
+            {...HIDE_SCROLL_INDICATORS}
+            contentContainerStyle={tabContentPadding(insets.bottom)}
+          >
             {listHeader}
-            <WatchCardSkeleton variant="grid" />
-            <WatchCardSkeleton variant="grid" />
-          </>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: CARD_GAP }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <View key={i} style={{ width: columnWidth }}>
+                  <WatchCardSkeleton variant="grid" />
+                </View>
+              ))}
+            </View>
+          </ScrollView>
         ) : (
           <FlashList
             data={sortedListings}
             numColumns={2}
+            estimatedItemSize={GRID_ESTIMATED_ITEM_HEIGHT}
             keyExtractor={(item) => item.id}
             {...HIDE_SCROLL_INDICATORS}
             contentContainerStyle={tabContentPadding(insets.bottom)}
@@ -223,7 +238,12 @@ export default function SearchScreen() {
               />
             }
             renderItem={({ item, index }) => (
-              <View style={gridItemStyle(index)}>
+              <View
+                style={{
+                  width: columnWidth,
+                  marginBottom: CARD_GAP,
+                }}
+              >
                 <WatchCard listing={item} variant="grid" index={index} showBuy={false} />
               </View>
             )}
