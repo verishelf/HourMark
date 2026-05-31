@@ -115,7 +115,7 @@ export default function HomeScreen() {
       >
         <ScreenHeader
           style={{ paddingRight: SPACING.screen + 48 }}
-          logo
+          label="Crownly"
           title="Curated Timepieces"
           subtitle="Authenticated luxury watches from verified sellers"
         />

@@ -16,7 +16,8 @@
     "api:install": "npm install --prefix apps/api",
     "api:dev": "npm run dev --prefix apps/api",
     "api:build": "npm run build --prefix apps/api",
-    "api:start": "npm run start --prefix apps/api"
+    "api:start": "npm run start --prefix apps/api",
+    "apple:client-secret": "node scripts/generate-apple-client-secret.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -58,6 +59,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "jose": "^6.0.11",
     "typescript": "~5.9.2"
   }
 }

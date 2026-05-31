@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     description:
       "The premium iOS marketplace for curated luxury watches. Secure checkout, verified sellers, and a 3% platform fee.",
     type: "website",
-    images: [{ url: "/crownly-logo.png", width: 784, height: 784, alt: "Crownly" }],
+    images: [{ url: "/crownly-logo.png", width: 500, height: 500, alt: "Crownly" }],
   },
 };
 

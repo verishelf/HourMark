@@ -10,6 +10,8 @@ type Props = {
   label?: string;
   /** Renders the Crownly mark above the title instead of a text label. */
   logo?: boolean;
+  /** Logo width when `logo` is true (default 108). */
+  logoWidth?: number;
   title: string;
   subtitle?: string;
   rightAction?: ReactNode;
@@ -22,6 +24,7 @@ type Props = {
 export function ScreenHeader({
   label,
   logo,
+  logoWidth = 108,
   title,
   subtitle,
   rightAction,
@@ -51,7 +54,10 @@ export function ScreenHeader({
       >
         <View style={{ flex: 1, paddingRight: rightAction ? 12 : 0 }}>
           {logo ? (
-            <CrownlyLogo width={108} style={{ marginBottom: 10, alignSelf: "flex-start" }} />
+            <CrownlyLogo
+              width={logoWidth}
+              style={{ marginBottom: 8, alignSelf: "flex-start" }}
+            />
           ) : label ? (
             <Text
               style={{

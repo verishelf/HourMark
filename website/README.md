@@ -13,12 +13,12 @@ Update contact emails and effective date in `src/lib/legal.ts` before production
 
 ## Brand assets
 
-| Asset | Path |
-|-------|------|
-| Master logo | `public/crownly-logo.png` |
-| Favicon / Apple touch | `public/favicon.png`, `public/apple-touch-icon.png` |
+| Asset | Path | Notes |
+|-------|------|--------|
+| Website logo (transparent) | `public/crownly-logo.png` | Same transparent master as the mobile app UI |
+| Favicon / Apple touch | `public/favicon.png`, `public/apple-touch-icon.png` | Generated from transparent master |
 
-Expo app icons and splash use the same mark in `/assets/` (`crownly-logo.png`, `icon.png`, `splash-icon.png`).
+The **App Store icon** (`/assets/icon.png` in the Expo app) uses the dark-background artwork only; see `/assets/README.md`.
 
 Copy and feature highlights align with the mobile app and Stripe Connect marketplace backend (`apps/api/`).
 
