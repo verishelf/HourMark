@@ -83,8 +83,10 @@ export async function createPaymentIntent(params: {
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.message ?? "Failed to create payment intent");
+    const err = (await response.json().catch(() => ({}))) as { message?: string };
+    const detail = err.message ?? `Payment setup failed (${response.status})`;
+    if (__DEV__) console.warn("[create-payment-intent]", response.status, detail);
+    throw new Error(detail);
   }
 
   return response.json();

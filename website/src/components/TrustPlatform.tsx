@@ -33,6 +33,16 @@ const PILLARS = [
     description:
       "Verified Seller, AI Authenticated, Escrow Protected, Full Set, and Trusted Seller badges update dynamically from live trust data.",
   },
+  {
+    title: "Authenticity Passport",
+    description:
+      "Issue and transfer digital provenance certificates. Buyers can look up serial history and flagged watches before they buy.",
+  },
+  {
+    title: "Seller Reputation",
+    description:
+      "Post-transaction reviews, aggregate ratings, total sales counts, and Trusted Seller status from completed escrow deals.",
+  },
 ];
 
 export function TrustPlatform() {

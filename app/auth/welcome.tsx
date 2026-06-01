@@ -1,9 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { resetToApp } from "@/lib/navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FullScreenAuthSlider } from "@/components/FullScreenAuthSlider";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { Colors } from "@/constants/colors";
+import { Colors, OverlayTextColors } from "@/constants/colors";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 
@@ -14,10 +15,10 @@ export default function AuthWelcomeScreen() {
 
   const goToLogin = () => {
     if (typeof redirect === "string" && redirect.startsWith("/")) {
-      router.push({ pathname: "/auth/login", params: { redirect } });
+      router.replace({ pathname: "/auth/login", params: { redirect } });
       return;
     }
-    router.push("/auth/login");
+    router.replace("/auth/login");
   };
 
   return (
@@ -34,9 +35,9 @@ export default function AuthWelcomeScreen() {
         ]}
         pointerEvents="box-none"
       >
-        <LuxuryButton label="Sign In" onPress={goToLogin} size="large" />
+        <LuxuryButton label="Sign In" onPress={goToLogin} size="large" variant="onDark" />
         <Pressable
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => resetToApp()}
           style={styles.guest}
           hitSlop={12}
         >
@@ -68,6 +69,6 @@ const styles = StyleSheet.create({
   },
   guestText: {
     ...Typography.caption,
-    color: Colors.textMuted,
+    color: OverlayTextColors.secondary,
   },
 });

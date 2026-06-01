@@ -1,4 +1,5 @@
 import { View } from "react-native";
+import { ListingPlaceholderGrid } from "@/components/ListingPlaceholderGrid";
 import { WatchCard } from "@/components/WatchCard";
 import { GRID_GAP } from "@/styles/layout";
 import type { Listing } from "@/types";
@@ -14,10 +15,18 @@ function chunkListings<T>(items: T[]): T[][] {
 type Props = {
   listings: Listing[];
   showBuy?: boolean;
+  showEmptyPlaceholder?: boolean;
 };
 
-export function ListingGrid({ listings, showBuy = false }: Props) {
-  if (!listings.length) return null;
+export function ListingGrid({
+  listings,
+  showBuy = false,
+  showEmptyPlaceholder = false,
+}: Props) {
+  if (!listings.length) {
+    if (showEmptyPlaceholder) return <ListingPlaceholderGrid />;
+    return null;
+  }
 
   return (
     <View style={{ gap: GRID_GAP }}>

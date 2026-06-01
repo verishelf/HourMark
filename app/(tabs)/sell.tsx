@@ -17,7 +17,9 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/EmptyState";
+import { ImageOverlayGate } from "@/components/ImageOverlayGate";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
+import { SellerVerificationTrustPanel } from "@/components/SellerVerificationTrustPanel";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { LUXURY_BRANDS, CONDITIONS } from "@/constants/brands";
@@ -27,7 +29,10 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { notifyContentRefresh } from "@/lib/contentRefresh";
+import { hasListingAuthBypass } from "@/lib/listingAuthBypass";
+import { analyzeListing } from "@/services/trust";
 import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { createListing, uploadListingImage } from "@/services/listings";
 import { isSellerKycApproved } from "@/services/kyc";
@@ -39,7 +44,13 @@ type Step = (typeof STEPS)[number];
 const FOOTER_HEIGHT = 104;
 const PHOTO_GAP = 10;
 
-function StepProgress({ current }: { current: Step }) {
+function StepProgress({
+  current,
+  styles,
+}: {
+  current: Step;
+  styles: ReturnType<typeof createSellStyles>;
+}) {
   const currentIndex = STEPS.indexOf(current);
 
   return (
@@ -66,7 +77,15 @@ function StepProgress({ current }: { current: Step }) {
   );
 }
 
-function FormSection({ title, children }: { title: string; children: ReactNode }) {
+function FormSection({
+  title,
+  children,
+  styles,
+}: {
+  title: string;
+  children: ReactNode;
+  styles: ReturnType<typeof createSellStyles>;
+}) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -93,6 +112,7 @@ export default function SellScreen() {
   const [includesWarrantyCard, setIncludesWarrantyCard] = useState(false);
   const [step, setStep] = useState<Step>("Photos");
   const [loading, setLoading] = useState(false);
+  const styles = useThemedStyles(createSellStyles);
 
   const handleStartVerification = () => {
     router.push("/verify?returnPath=sell");
@@ -192,11 +212,20 @@ export default function SellScreen() {
       });
 
       notifyContentRefresh();
-      router.push(`/listing/trust-verify/${listing.id}`);
-      Alert.alert(
-        "Almost there",
-        "Complete AI authentication uploads to publish your listing."
-      );
+
+      if (hasListingAuthBypass(profile)) {
+        await analyzeListing(listing.id);
+        notifyContentRefresh();
+        Alert.alert("Published", "Your listing is live (demo mode — AI auth bypassed).", [
+          { text: "OK", onPress: () => router.replace("/(tabs)") },
+        ]);
+      } else {
+        router.push(`/listing/trust-verify/${listing.id}`);
+        Alert.alert(
+          "Almost there",
+          "Complete AI authentication uploads to publish your listing."
+        );
+      }
       setStep("Photos");
       setImages([]);
       setBrand("");
@@ -229,18 +258,18 @@ export default function SellScreen() {
 
   if (!profile?.verified) {
     return (
-      <View style={styles.screen}>
-        <ScreenHeader title="Sell" subtitle="List your timepieces to collectors worldwide" />
-        <View style={styles.loggedOutBody}>
-          <EmptyState
-            icon="shield-checkmark-outline"
-            title="Complete seller verification"
-            body="Verify your identity with name, address, and SSN, and connect payouts before listing watches."
-            actionLabel="Start Verification"
-            onAction={handleStartVerification}
-          />
-        </View>
-      </View>
+      <ImageOverlayGate backgroundImage={LOGGED_OUT_GATE_IMAGES.sellerVerification}>
+        <EmptyState
+          fill
+          onDark
+          icon="shield-checkmark-outline"
+          title="Complete seller verification"
+          body="Join verified sellers on Crownly. We confirm your identity and connect secure payouts so collectors can buy with confidence."
+          footer={<SellerVerificationTrustPanel />}
+          actionLabel="Start Verification"
+          onAction={handleStartVerification}
+        />
+      </ImageOverlayGate>
     );
   }
 
@@ -250,10 +279,12 @@ export default function SellScreen() {
         <ScreenHeader title="Sell" subtitle="List your timepieces to collectors worldwide" />
         <View style={styles.loggedOutBody}>
           <EmptyState
+            fill
             icon="id-card-outline"
             title="Government ID verification"
             body="Upload your ID and selfie for automated KYC. Verified sellers can publish listings."
             actionLabel="Verify identity"
+            actionVariant="outline"
             onAction={() => router.push("/kyc")}
           />
         </View>
@@ -278,10 +309,10 @@ export default function SellScreen() {
         <Text style={styles.pageTitle}>List a Watch</Text>
         <Text style={styles.pageSubtitle}>Share your timepiece with discerning collectors</Text>
 
-        <StepProgress current={step} />
+        <StepProgress current={step} styles={styles} />
 
         {step === "Photos" && (
-          <FormSection title="Photos">
+          <FormSection title="Photos" styles={styles}>
             <Pressable onPress={pickImages} style={styles.uploadArea}>
               <Ionicons name="camera-outline" size={28} color={Colors.textMuted} />
               <Text style={styles.uploadLabel}>Add Photos</Text>
@@ -325,7 +356,7 @@ export default function SellScreen() {
 
         {step === "Details" && (
           <>
-            <FormSection title="Watch Details">
+            <FormSection title="Watch Details" styles={styles}>
               <Text style={styles.fieldLabel}>Brand</Text>
               <ScrollView
                 horizontal
@@ -376,7 +407,7 @@ export default function SellScreen() {
               />
             </FormSection>
 
-            <FormSection title="Condition">
+            <FormSection title="Condition" styles={styles}>
               <ScrollView
                 horizontal
                 {...HIDE_SCROLL_INDICATORS}
@@ -396,7 +427,7 @@ export default function SellScreen() {
               </ScrollView>
             </FormSection>
 
-            <FormSection title="What's included">
+            <FormSection title="What's included" styles={styles}>
               <Text style={styles.fieldLabel}>Tap to toggle — faded items are not included</Text>
               <View style={[styles.chipRow, { marginTop: 8, flexWrap: "wrap" }]}>
                 <Pressable
@@ -466,7 +497,7 @@ export default function SellScreen() {
               </View>
             </FormSection>
 
-            <FormSection title="Description">
+            <FormSection title="Description" styles={styles}>
               <TextInput
                 placeholder="Describe your watch, box & papers, service history…"
                 placeholderTextColor={Colors.textMuted}
@@ -482,7 +513,7 @@ export default function SellScreen() {
 
         {step === "Review" && (
           <>
-            <FormSection title="Pricing">
+            <FormSection title="Pricing" styles={styles}>
               <TextInput
                 placeholder="Asking Price (USD)"
                 placeholderTextColor={Colors.textMuted}
@@ -526,7 +557,7 @@ export default function SellScreen() {
 
       <View style={[styles.footer, { bottom: footerBottom, paddingBottom: 16 }]}>
         {step === "Photos" && (
-          <LuxuryButton label="Next" onPress={goNext} variant="primary" size="large" />
+          <LuxuryButton label="Next" onPress={goNext} variant="outline" size="large" />
         )}
         {step === "Details" && (
           <View style={styles.footerRow}>
@@ -535,7 +566,7 @@ export default function SellScreen() {
             </View>
             <View style={styles.footerSpacer} />
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Next" onPress={goNext} variant="primary" size="large" />
+              <LuxuryButton label="Next" onPress={goNext} variant="outline" size="large" />
             </View>
           </View>
         )}
@@ -550,7 +581,7 @@ export default function SellScreen() {
                 label="Publish"
                 onPress={handlePublish}
                 loading={loading}
-                variant="primary"
+                variant="outline"
                 size="large"
               />
             </View>
@@ -561,10 +592,17 @@ export default function SellScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createSellStyles() {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  loggedOutBody: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: SPACING.screen,
   },
   pageTitle: {
     ...Typography.h2,
@@ -664,7 +702,9 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.overlay,
+    backgroundColor: Colors.cardElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -769,4 +809,5 @@ const styles = StyleSheet.create({
   footerSpacer: {
     width: 12,
   },
-});
+  });
+}

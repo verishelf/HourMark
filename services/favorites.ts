@@ -46,7 +46,8 @@ export async function isFavorite(
 
 export async function toggleFavorite(
   userId: string,
-  listingId: string
+  listingId: string,
+  listingPrice?: number
 ): Promise<boolean> {
   if (!isSupabaseConfigured) {
     if (mockFavorites.has(listingId)) {
@@ -70,6 +71,22 @@ export async function toggleFavorite(
   await supabase.from("favorites").insert({
     user_id: userId,
     listing_id: listingId,
+    saved_price: listingPrice ?? null,
+    price_alert_enabled: true,
   });
   return true;
+}
+
+export async function updateFavoritePriceAlert(
+  userId: string,
+  listingId: string,
+  enabled: boolean
+): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  await supabase
+    .from("favorites")
+    .update({ price_alert_enabled: enabled })
+    .eq("user_id", userId)
+    .eq("listing_id", listingId);
 }

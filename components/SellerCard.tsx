@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
@@ -31,21 +31,11 @@ export function SellerCard({ seller, onPress }: Props) {
       })}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: ROW_GAP }}>
-        <Image
-          source={{
-            uri:
-              seller.avatar_url ??
-              "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-          }}
-          style={{
-            width: AVATAR_SIZE,
-            height: AVATAR_SIZE,
-            borderRadius: AVATAR_SIZE / 2,
-            borderWidth: 1,
-            borderColor: Colors.borderLight,
-            backgroundColor: Colors.card,
-          }}
-          contentFit="cover"
+        <UserAvatar
+          uri={seller.avatar_url}
+          size={AVATAR_SIZE}
+          borderWidth={1}
+          borderColor={Colors.borderLight}
         />
 
         <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8, minHeight: AVATAR_SIZE }}>

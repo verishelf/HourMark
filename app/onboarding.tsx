@@ -8,7 +8,7 @@ import {
   View,
   ViewToken,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { resetToApp } from "@/lib/navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MotiView } from "moti";
 import { CrownlyLogo } from "@/components/CrownlyLogo";
@@ -36,7 +36,6 @@ const SLIDES = [
 ];
 
 export default function OnboardingScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const {
     listRef,
@@ -161,12 +160,12 @@ export default function OnboardingScreen() {
         ) : (
           <LuxuryButton
             label="Enter Crownly"
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => resetToApp()}
           />
         )}
 
         <Pressable
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => resetToApp()}
           style={{ marginTop: 20, alignItems: "center" }}
         >
           <Text style={{ ...Typography.caption, color: Colors.textMuted }}>

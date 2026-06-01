@@ -11,16 +11,19 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState, emptyStateSectionStyle } from "@/components/EmptyState";
 import { ProfileCard } from "@/components/ProfileCard";
+import { CollectionItemCard } from "@/components/CollectionItemCard";
 import { PostGrid } from "@/components/PostGrid";
-import { ProfileTabs, profileTabStyles } from "@/components/ProfileTabs";
+import { ProfileTabs, useProfileTabStyles } from "@/components/ProfileTabs";
 import { WatchCard } from "@/components/WatchCard";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
-import { GRID_GAP, SPACING } from "@/constants/layout";
+import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getSellerActiveListings } from "@/services/listings";
 import { getUserPosts } from "@/services/posts";
 import {
@@ -31,11 +34,10 @@ import {
 } from "@/services/follows";
 import { getOrCreateConversationWithSeller } from "@/services/messaging";
 import { getPublicProfile } from "@/services/profile";
-import { gridItemStyle, tabContentPadding } from "@/styles/layout";
-import type { Listing, UserPost, UserProfile } from "@/types";
-
-const DEFAULT_AVATAR =
-  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200";
+import { gridItemStyle, tabContentPadding, GRID_GAP } from "@/styles/layout";
+import { getSellerReviews, isTrustedSeller } from "@/services/reviews";
+import { getCollection } from "@/services/collection";
+import type { Listing, SellerReview, UserPost, UserProfile, WatchCollectionItem } from "@/types";
 
 function chunkListings(items: Listing[]): Listing[][] {
   const rows: Listing[][] = [];
@@ -58,7 +60,12 @@ export default function SellerProfileScreen() {
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
-  const [tab, setTab] = useState<"posts" | "listings">("posts");
+  const [tab, setTab] = useState<"listings" | "posts" | "collection">("listings");
+  const [reviews, setReviews] = useState<SellerReview[]>([]);
+  const [collection, setCollection] = useState<WatchCollectionItem[]>([]);
+  const profileTabStyles = useProfileTabStyles();
+  const { colorScheme } = useTheme();
+  const styles = useThemedStyles(createSellerProfileStyles);
 
   const isOwnProfile = user?.id === id;
 
@@ -75,17 +82,22 @@ export default function SellerProfileScreen() {
     async function load() {
       setLoading(true);
       try {
-        const [profile, userPosts, activeListings, counts] = await Promise.all([
+        const [profile, userPosts, activeListings, counts, sellerReviews, sellerCollection] =
+          await Promise.all([
           getPublicProfile(id),
           getUserPosts(id),
           getSellerActiveListings(id),
           getFollowCounts(id),
+          getSellerReviews(id),
+          getCollection(id),
         ]);
         if (cancelled) return;
         setSeller(profile);
         setPosts(userPosts);
         setListings(activeListings);
         setFollowCounts(counts);
+        setReviews(sellerReviews);
+        setCollection(sellerCollection);
         if (user) {
           try {
             const isFollowingSeller = await isFollowing(user.id, id);
@@ -173,6 +185,7 @@ export default function SellerProfileScreen() {
     return (
       <View style={styles.centered}>
         <EmptyState
+          fill
           icon="person-outline"
           title="Seller not found"
           body="This profile may have been removed."
@@ -188,6 +201,7 @@ export default function SellerProfileScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView
+        key={colorScheme}
         contentContainerStyle={tabContentPadding(insets.bottom)}
         {...HIDE_SCROLL_INDICATORS}
       >
@@ -211,7 +225,7 @@ export default function SellerProfileScreen() {
             username={username}
             showUsernameInCard={false}
             namePlacement="aboveBio"
-            avatarUrl={seller.avatar_url ?? DEFAULT_AVATAR}
+            avatarUrl={seller.avatar_url}
             verified={seller.verified}
             verifiedLabel="Verified Seller"
             bio={seller.bio}
@@ -241,10 +255,19 @@ export default function SellerProfileScreen() {
             messageLoading={messageLoading}
           />
 
+          {seller.seller_rating != null && seller.seller_rating > 0 ? (
+            <Text style={styles.ratingLine}>
+              ★ {seller.seller_rating.toFixed(1)}
+              {seller.seller_review_count ? ` · ${seller.seller_review_count} reviews` : ""}
+              {isTrustedSeller(seller) ? " · Trusted Seller" : ""}
+            </Text>
+          ) : null}
+
           <ProfileTabs
             tabs={[
-              { key: "posts", label: "Posts" },
               { key: "listings", label: "Listings" },
+              { key: "posts", label: "Posts" },
+              { key: "collection", label: "Collection" },
             ]}
             active={tab}
             onChange={setTab}
@@ -253,21 +276,11 @@ export default function SellerProfileScreen() {
           <View
             style={[
               profileTabStyles.tabContent,
-              tab !== "posts" || !posts.length ? profileTabStyles.tabContentPadded : null,
+              tab === "listings" && profileTabStyles.tabContentListings,
+              tab !== "listings" &&
+                (tab === "posts" && posts.length ? null : profileTabStyles.tabContentPadded),
             ]}
           >
-            {tab === "posts" &&
-              (posts.length ? (
-                <PostGrid posts={posts} variant="compact" flushTop feedUserId={id} />
-              ) : (
-                <EmptyState
-                  compact
-                  icon="images-outline"
-                  title="No posts yet"
-                  body="This seller hasn't shared any photos yet."
-                />
-              ))}
-
             {tab === "listings" &&
               (listings.length ? (
                 <View style={styles.grid}>
@@ -287,11 +300,37 @@ export default function SellerProfileScreen() {
                   ))}
                 </View>
               ) : (
+                <View style={emptyStateSectionStyle}>
+                  <EmptyState
+                    compact
+                    icon="watch-outline"
+                    title="No active listings"
+                    body="This seller doesn't have any watches listed right now."
+                  />
+                </View>
+              ))}
+
+            {tab === "posts" &&
+              (posts.length ? (
+                <PostGrid posts={posts} variant="compact" flushTop feedUserId={id} />
+              ) : (
                 <EmptyState
                   compact
-                  icon="watch-outline"
-                  title="No active listings"
-                  body="This seller doesn't have any watches listed right now."
+                  icon="images-outline"
+                  title="No posts yet"
+                  body="This seller hasn't shared any photos yet."
+                />
+              ))}
+
+            {tab === "collection" &&
+              (collection.length ? (
+                collection.map((item) => <CollectionItemCard key={item.id} item={item} />)
+              ) : (
+                <EmptyState
+                  compact
+                  icon="albums-outline"
+                  title="No collection shared"
+                  body="This collector hasn't added watches to their collection yet."
                 />
               ))}
           </View>
@@ -301,55 +340,63 @@ export default function SellerProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: SPACING.screen,
-  },
-  navBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: SPACING.screen,
-    paddingBottom: 12,
-    gap: 4,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: -8,
-  },
-  navTitle: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    minWidth: 0,
-    paddingRight: SPACING.screen,
-  },
-  navUsername: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-    fontSize: 18,
-    fontWeight: "600",
-    flexShrink: 1,
-  },
-  content: {
-    paddingHorizontal: SPACING.screen,
-  },
-  grid: {
-    gap: GRID_GAP,
-  },
-  gridRow: {
-    flexDirection: "row",
-    gap: GRID_GAP,
-  },
-});
+function createSellerProfileStyles() {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    centered: {
+      flex: 1,
+      backgroundColor: Colors.background,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: SPACING.screen,
+    },
+    navBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: SPACING.screen,
+      paddingBottom: 12,
+      gap: 4,
+    },
+    ratingLine: {
+      ...Typography.caption,
+      color: Colors.textSecondary,
+      marginBottom: 8,
+      paddingHorizontal: SPACING.screen,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      alignItems: "center",
+      justifyContent: "center",
+      marginLeft: -8,
+    },
+    navTitle: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      minWidth: 0,
+      paddingRight: SPACING.screen,
+    },
+    navUsername: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+      fontSize: 18,
+      fontWeight: "600",
+      flexShrink: 1,
+    },
+    content: {
+      paddingHorizontal: SPACING.screen,
+    },
+    grid: {
+      gap: GRID_GAP,
+    },
+    gridRow: {
+      flexDirection: "row",
+      gap: GRID_GAP,
+    },
+  });
+}

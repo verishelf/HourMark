@@ -19,9 +19,14 @@ export type UserProfile = {
   kyc_provider_id?: string | null;
   account_trust_score?: number;
   fraud_risk_score?: number;
+  /** Demo / App Store: skip AI verification asset uploads */
+  bypass_listing_auth?: boolean;
   stripe_account_id: string | null;
   stripe_onboarding_status: StripeOnboardingStatus;
   seller_rating: number | null;
+  seller_review_count?: number;
+  total_sales?: number;
+  grail_bio?: string | null;
   created_at: string;
 };
 
@@ -57,6 +62,8 @@ export type Listing = {
   includes_box?: boolean;
   includes_papers?: boolean;
   includes_warranty_card?: boolean;
+  min_offer_price?: number | null;
+  accepts_offers?: boolean;
   created_at: string;
   seller?: UserProfile;
 };
@@ -65,7 +72,143 @@ export type Favorite = {
   id: string;
   user_id: string;
   listing_id: string;
+  price_alert_enabled?: boolean;
+  saved_price?: number | null;
   created_at: string;
+};
+
+export type OfferStatus =
+  | "pending"
+  | "accepted"
+  | "countered"
+  | "declined"
+  | "expired"
+  | "withdrawn";
+
+export type ListingOffer = {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  seller_id: string;
+  conversation_id: string | null;
+  amount: number;
+  status: OfferStatus;
+  parent_offer_id: string | null;
+  expires_at: string | null;
+  message: string | null;
+  created_at: string;
+  updated_at: string;
+  listing?: Listing;
+  buyer?: UserProfile;
+};
+
+export type SavedSearch = {
+  id: string;
+  user_id: string;
+  name: string | null;
+  brand: string | null;
+  reference_number: string | null;
+  condition: string | null;
+  max_price: number | null;
+  min_price: number | null;
+  search_text: string | null;
+  alert_enabled: boolean;
+  created_at: string;
+};
+
+export type AppNotification = {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  data: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type SellerReview = {
+  id: string;
+  order_id: string;
+  reviewer_id: string;
+  seller_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  reviewer?: Pick<UserProfile, "username" | "avatar_url">;
+};
+
+export type AuthenticityPassport = {
+  id: string;
+  listing_id: string | null;
+  serial_number: string | null;
+  brand: string | null;
+  model: string | null;
+  reference_number: string | null;
+  trust_score: number | null;
+  verification_data: Record<string, unknown>;
+  passport_code: string;
+  owner_id: string | null;
+  status: "active" | "revoked" | "transferred";
+  verified_at: string;
+  created_at: string;
+};
+
+export type WatchCollectionItem = {
+  id: string;
+  user_id: string;
+  brand: string;
+  model: string;
+  reference_number: string | null;
+  serial_number: string | null;
+  purchase_price: number | null;
+  estimated_value: number | null;
+  purchase_date: string | null;
+  includes_box: boolean;
+  includes_papers: boolean;
+  image_url: string | null;
+  order_id: string | null;
+  passport_id: string | null;
+  notes: string | null;
+  created_at: string;
+  passport?: AuthenticityPassport;
+};
+
+export type GrailRequest = {
+  id: string;
+  user_id: string;
+  brand: string | null;
+  model: string | null;
+  reference_number: string | null;
+  max_budget: number | null;
+  min_condition: string | null;
+  notes: string | null;
+  status: "active" | "fulfilled" | "cancelled";
+  created_at: string;
+  user?: Pick<UserProfile, "username" | "avatar_url">;
+};
+
+export type PostType = "general" | "wrist_shot" | "grail_hunt";
+
+export type SerialLookupResult = {
+  found: boolean;
+  serial_number: string;
+  listings_count: number;
+  flagged: boolean;
+  passport_code: string | null;
+  brand: string | null;
+  model: string | null;
+};
+
+export type WatchScanResult = {
+  brand: string | null;
+  model: string | null;
+  reference_number: string | null;
+  confidence: number;
+  estimated_value_min: number | null;
+  estimated_value_max: number | null;
+  verified_listings_count: number;
+  active_listings: Listing[];
 };
 
 export type Conversation = {
@@ -141,6 +284,12 @@ export type Order = {
   delivery_confirmed_at?: string | null;
   funds_released_at?: string | null;
   escrow_status?: "none" | "held" | "released" | "disputed";
+  carrier?: string | null;
+  delivery_photos?: string[];
+  dispute_status?: "open" | "resolved" | "rejected" | null;
+  dispute_reason?: string | null;
+  dispute_photos?: string[];
+  accepted_offer_id?: string | null;
   created_at: string;
   listing?: Listing;
 };
@@ -220,6 +369,8 @@ export type UserPost = {
   user_id: string;
   caption: string | null;
   image_url: string;
+  post_type?: PostType;
+  reference_number?: string | null;
   created_at: string;
   author?: Pick<UserProfile, "username" | "avatar_url">;
 };
@@ -242,6 +393,8 @@ export type UserPostComment = {
 export type CreatePostInput = {
   caption?: string;
   image_url: string;
+  post_type?: PostType;
+  reference_number?: string;
 };
 
 export type UpdatePostInput = {

@@ -4,16 +4,20 @@ import { motion } from "framer-motion";
 
 const FOR_BUYERS = [
   { title: "Verified sellers", detail: "KYC with government ID, selfie match, and phone verification." },
-  { title: "Escrow checkout", detail: "Funds stay held until delivery and a 3-day inspection window ends." },
-  { title: "AI authentication", detail: "Trust scores, serial checks, and badges on every verified listing." },
-  { title: "Order tracking", detail: "Follow payment hold, shipping, inspection, and payout release." },
+  { title: "Make an offer", detail: "Negotiate in-app, then checkout at the accepted price." },
+  { title: "Escrow checkout", detail: "Apple Pay, card, or wire. Funds held until delivery and inspection." },
+  { title: "Authenticity Passport", detail: "Serial lookup and provenance that transfers with your purchase." },
+  { title: "Saved alerts", detail: "Saved searches and favorite price-drop notifications." },
+  { title: "Order protection", detail: "Tracking, 3-day inspection, and in-app dispute resolution." },
 ];
 
 const FOR_SELLERS = [
   { title: "List with proof", detail: "Serial, movement, papers, and rotating video for automated review." },
-  { title: "Stripe Connect", detail: "Express onboarding with delayed payout after buyer inspection." },
+  { title: "Stripe Connect", detail: "Bank-grade verification and payouts after buyer inspection." },
+  { title: "Offers & messaging", detail: "Accept, counter, or decline offers from chat or listing detail." },
+  { title: "Grail Board", detail: "See what collectors are hunting and get notified on matches." },
   { title: "Low 3% fee", detail: "Transparent platform pricing on every escrow-protected sale." },
-  { title: "Trust badges", detail: "Earn Verified Seller and AI Authenticated status as scores improve." },
+  { title: "Trusted Seller", detail: "Earn ratings, review counts, and badges as you complete sales." },
 ];
 
 export function HowItWorks() {

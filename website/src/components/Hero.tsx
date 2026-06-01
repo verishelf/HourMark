@@ -48,8 +48,8 @@ export function Hero() {
           className="mt-8 max-w-lg text-base leading-relaxed text-[#a1a1aa] md:text-lg"
         >
           Crownly is the premium iOS marketplace to buy, sell, and discover
-          authenticated luxury watches — with verified sellers, Stripe-powered
-          checkout, and automatic seller payouts on every sale.
+          authenticated luxury watches — with verified sellers, in-app offers,
+          Authenticity Passports, escrow checkout, and collector tools built in.
         </motion.p>
 
         <motion.div
@@ -80,8 +80,8 @@ export function Hero() {
         >
           {[
             { value: "3%", label: "Platform fee" },
-            { value: "Stripe", label: "Connect payouts" },
-            { value: "100%", label: "Verified sellers" },
+            { value: "Escrow", label: "Protected checkout" },
+            { value: "AI", label: "Listing verification" },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="text-2xl font-light text-white md:text-3xl">

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Text,
   View,
-  type ViewToken,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,8 +15,36 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getPostDetail, getUserPosts } from "@/services/posts";
 import type { UserPost, UserPostDetail } from "@/types";
+
+function createStyles() {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    header: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      paddingHorizontal: SPACING.screen,
+    },
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: Colors.background,
+    },
+    muted: {
+      ...Typography.body,
+      color: Colors.textMuted,
+    },
+  });
+}
 
 export default function ProfilePostsFeedScreen() {
   const { userId, postId } = useLocalSearchParams<{
@@ -27,6 +54,7 @@ export default function ProfilePostsFeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const styles = useThemedStyles(createStyles);
   const listRef = useRef<FlatList<UserPost>>(null);
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [detailsById, setDetailsById] = useState<Record<string, UserPostDetail>>({});
@@ -115,6 +143,7 @@ export default function ProfilePostsFeedScreen() {
           data={posts}
           keyExtractor={(item) => item.id}
           {...HIDE_SCROLL_INDICATORS}
+          style={{ backgroundColor: Colors.background }}
           contentContainerStyle={{ paddingTop: insets.top + 52, paddingBottom: insets.bottom + 24 }}
           onScrollToIndexFailed={onScrollToIndexFailed}
           renderItem={({ item, index }) => (
@@ -129,27 +158,3 @@ export default function ProfilePostsFeedScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    paddingHorizontal: SPACING.screen,
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  muted: {
-    ...Typography.body,
-    color: Colors.textMuted,
-  },
-});

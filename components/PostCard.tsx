@@ -19,12 +19,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { PostCommentLine } from "@/components/PostCommentLine";
+import { UserAvatar } from "@/components/UserAvatar";
 import { PostDoubleTapImage } from "@/components/PostDoubleTapImage";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import {
   addPostComment,
   getPostComments,
@@ -33,16 +35,193 @@ import {
 } from "@/services/posts";
 import type { UserPostComment, UserPostDetail } from "@/types";
 
-const DEFAULT_AVATAR =
-  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200";
-
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
 
+function createStyles() {
+  return StyleSheet.create({
+    feedItem: {
+      borderBottomWidth: 1,
+      borderBottomColor: Colors.border,
+      marginBottom: 8,
+    },
+    postHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: SPACING.screen,
+      paddingTop: 12,
+      paddingBottom: 10,
+    },
+    postHeaderAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: Colors.cardElevated,
+      borderWidth: 1,
+      borderColor: Colors.border,
+    },
+    postHeaderUsername: {
+      ...Typography.body,
+      color: Colors.textPrimary,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    placeholder: {
+      minHeight: 120,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: Colors.cardElevated,
+    },
+    muted: {
+      ...Typography.body,
+      color: Colors.textMuted,
+    },
+    imageFrame: {
+      alignSelf: "center",
+      overflow: "hidden",
+      backgroundColor: Colors.cardElevated,
+    },
+    body: {
+      paddingHorizontal: SPACING.screen,
+      paddingTop: 16,
+      paddingBottom: 20,
+    },
+    actionsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 20,
+      marginBottom: 14,
+    },
+    actionButton: {
+      flexShrink: 0,
+    },
+    actionInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    actionPressed: {
+      opacity: 0.7,
+    },
+    actionDisabled: {
+      opacity: 0.5,
+    },
+    actionCount: {
+      color: Colors.textPrimary,
+      fontSize: 14,
+      fontWeight: "600",
+      lineHeight: 24,
+      includeFontPadding: false,
+    },
+    captionBlock: {
+      lineHeight: 22,
+      marginBottom: 4,
+    },
+    username: {
+      ...Typography.body,
+      color: Colors.textPrimary,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    captionText: {
+      ...Typography.body,
+      color: Colors.textPrimary,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    commentsSection: {
+      marginTop: 14,
+      gap: 10,
+    },
+    modalScreen: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.screen,
+      paddingTop: 16,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: Colors.border,
+    },
+    modalTitle: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+    },
+    modalClose: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    modalList: {
+      flex: 1,
+    },
+    modalListContent: {
+      padding: SPACING.screen,
+      gap: 12,
+      flexGrow: 1,
+    },
+    modalEmpty: {
+      ...Typography.body,
+      color: Colors.textMuted,
+      textAlign: "center",
+      marginTop: 24,
+    },
+    modalInputBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: SPACING.screen,
+      paddingTop: 10,
+      paddingBottom: 12,
+      borderTopWidth: 1,
+      borderTopColor: Colors.border,
+      backgroundColor: Colors.background,
+    },
+    commentInput: {
+      flex: 1,
+      ...Typography.body,
+      color: Colors.textPrimary,
+      backgroundColor: Colors.cardElevated,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.pill,
+      paddingHorizontal: 14,
+      paddingTop: 10,
+      paddingBottom: 10,
+      minHeight: 44,
+      maxHeight: 100,
+      textAlignVertical: "center",
+    },
+    sendButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: Colors.cardElevated,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    sendButtonDisabled: {
+      opacity: 0.4,
+    },
+  });
+}
+
+type PostCardStyles = ReturnType<typeof createStyles>;
+
 function ActionButton({
+  styles,
   icon,
   filled,
   count,
@@ -50,6 +229,7 @@ function ActionButton({
   onPress,
   disabled,
 }: {
+  styles: PostCardStyles;
   icon: keyof typeof Ionicons.glyphMap;
   filled?: boolean;
   count?: number;
@@ -96,6 +276,7 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const { user, isAuthenticated, profile } = useAuth();
+  const styles = useThemedStyles(createStyles);
 
   const [post, setPost] = useState<UserPostDetail | null>(initialPost ?? null);
   const [comments, setComments] = useState<UserPostComment[]>([]);
@@ -244,8 +425,6 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
     );
   }
 
-  const avatarUrl = post.author?.avatar_url ?? DEFAULT_AVATAR;
-
   return (
     <View style={showFeedDivider ? styles.feedItem : undefined}>
       <Pressable
@@ -254,7 +433,12 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
         accessibilityRole="button"
         accessibilityLabel={`View ${username}'s profile`}
       >
-        <Image source={{ uri: avatarUrl }} style={styles.postHeaderAvatar} contentFit="cover" />
+        <UserAvatar
+          uri={post.author?.avatar_url}
+          size={36}
+          borderWidth={styles.postHeaderAvatar.borderWidth}
+          borderColor={styles.postHeaderAvatar.borderColor}
+        />
         <Text style={styles.postHeaderUsername}>{username}</Text>
       </Pressable>
 
@@ -269,6 +453,7 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
       <View style={styles.body}>
         <View style={styles.actionsRow}>
           <ActionButton
+            styles={styles}
             icon={post.liked_by_me ? "heart" : "heart-outline"}
             filled={post.liked_by_me}
             count={post.like_count}
@@ -277,12 +462,13 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
             disabled={likeLoading}
           />
           <ActionButton
+            styles={styles}
             icon="chatbubble-outline"
             count={post.comment_count}
             label="Comment"
             onPress={openCommentsModal}
           />
-          <ActionButton icon="paper-plane-outline" label="Share" onPress={handleShare} />
+          <ActionButton styles={styles} icon="paper-plane-outline" label="Share" onPress={handleShare} />
         </View>
 
         {(post.caption || comments.length > 0) ? (
@@ -366,178 +552,3 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  feedItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    marginBottom: 8,
-  },
-  postHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: SPACING.screen,
-    paddingTop: 12,
-    paddingBottom: 10,
-  },
-  postHeaderAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.cardElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  postHeaderUsername: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  placeholder: {
-    minHeight: 120,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.cardElevated,
-  },
-  muted: {
-    ...Typography.body,
-    color: Colors.textMuted,
-  },
-  imageFrame: {
-    alignSelf: "center",
-    overflow: "hidden",
-    backgroundColor: Colors.cardElevated,
-  },
-  body: {
-    paddingHorizontal: SPACING.screen,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 20,
-    marginBottom: 14,
-  },
-  actionButton: {
-    flexShrink: 0,
-  },
-  actionInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  actionPressed: {
-    opacity: 0.7,
-  },
-  actionDisabled: {
-    opacity: 0.5,
-  },
-  actionCount: {
-    color: Colors.textPrimary,
-    fontSize: 14,
-    fontWeight: "600",
-    lineHeight: 24,
-    includeFontPadding: false,
-  },
-  captionBlock: {
-    lineHeight: 22,
-    marginBottom: 4,
-  },
-  username: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  captionText: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  commentsSection: {
-    marginTop: 14,
-    gap: 10,
-  },
-  modalScreen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.screen,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  modalTitle: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-  },
-  modalClose: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalList: {
-    flex: 1,
-  },
-  modalListContent: {
-    padding: SPACING.screen,
-    gap: 12,
-    flexGrow: 1,
-  },
-  modalEmpty: {
-    ...Typography.body,
-    color: Colors.textMuted,
-    textAlign: "center",
-    marginTop: 24,
-  },
-  modalInputBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: SPACING.screen,
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
-  },
-  commentInput: {
-    flex: 1,
-    ...Typography.body,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.cardElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: RADIUS.pill,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 10,
-    minHeight: 44,
-    maxHeight: 100,
-    textAlignVertical: "center",
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.cardElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  sendButtonDisabled: {
-    opacity: 0.4,
-  },
-});

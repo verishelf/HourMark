@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { Image } from "expo-image";
+import { UserAvatar } from "@/components/UserAvatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
@@ -12,7 +12,7 @@ type Props = {
   onAvatarPress?: () => void;
 };
 
-const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200";
+const BUBBLE_AVATAR_SIZE = 24;
 
 export function MessageBubble({ message, isOwn, avatarUri, onAvatarPress }: Props) {
   return (
@@ -27,10 +27,11 @@ export function MessageBubble({ message, isOwn, avatarUri, onAvatarPress }: Prop
     >
       {!isOwn && (
         <Pressable onPress={onAvatarPress} hitSlop={8}>
-          <Image
-            source={{ uri: avatarUri ?? DEFAULT_AVATAR }}
-            style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: Colors.border }}
-            contentFit="cover"
+          <UserAvatar
+            uri={avatarUri}
+            size={BUBBLE_AVATAR_SIZE}
+            borderWidth={1}
+            borderColor={Colors.border}
           />
         </Pressable>
       )}
@@ -80,10 +81,11 @@ export function MessageBubble({ message, isOwn, avatarUri, onAvatarPress }: Prop
       </View>
       {isOwn && (
         <Pressable onPress={onAvatarPress} hitSlop={8}>
-          <Image
-            source={{ uri: avatarUri ?? DEFAULT_AVATAR }}
-            style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: Colors.border }}
-            contentFit="cover"
+          <UserAvatar
+            uri={avatarUri}
+            size={BUBBLE_AVATAR_SIZE}
+            borderWidth={1}
+            borderColor={Colors.border}
           />
         </Pressable>
       )}

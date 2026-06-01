@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { LISTING_CARD_RADIUS, RADIUS, SPACING } from "@/constants/layout";
+import { useCardOverlayButtonStyle } from "@/hooks/useCardOverlayButtonStyle";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { GRID_GAP } from "@/styles/layout";
 import type { UserPost } from "@/types";
 
@@ -31,6 +33,39 @@ type Props = {
   feedUserId?: string;
 };
 
+function createStyles() {
+  return StyleSheet.create({
+    grid: {},
+    gridFlush: {
+      marginHorizontal: -SPACING.screen,
+    },
+    row: {
+      flexDirection: "row",
+    },
+    rowCentered: {
+      justifyContent: "center",
+    },
+    cell: {
+      overflow: "hidden",
+      backgroundColor: Colors.cardElevated,
+    },
+    cellPressed: {
+      opacity: 0.92,
+    },
+    image: {
+      width: "100%",
+      height: "100%",
+    },
+    cellActions: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      flexDirection: "row",
+      gap: 6,
+    },
+  });
+}
+
 export function PostGrid({
   posts,
   editable,
@@ -41,6 +76,8 @@ export function PostGrid({
   feedUserId,
 }: Props) {
   const router = useRouter();
+  const styles = useThemedStyles(createStyles);
+  const overlayButton = useCardOverlayButtonStyle(26);
 
   const openPost = (post: UserPost) => {
     if (feedUserId) {
@@ -111,9 +148,9 @@ export function PostGrid({
                           onEdit(post);
                         }}
                         hitSlop={8}
-                        style={styles.actionButton}
+                        style={overlayButton.button}
                       >
-                        <Ionicons name="pencil" size={14} color={Colors.textPrimary} />
+                        <Ionicons name="pencil" size={14} color={overlayButton.icon} />
                       </Pressable>
                     ) : null}
                     {onDelete ? (
@@ -123,7 +160,7 @@ export function PostGrid({
                           handleDelete(post);
                         }}
                         hitSlop={8}
-                        style={styles.actionButton}
+                        style={overlayButton.button}
                       >
                         <Ionicons name="trash-outline" size={14} color={Colors.error} />
                       </Pressable>
@@ -138,42 +175,3 @@ export function PostGrid({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  grid: {},
-  gridFlush: {
-    marginHorizontal: -SPACING.screen,
-  },
-  row: {
-    flexDirection: "row",
-  },
-  rowCentered: {
-    justifyContent: "center",
-  },
-  cell: {
-    overflow: "hidden",
-    backgroundColor: Colors.cardElevated,
-  },
-  cellPressed: {
-    opacity: 0.92,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  cellActions: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    flexDirection: "row",
-    gap: 6,
-  },
-  actionButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.overlay,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

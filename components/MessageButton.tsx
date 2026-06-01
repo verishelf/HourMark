@@ -11,6 +11,7 @@ import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 
 type Props = {
   onPress: () => void;
@@ -19,6 +20,8 @@ type Props = {
 };
 
 export function MessageButton({ onPress, loading = false, style }: Props) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Pressable
       onPress={() => {
@@ -45,7 +48,8 @@ export function MessageButton({ onPress, loading = false, style }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles() {
+  return StyleSheet.create({
   base: {
     minHeight: 44,
     borderRadius: RADIUS.pill,
@@ -71,4 +75,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: Colors.textPrimary,
   },
-});
+  });
+}

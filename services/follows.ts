@@ -15,8 +15,7 @@ const mockBuyer: UserProfile = {
   id: "buyer-1",
   username: "collector_nyc",
   full_name: "Alex Morgan",
-  avatar_url:
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
+  avatar_url: null,
   bio: "Passionate about independent watchmakers",
   verified: false,
   stripe_account_id: null,

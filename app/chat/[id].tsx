@@ -14,6 +14,7 @@ import { AnimatePresence, MotiView } from "moti";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { EmptyState } from "@/components/EmptyState";
 import { MessageBubble } from "@/components/MessageBubble";
 import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
@@ -29,14 +30,16 @@ import {
   deleteMessage,
   getConversationById,
 } from "@/services/messaging";
+import { getOffersForListing } from "@/services/offers";
+import { OfferActionRow } from "@/components/OfferModal";
+import { UserAvatar } from "@/components/UserAvatar";
 import {
-  CONVERSATION_DEFAULT_AVATAR,
   getConversationAvatarUri,
   getConversationPrimaryTitle,
   getConversationSubtitle,
   isWatchConversation,
 } from "@/lib/conversationDisplay";
-import type { Conversation, Message } from "@/types";
+import type { Conversation, ListingOffer, Message } from "@/types";
 
 const MESSAGE_ENTER_TRANSITION = { type: "timing" as const, duration: 220 };
 const MESSAGE_EXIT_TRANSITION = { type: "timing" as const, duration: 280 };
@@ -57,6 +60,7 @@ export default function ChatScreen() {
   const { user, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [offers, setOffers] = useState<ListingOffer[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<ScrollView>(null);
 
@@ -65,7 +69,12 @@ export default function ChatScreen() {
     getMessages(id).then(setMessages);
     markMessagesAsRead(id, user.id);
     getConversationById(id, user.id)
-      .then((conv) => setConversation(conv))
+      .then((conv) => {
+        setConversation(conv);
+        if (conv?.listing_id) {
+          getOffersForListing(conv.listing_id).then(setOffers);
+        }
+      })
       .catch(() => setConversation(null));
 
     const unsubscribe = subscribeToMessages(id, (msg) => {
@@ -106,9 +115,7 @@ export default function ChatScreen() {
 
   const otherUser = conversation?.other_user ?? null;
   const aboutWatch = conversation ? isWatchConversation(conversation) : false;
-  const headerImageUri = conversation
-    ? getConversationAvatarUri(conversation)
-    : CONVERSATION_DEFAULT_AVATAR;
+  const headerImageUri = conversation ? getConversationAvatarUri(conversation) : null;
   const headerTitle = conversation
     ? getConversationPrimaryTitle(conversation)
     : "Conversation";
@@ -135,11 +142,24 @@ export default function ChatScreen() {
           }}
           style={styles.headerThumbPress}
         >
-          <Image
-            source={{ uri: headerImageUri }}
-            style={aboutWatch ? styles.headerListingThumb : styles.headerAvatar}
-            contentFit="cover"
-          />
+          {aboutWatch ? (
+            headerImageUri ? (
+              <Image
+                source={{ uri: headerImageUri }}
+                style={styles.headerListingThumb}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={styles.headerListingThumb} />
+            )
+          ) : (
+            <UserAvatar
+              uri={headerImageUri}
+              size={40}
+              borderWidth={styles.headerAvatar.borderWidth}
+              borderColor={styles.headerAvatar.borderColor}
+            />
+          )}
         </Pressable>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ ...Typography.h3, color: Colors.textPrimary }} numberOfLines={1}>
@@ -161,6 +181,34 @@ export default function ChatScreen() {
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         keyboardShouldPersistTaps="handled"
       >
+        {offers.length > 0 && conversation?.listing_id ? (
+          <View style={{ marginBottom: 16, gap: 4 }}>
+            <Text style={{ ...Typography.label, color: Colors.textMuted, marginBottom: 4 }}>
+              Offers
+            </Text>
+            {offers.slice(0, 5).map((offer) => (
+              <OfferActionRow
+                key={offer.id}
+                offer={offer}
+                isSeller={user?.id === offer.seller_id}
+                onUpdate={(updated) =>
+                  setOffers((prev) =>
+                    prev.map((o) => (o.id === updated.id ? updated : o))
+                  )
+                }
+              />
+            ))}
+          </View>
+        ) : null}
+
+        {messages.length === 0 ? (
+          <EmptyState
+            fill
+            icon="chatbubbles-outline"
+            title="No messages yet"
+            body="Send a message to start the conversation."
+          />
+        ) : (
         <AnimatePresence initial={false}>
           {messages.map((item) => {
             const isOwn = item.sender_id === user?.id;
@@ -189,10 +237,8 @@ export default function ChatScreen() {
                 from={{ opacity: 0, translateY: 12 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 exit={{ opacity: 0, translateY: -8, height: 0, marginBottom: 0 }}
-                transition={{
-                  enter: MESSAGE_ENTER_TRANSITION,
-                  exit: MESSAGE_EXIT_TRANSITION,
-                }}
+                transition={MESSAGE_ENTER_TRANSITION}
+                exitTransition={MESSAGE_EXIT_TRANSITION}
                 style={styles.messageRow}
               >
                 {isOwn ? (
@@ -206,6 +252,7 @@ export default function ChatScreen() {
             );
           })}
         </AnimatePresence>
+        )}
       </ScrollView>
 
       <View
@@ -290,6 +337,8 @@ const styles = StyleSheet.create({
   },
   listContentEmpty: {
     flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   messageRow: {
     width: "100%",

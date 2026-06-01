@@ -6,6 +6,7 @@ import { AUTH_SLIDE_IMAGES } from "@/constants/authSlides";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
 import { HIDE_SCROLL_INDICATORS, smoothHorizontalScrollProps } from "@/constants/scroll";
+import { useTheme } from "@/hooks/useTheme";
 import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -22,6 +23,7 @@ export function AuthImageSlider({
   images = AUTH_SLIDE_IMAGES,
   height = 240,
 }: Props) {
+  const { colorScheme } = useTheme();
   const {
     listRef,
     loopData,
@@ -54,7 +56,7 @@ export function AuthImageSlider({
         horizontal
         {...HIDE_SCROLL_INDICATORS}
         {...smoothHorizontalScrollProps(SNAP_INTERVAL)}
-        keyExtractor={(_, i) => `auth-thumb-${i}`}
+        keyExtractor={(_, i) => `auth-thumb-${i}-${colorScheme}`}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         onMomentumScrollEnd={onMomentumScrollEnd}

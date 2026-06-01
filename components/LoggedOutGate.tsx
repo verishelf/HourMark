@@ -32,9 +32,9 @@ export function LoggedOutGate({
           {subtitle}
         </Text>
         <View style={styles.buttons}>
-          <LuxuryButton label="Sign In" onPress={onSignIn} variant="primary" size="large" />
+          <LuxuryButton label="Sign In" onPress={onSignIn} variant="onDark" size="large" />
           <View style={styles.gap} />
-          <LuxuryButton label="Create Account" onPress={onSignUp} variant="outline" size="large" />
+          <LuxuryButton label="Create Account" onPress={onSignUp} variant="onDark" size="large" />
         </View>
       </View>
     </View>
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.hero,
-    color: Colors.textPrimary,
+    color: "#FFFFFF",
     fontSize: 42,
     lineHeight: 46,
     textAlign: "center",
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...Typography.body,
-    color: Colors.textSecondary,
+    color: "rgba(255,255,255,0.75)",
     textAlign: "center",
     lineHeight: 22,
     maxWidth: 320,

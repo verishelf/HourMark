@@ -8,13 +8,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputProps,
   View,
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useStripe,
-  isPlatformPaySupported,
   PlatformPay,
   PlatformPayButton,
   confirmPlatformPayPayment,
@@ -28,9 +28,26 @@ import { COMMISSION_RATE } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { CARD_GAP, LISTING_CARD_RADIUS, RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { formatPrice, calculateCommission, isStripeConfigured } from "@/lib/stripe";
+import {
+  formatPrice,
+  calculateCommission,
+  isStripeConfigured,
+  STRIPE_PUBLISHABLE_KEY,
+  STRIPE_RETURN_URL,
+  formatStripePaymentError,
+} from "@/lib/stripe";
+import {
+  APPLE_PAY_CURRENCY,
+  APPLE_PAY_MERCHANT_COUNTRY,
+  buildApplePayCartItems,
+  getApplePayAvailability,
+} from "@/lib/applePay";
+import { checkoutPrefillEmail } from "@/lib/email";
+import { safeGoBack } from "@/lib/navigation";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getListingById } from "@/services/listings";
 import {
   createPaymentIntent,
@@ -41,16 +58,16 @@ import type { Listing, ShippingDetails } from "@/types";
 
 type PayMethod = "apple_pay" | "card" | "wire";
 
-const MERCHANT_COUNTRY = "US";
-
-async function checkApplePaySupport(): Promise<boolean> {
-  if (Platform.OS !== "ios" || !isStripeConfigured) return false;
-
-  try {
-    return await isPlatformPaySupported();
-  } catch {
-    return false;
-  }
+/** Maps iOS/Android contact & home-address autofill to the correct shipping fields. */
+function shippingAutofill(
+  autoComplete: NonNullable<TextInputProps["autoComplete"]>,
+  textContentType: NonNullable<TextInputProps["textContentType"]>
+): Pick<TextInputProps, "autoComplete" | "textContentType" | "importantForAutofill"> {
+  return {
+    autoComplete,
+    textContentType,
+    ...(Platform.OS === "android" ? { importantForAutofill: "yes" as const } : {}),
+  };
 }
 
 function validateShippingForm(form: ShippingDetails): string | null {
@@ -76,10 +93,15 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { colorScheme } = useTheme();
+  const styles = useThemedStyles(createCheckoutStyles);
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [listing, setListing] = useState<Listing | null>(null);
   const [activeMethod, setActiveMethod] = useState<PayMethod | null>(null);
-  const [applePayAvailable, setApplePayAvailable] = useState(false);
+  const [applePayNativeAvailable, setApplePayNativeAvailable] = useState(false);
+  const [applePayUnavailableReason, setApplePayUnavailableReason] = useState<string | null>(
+    null
+  );
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
@@ -97,13 +119,17 @@ export default function CheckoutScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      checkApplePaySupport().then(setApplePayAvailable);
+      getApplePayAvailability().then(({ canUseNativeButton, reason }) => {
+        setApplePayNativeAvailable(canUseNativeButton);
+        setApplePayUnavailableReason(reason);
+      });
     }, [])
   );
 
   useEffect(() => {
-    if (user?.email && !buyerEmail) {
-      setBuyerEmail(user.email);
+    if (!buyerEmail && user?.email) {
+      const prefill = checkoutPrefillEmail(user.email);
+      if (prefill) setBuyerEmail(prefill);
     }
   }, [user?.email, buyerEmail]);
 
@@ -184,6 +210,14 @@ export default function CheckoutScreen() {
   const handleCardPayment = async () => {
     if (!listing || !user || !ensureShippingValid()) return;
 
+    if (!STRIPE_PUBLISHABLE_KEY) {
+      Alert.alert(
+        "Stripe not configured",
+        "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY to .env, then restart Expo: npx expo start -c"
+      );
+      return;
+    }
+
     setActiveMethod("card");
     try {
       const { clientSecret, orderId } = await createPaymentIntent({
@@ -198,7 +232,15 @@ export default function CheckoutScreen() {
         Alert.alert(
           "Demo Mode",
           "Stripe is not configured. In production, card payment would process here.",
-          [{ text: "OK", onPress: () => router.back() }]
+          [
+            {
+              text: "OK",
+              onPress: () =>
+                safeGoBack(
+                  listingId ? (`/listing/${listingId}` as const) : "/(tabs)"
+                ),
+            },
+          ]
         );
         return;
       }
@@ -206,9 +248,10 @@ export default function CheckoutScreen() {
       const { error: initError } = await initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: "Crownly",
+        returnURL: STRIPE_RETURN_URL,
         allowsDelayedPaymentMethods: false,
         applePay: {
-          merchantCountryCode: MERCHANT_COUNTRY,
+          merchantCountryCode: APPLE_PAY_MERCHANT_COUNTRY,
         },
         defaultBillingDetails: {
           email: shippingDetails.buyerEmail,
@@ -238,14 +281,32 @@ export default function CheckoutScreen() {
       await completeOrder(orderId);
       router.replace(`/checkout/success?orderId=${orderId}` as const);
     } catch (e) {
-      Alert.alert("Payment Failed", e instanceof Error ? e.message : "Try again");
+      const raw = e instanceof Error ? e.message : "Try again";
+      if (__DEV__) console.warn("[checkout] card payment failed:", raw);
+      Alert.alert("Payment Failed", formatStripePaymentError(raw));
     } finally {
       setActiveMethod(null);
     }
   };
 
+  const tryApplePay = () => {
+    if (applePayUnavailableReason) {
+      Alert.alert("Apple Pay", applePayUnavailableReason);
+      return;
+    }
+    void handleApplePay();
+  };
+
   const handleApplePay = async () => {
     if (!listing || !user || !ensureShippingValid()) return;
+
+    if (!STRIPE_PUBLISHABLE_KEY) {
+      Alert.alert(
+        "Stripe not configured",
+        "Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY to .env, then restart Expo: npx expo start -c"
+      );
+      return;
+    }
 
     setActiveMethod("apple_pay");
     try {
@@ -264,15 +325,12 @@ export default function CheckoutScreen() {
 
       const { error } = await confirmPlatformPayPayment(clientSecret, {
         applePay: {
-          cartItems: [
-            {
-              label: `${listing.brand} ${listing.model}`,
-              amount: (listing.price / 100).toFixed(2),
-              paymentType: PlatformPay.PaymentType.Immediate,
-            },
-          ],
-          merchantCountryCode: MERCHANT_COUNTRY,
-          currencyCode: "USD",
+          cartItems: buildApplePayCartItems(
+            `${listing.brand} ${listing.model}`,
+            listing.price
+          ),
+          merchantCountryCode: APPLE_PAY_MERCHANT_COUNTRY,
+          currencyCode: APPLE_PAY_CURRENCY,
         },
       });
 
@@ -286,7 +344,9 @@ export default function CheckoutScreen() {
       await completeOrder(orderId);
       router.replace(`/checkout/success?orderId=${orderId}` as const);
     } catch (e) {
-      Alert.alert("Apple Pay Failed", e instanceof Error ? e.message : "Try again");
+      const raw = e instanceof Error ? e.message : "Try again";
+      if (__DEV__) console.warn("[checkout] Apple Pay failed:", raw);
+      Alert.alert("Apple Pay Failed", formatStripePaymentError(raw));
     } finally {
       setActiveMethod(null);
     }
@@ -325,6 +385,10 @@ export default function CheckoutScreen() {
   const commission = calculateCommission(listing.price);
   const coverImage = getListingCoverImage(listing.images);
   const isLoading = activeMethod !== null;
+  const showApplePayOnIos = Platform.OS === "ios" && isStripeConfigured;
+  const applePayAppearance =
+    colorScheme === "light" ? PlatformPay.ButtonStyle.Black : PlatformPay.ButtonStyle.White;
+
   const paymentRows: {
     key: PayMethod;
     icon: keyof typeof Ionicons.glyphMap;
@@ -332,11 +396,24 @@ export default function CheckoutScreen() {
     subtitle: string;
     onPress: () => void;
   }[] = [
+    ...(showApplePayOnIos && !applePayNativeAvailable
+      ? [
+          {
+            key: "apple_pay" as const,
+            icon: "logo-apple" as const,
+            label: "Apple Pay",
+            subtitle: applePayUnavailableReason ?? "Pay with Apple Wallet",
+            onPress: tryApplePay,
+          },
+        ]
+      : []),
     {
       key: "card",
       icon: "card-outline",
       label: "Credit or Debit Card",
-      subtitle: "Visa, Mastercard, Amex, and more",
+      subtitle: showApplePayOnIos
+        ? "Card or Apple Pay in checkout sheet"
+        : "Visa, Mastercard, Amex, and more",
       onPress: handleCardPayment,
     },
     {
@@ -362,7 +439,15 @@ export default function CheckoutScreen() {
           title="Checkout"
           subtitle="Shipping details and payment"
           rightAction={
-            <Pressable onPress={() => router.back()} hitSlop={12} style={styles.closeButton}>
+            <Pressable
+              onPress={() =>
+                safeGoBack(
+                  listingId ? (`/listing/${listingId}` as const) : "/(tabs)"
+                )
+              }
+              hitSlop={12}
+              style={styles.closeButton}
+            >
               <Ionicons name="close" size={22} color={Colors.textPrimary} />
             </Pressable>
           }
@@ -393,7 +478,7 @@ export default function CheckoutScreen() {
               placeholderTextColor={Colors.textMuted}
               value={buyerName}
               onChangeText={setBuyerName}
-              autoComplete="name"
+              {...shippingAutofill("name", "name")}
               style={styles.input}
             />
             <TextInput
@@ -401,9 +486,10 @@ export default function CheckoutScreen() {
               placeholderTextColor={Colors.textMuted}
               value={buyerEmail}
               onChangeText={setBuyerEmail}
-              autoComplete="email"
+              {...shippingAutofill("email", "emailAddress")}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
               style={styles.input}
             />
             <TextInput
@@ -411,7 +497,7 @@ export default function CheckoutScreen() {
               placeholderTextColor={Colors.textMuted}
               value={buyerPhone}
               onChangeText={setBuyerPhone}
-              autoComplete="tel"
+              {...shippingAutofill("tel", "telephoneNumber")}
               keyboardType="phone-pad"
               style={styles.input}
             />
@@ -420,7 +506,7 @@ export default function CheckoutScreen() {
               placeholderTextColor={Colors.textMuted}
               value={addressLine1}
               onChangeText={setAddressLine1}
-              autoComplete="street-address"
+              {...shippingAutofill("street-address", "streetAddressLine1")}
               style={styles.input}
             />
             <TextInput
@@ -428,7 +514,7 @@ export default function CheckoutScreen() {
               placeholderTextColor={Colors.textMuted}
               value={addressLine2}
               onChangeText={setAddressLine2}
-              autoComplete="address-line2"
+              {...shippingAutofill("address-line2", "streetAddressLine2")}
               style={styles.input}
             />
             <View style={styles.inputRow}>
@@ -437,7 +523,7 @@ export default function CheckoutScreen() {
                 placeholderTextColor={Colors.textMuted}
                 value={city}
                 onChangeText={setCity}
-                autoComplete="address-line1"
+                {...shippingAutofill("postal-address-locality", "addressCity")}
                 style={[styles.input, styles.inputHalf, styles.inputRowLeft]}
               />
               <TextInput
@@ -445,7 +531,7 @@ export default function CheckoutScreen() {
                 placeholderTextColor={Colors.textMuted}
                 value={state}
                 onChangeText={setState}
-                autoComplete="address-line1"
+                {...shippingAutofill("postal-address-region", "addressState")}
                 autoCapitalize="characters"
                 style={[styles.input, styles.inputHalf]}
               />
@@ -456,7 +542,7 @@ export default function CheckoutScreen() {
                 placeholderTextColor={Colors.textMuted}
                 value={postalCode}
                 onChangeText={setPostalCode}
-                autoComplete="postal-code"
+                {...shippingAutofill("postal-code", "postalCode")}
                 keyboardType="number-pad"
                 style={[styles.input, styles.inputHalf, styles.inputRowLeft]}
               />
@@ -465,6 +551,7 @@ export default function CheckoutScreen() {
                 placeholderTextColor={Colors.textMuted}
                 value={country}
                 onChangeText={setCountry}
+                {...shippingAutofill("country", "countryName")}
                 autoCapitalize="characters"
                 style={[styles.input, styles.inputHalf]}
               />
@@ -491,27 +578,29 @@ export default function CheckoutScreen() {
 
           <Text style={styles.sectionHeading}>Payment Method</Text>
 
-          {applePayAvailable ? (
+          {showApplePayOnIos ? (
             <View style={styles.applePaySection}>
-              <PlatformPayButton
-                onPress={handleApplePay}
-                type={PlatformPay.ButtonType.Buy}
-                appearance={PlatformPay.ButtonStyle.Black}
-                borderRadius={RADIUS.sm}
-                disabled={isLoading}
-                style={styles.applePayButton}
-              />
+              {applePayNativeAvailable ? (
+                <PlatformPayButton
+                  onPress={tryApplePay}
+                  type={PlatformPay.ButtonType.Buy}
+                  appearance={applePayAppearance}
+                  borderRadius={RADIUS.sm}
+                  disabled={isLoading}
+                  style={styles.applePayButton}
+                />
+              ) : null}
               {activeMethod === "apple_pay" ? (
                 <Text style={styles.applePayStatus}>Opening Apple Pay…</Text>
+              ) : applePayUnavailableReason ? (
+                <Text style={styles.applePayHint}>{applePayUnavailableReason}</Text>
               ) : null}
             </View>
-          ) : Platform.OS === "ios" && isStripeConfigured ? (
-            <Text style={styles.applePayHint}>
-              Apple Pay is available in a development build on a device with Wallet set up.
-            </Text>
           ) : null}
 
-          {applePayAvailable ? <Text style={styles.paymentDivider}>or pay with</Text> : null}
+          {showApplePayOnIos && applePayNativeAvailable ? (
+            <Text style={styles.paymentDivider}>or pay with</Text>
+          ) : null}
 
           <View style={styles.settingsSection}>
             {paymentRows.map((row, index) => (
@@ -538,7 +627,8 @@ export default function CheckoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createCheckoutStyles() {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -724,4 +814,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
   },
-});
+  });
+}

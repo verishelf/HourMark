@@ -7,8 +7,10 @@ import { CrownlyLogo } from "@/components/CrownlyLogo";
 const NAV = [
   { href: "#richard-mille", label: "Richard Mille" },
   { href: "#features", label: "Features" },
+  { href: "#platform", label: "Platform" },
   { href: "#trust", label: "Trust" },
   { href: "#showcase", label: "App" },
+  { href: "#community", label: "Community" },
   { href: "#how-it-works", label: "Buy & Sell" },
   { href: "#download", label: "Download" },
 ];

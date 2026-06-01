@@ -24,9 +24,9 @@ export function Download() {
               Start buying &amp; selling
             </h2>
             <p className="mx-auto mt-6 max-w-md text-[#a1a1aa]">
-              Crownly is launching soon on the App Store. Discover authenticated
-              luxury watches, checkout with Apple Pay, and sell with Stripe
-              Connect payouts — all from your iPhone.
+              Crownly is launching soon on the App Store. Discover authenticated listings,
+              negotiate with offers, track your collection, and checkout with Apple Pay
+              or wire — all from your iPhone.
             </p>
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">

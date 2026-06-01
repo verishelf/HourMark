@@ -26,6 +26,18 @@ export function Footer() {
             Terms &amp; EULA
           </Link>
           <Link
+            href="/#platform"
+            className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
+          >
+            Platform
+          </Link>
+          <Link
+            href="/#trust"
+            className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
+          >
+            Trust
+          </Link>
+          <Link
             href="/#how-it-works"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >

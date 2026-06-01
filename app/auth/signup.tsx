@@ -12,8 +12,12 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { resetToApp } from "@/lib/navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { formatAppleSignInError, performAppleSignIn } from "@/lib/appleSignIn";
 import { LuxuryButton } from "@/components/LuxuryButton";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { Colors } from "@/constants/colors";
 import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { Typography } from "@/constants/typography";
@@ -30,11 +34,28 @@ export default function SignupScreen() {
 
   const inputStyle = {
     ...Typography.body,
-    color: Colors.textPrimary,
+    color: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: "rgba(255,255,255,0.35)",
     paddingVertical: 14,
     marginBottom: 20,
+  };
+
+  const afterAuth = () => resetToApp();
+
+  const handleAppleSignUp = async () => {
+    setLoading(true);
+    try {
+      await performAppleSignIn();
+      afterAuth();
+    } catch (e) {
+      const message = formatAppleSignInError(e);
+      if (message) {
+        Alert.alert("Apple Sign In", message);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignup = async () => {
@@ -46,7 +67,7 @@ export default function SignupScreen() {
     try {
       await signUpWithEmail(email, password, username);
       Alert.alert("Welcome", "Check your email to verify your account.");
-      router.replace("/(tabs)");
+      resetToApp();
     } catch (e) {
       Alert.alert("Sign Up", e instanceof Error ? e.message : "Failed to create account");
     } finally {
@@ -76,31 +97,14 @@ export default function SignupScreen() {
         }}
       >
         <View style={styles.card}>
-          <Text
-            style={{
-              ...Typography.hero,
-              color: Colors.textPrimary,
-              fontSize: 36,
-              marginBottom: 8,
-              textAlign: "center",
-            }}
-          >
-            Join Crownly
-          </Text>
-          <Text
-            style={{
-              ...Typography.body,
-              color: Colors.textSecondary,
-              marginBottom: 28,
-              textAlign: "center",
-            }}
-          >
-            Create your collector account
-          </Text>
+          <CrownlyLogo width={100} style={styles.logo} />
+
+          <Text style={styles.title}>Join Crownly</Text>
+          <Text style={styles.subtitle}>Create your collector account</Text>
 
           <TextInput
             placeholder="Username"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor="rgba(255,255,255,0.65)"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
@@ -108,7 +112,7 @@ export default function SignupScreen() {
           />
           <TextInput
             placeholder="Email"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor="rgba(255,255,255,0.65)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -117,31 +121,48 @@ export default function SignupScreen() {
           />
           <TextInput
             placeholder="Password"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor="rgba(255,255,255,0.65)"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             style={inputStyle}
           />
 
-          <LuxuryButton label="Create Account" onPress={handleSignup} loading={loading} size="large" />
+          <LuxuryButton
+            label="Create Account"
+            onPress={handleSignup}
+            loading={loading}
+            size="large"
+            variant="onDark"
+          />
+
+          <View style={{ height: 18 }} />
+
+          {Platform.OS === "ios" && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+              cornerRadius={2}
+              style={{ width: "100%", height: 52, marginBottom: 12 }}
+              onPress={handleAppleSignUp}
+            />
+          )}
 
           <Pressable
             onPress={() => router.push("/auth/login")}
-            style={{ marginTop: 20, alignItems: "center" }}
+            style={{ marginTop: 20, alignItems: "center", paddingVertical: 8 }}
+            hitSlop={8}
           >
-            <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
-              Already have an account? Sign in
+            <Text style={styles.link}>
+              Already have an account? <Text style={styles.linkAccent}>Sign in</Text>
             </Text>
           </Pressable>
 
           <Pressable
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => resetToApp()}
             style={{ marginTop: 12, alignItems: "center" }}
           >
-            <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
-              Browse as guest
-            </Text>
+            <Text style={styles.linkMuted}>Browse as guest</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -170,5 +191,34 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "rgba(10, 10, 10, 0.78)",
     padding: 20,
+  },
+  logo: {
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  title: {
+    ...Typography.hero,
+    color: "#FFFFFF",
+    fontSize: 36,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    ...Typography.body,
+    color: "rgba(255,255,255,0.75)",
+    marginBottom: 28,
+    textAlign: "center",
+  },
+  link: {
+    ...Typography.caption,
+    color: "rgba(255,255,255,0.75)",
+  },
+  linkAccent: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  linkMuted: {
+    ...Typography.caption,
+    color: "rgba(255,255,255,0.65)",
   },
 });

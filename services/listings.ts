@@ -343,3 +343,29 @@ function filterMockListings(
 
   return result.filter(isDisplayableListing);
 }
+
+export async function getListingsFromFollowing(userId: string): Promise<Listing[]> {
+  if (!isSupabaseConfigured) {
+    return getMockListings().slice(0, 6);
+  }
+
+  const { data: follows } = await supabase
+    .from("user_follows")
+    .select("following_id")
+    .eq("follower_id", userId);
+
+  const followingIds = (follows ?? []).map((f) => f.following_id as string);
+  if (!followingIds.length) return [];
+
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*, seller:users(*)")
+    .in("seller_id", followingIds)
+    .eq("status", "active")
+    .eq("authentication_status", "auto_verified")
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) throw error;
+  return normalizeListings((data ?? []) as Listing[]);
+}

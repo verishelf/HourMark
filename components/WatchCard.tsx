@@ -12,6 +12,7 @@ import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { CARD_GAP, LISTING_CARD_RADIUS, RADIUS } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
+import { useCardOverlayButtonStyle } from "@/hooks/useCardOverlayButtonStyle";
 import { useFavorite } from "@/hooks/useFavorite";
 import type { Listing } from "@/types";
 
@@ -37,6 +38,7 @@ export function WatchCard({
   const router = useRouter();
   const { user } = useAuth();
   const { favorited, toggle } = useFavorite(user?.id, listing.id);
+  const overlayButton = useCardOverlayButtonStyle();
 
   const imageHeight =
     variant === "editorial"
@@ -68,20 +70,12 @@ export function WatchCard({
   };
 
   const cardRadius = LISTING_CARD_RADIUS;
-  const overlayBtn = {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.overlay,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-  };
 
   return (
     <View
       style={{
         marginBottom: isGrid || isCompact ? 0 : CARD_GAP,
-        width: isGrid ? "100%" : undefined,
+        width: isGrid || isCompact ? "100%" : undefined,
       }}
     >
       <View
@@ -133,23 +127,27 @@ export function WatchCard({
               }}
             >
               {onEdit ? (
-                <Pressable onPress={onEdit} hitSlop={8} style={overlayBtn}>
-                  <Ionicons name="create-outline" size={16} color={Colors.textPrimary} />
+                <Pressable onPress={onEdit} hitSlop={8} style={overlayButton.button}>
+                  <Ionicons name="create-outline" size={16} color={overlayButton.icon} />
                 </Pressable>
               ) : null}
               {onDelete ? (
-                <Pressable onPress={onDelete} hitSlop={8} style={overlayBtn}>
+                <Pressable onPress={onDelete} hitSlop={8} style={overlayButton.button}>
                   <Ionicons name="trash-outline" size={16} color={Colors.error} />
                 </Pressable>
               ) : null}
             </View>
           )}
           {showHeart && !showOwnerActions && (
-            <Pressable onPress={handleFavorite} hitSlop={8} style={{ ...overlayBtn, position: "absolute", top: 8, right: 8 }}>
+            <Pressable
+              onPress={handleFavorite}
+              hitSlop={8}
+              style={{ ...overlayButton.button, position: "absolute", top: 8, right: 8 }}
+            >
               <Ionicons
                 name={favorited ? "heart" : "heart-outline"}
                 size={18}
-                color={favorited ? Colors.textPrimary : Colors.textSecondary}
+                color={favorited ? overlayButton.icon : overlayButton.iconMuted}
               />
             </Pressable>
           )}

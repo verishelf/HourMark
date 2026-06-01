@@ -1,17 +1,20 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import {
+  Alert,
   Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { EmptyState } from "@/components/EmptyState";
+import { ListingPlaceholderGrid } from "@/components/ListingPlaceholderGrid";
 import { FilterDropdown } from "@/components/FilterDropdown";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SearchBar } from "@/components/SearchBar";
@@ -25,6 +28,8 @@ import { CARD_GAP, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { isDisplayableListing } from "@/lib/listingImages";
 import { tabContentPadding } from "@/styles/layout";
+import { useAuth } from "@/hooks/useAuth";
+import { saveSearch } from "@/services/savedSearches";
 import type { Listing } from "@/types";
 
 const PRICE_OPTIONS = [
@@ -53,10 +58,10 @@ function sortListings(listings: Listing[], sort: SortKey): Listing[] {
   );
 }
 
-const GRID_ESTIMATED_ITEM_HEIGHT = 268;
-
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { user } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
   const { brand: brandParam } = useLocalSearchParams<{ brand?: string }>();
   const columnWidth = (screenWidth - SPACING.screen * 2 - CARD_GAP) / 2;
@@ -86,10 +91,39 @@ export default function SearchScreen() {
   );
 
   const { listings, loading } = useListings(filters);
+  const { listings: allListings, loading: loadingAll } = useListings({});
   const sortedListings = useMemo(
     () => sortListings(listings, sort).filter(isDisplayableListing),
     [listings, sort]
   );
+  const marketplaceEmpty = useMemo(
+    () =>
+      !loadingAll &&
+      allListings.filter(isDisplayableListing).length === 0,
+    [loadingAll, allListings]
+  );
+  const hasActiveFilters = useMemo(
+    () =>
+      Boolean(search.trim()) ||
+      brand !== "All" ||
+      condition !== "All" ||
+      maxPrice != null,
+    [search, brand, condition, maxPrice]
+  );
+
+  const handleSaveSearch = async () => {
+    if (!user) {
+      router.push("/auth/welcome");
+      return;
+    }
+    await saveSearch(user.id, {
+      search: search || undefined,
+      brand: brand !== "All" ? brand : undefined,
+      condition: condition !== "All" ? condition : undefined,
+      maxPrice,
+    });
+    Alert.alert("Saved", "You'll be alerted when AI-verified listings match.");
+  };
 
   const brandOptions = FILTER_CHIPS.map((chip) => ({ label: chip, value: chip }));
   const conditionOptions = [
@@ -178,14 +212,23 @@ export default function SearchScreen() {
         <Text style={{ ...Typography.caption, color: Colors.textMuted, fontSize: 12 }}>
           {sortedListings.length} timepiece{sortedListings.length === 1 ? "" : "s"}
         </Text>
-        <FilterDropdown
-          compact
-          showTitle
-          title="Sort"
-          value={sort}
-          options={SORT_OPTIONS}
-          onSelect={(v) => setSort(v as SortKey)}
-        />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {hasActiveFilters ? (
+            <Pressable onPress={handleSaveSearch}>
+              <Text style={{ ...Typography.caption, color: Colors.textSecondary, fontSize: 12 }}>
+                Save alert
+              </Text>
+            </Pressable>
+          ) : null}
+          <FilterDropdown
+            compact
+            showTitle
+            title="Sort"
+            value={sort}
+            options={SORT_OPTIONS}
+            onSelect={(v) => setSort(v as SortKey)}
+          />
+        </View>
       </View>
     </View>
   );
@@ -223,7 +266,6 @@ export default function SearchScreen() {
           <FlashList
             data={sortedListings}
             numColumns={2}
-            estimatedItemSize={GRID_ESTIMATED_ITEM_HEIGHT}
             keyExtractor={(item) => item.id}
             {...HIDE_SCROLL_INDICATORS}
             contentContainerStyle={tabContentPadding(insets.bottom)}
@@ -231,11 +273,15 @@ export default function SearchScreen() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
             ListEmptyComponent={
-              <EmptyState
-                icon="search-outline"
-                title="No watches found"
-                body="Try adjusting your filters or search terms."
-              />
+              marketplaceEmpty && !hasActiveFilters ? (
+                <ListingPlaceholderGrid count={4} />
+              ) : (
+                <EmptyState
+                  icon="search-outline"
+                  title="No watches found"
+                  body="Try adjusting your filters or search terms."
+                />
+              )
             }
             renderItem={({ item, index }) => (
               <View

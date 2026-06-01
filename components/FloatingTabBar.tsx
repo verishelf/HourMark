@@ -9,6 +9,7 @@ import { Colors } from "@/constants/colors";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { getConversations } from "@/services/messaging";
 
 type TabConfig = {
@@ -34,7 +35,9 @@ const TAB_CONFIG: Record<string, TabConfig> = {
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { colorScheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
+  const isLight = colorScheme === "light";
 
   useEffect(() => {
     if (!user) {
@@ -65,10 +68,10 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
       }}
     >
       <BlurView
-        intensity={80}
-        tint="dark"
+        intensity={isLight ? 90 : 80}
+        tint={isLight ? "light" : "dark"}
         style={{
-          backgroundColor: "rgba(10, 10, 10, 0.92)",
+          backgroundColor: isLight ? "rgba(255, 255, 255, 0.92)" : "rgba(10, 10, 10, 0.92)",
           paddingBottom: insets.bottom,
         }}
       >

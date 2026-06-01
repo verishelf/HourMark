@@ -3,10 +3,12 @@ import { Alert, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { AuthenticityPassportCard } from "@/components/AuthenticityPassportCard";
 import { HeaderIconButton } from "@/components/HeaderIconButton";
 import { ListingGallery } from "@/components/ListingGallery";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
+import { MakeOfferModal } from "@/components/OfferModal";
 import { SellerCard } from "@/components/SellerCard";
 import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { TrustBadgeRow } from "@/components/TrustBadgeRow";
@@ -20,26 +22,45 @@ import { Typography } from "@/constants/typography";
 import { formatPrice } from "@/lib/stripe";
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorite } from "@/hooks/useFavorite";
+import { useTheme } from "@/hooks/useTheme";
 import { getListingById, getRelatedListings } from "@/services/listings";
 import { getOrCreateConversation } from "@/services/messaging";
-import type { Listing } from "@/types";
+import { getPassportForListing } from "@/services/passport";
+import { getAcceptedOfferForListing } from "@/services/offers";
+import type { AuthenticityPassport, Listing, ListingOffer } from "@/types";
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { colorScheme } = useTheme();
+  const isLight = colorScheme === "light";
+  const headerButtonVariant = isLight ? "surface" : "overlay";
   const [listing, setListing] = useState<Listing | null>(null);
   const [related, setRelated] = useState<Listing[]>([]);
-  const { favorited, toggle } = useFavorite(user?.id, id ?? "");
+  const [passport, setPassport] = useState<AuthenticityPassport | null>(null);
+  const [acceptedOffer, setAcceptedOffer] = useState<ListingOffer | null>(null);
+  const [offerModalVisible, setOfferModalVisible] = useState(false);
+  const { favorited, toggle } = useFavorite(user?.id, id ?? "", listing?.price);
 
   useEffect(() => {
     if (!id) return;
     getListingById(id).then((l) => {
       setListing(l);
-      if (l) getRelatedListings(l).then(setRelated);
+      if (l) {
+        getRelatedListings(l).then(setRelated);
+        if (l.authentication_status === "auto_verified") {
+          getPassportForListing(l.id).then(setPassport);
+        }
+      }
     });
   }, [id]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    getAcceptedOfferForListing(id, user.id).then(setAcceptedOffer);
+  }, [user, id]);
 
   if (!listing) {
     return (
@@ -52,7 +73,7 @@ export default function ListingDetailScreen() {
   const handleBuyNow = () => {
     if (authLoading) return;
 
-    const checkoutPath = `/checkout?listingId=${listing.id}`;
+    const checkoutPath = `/checkout?listingId=${listing.id}${acceptedOffer ? `&offerId=${acceptedOffer.id}` : ""}`;
 
     if (!isAuthenticated) {
       router.push({
@@ -64,8 +85,27 @@ export default function ListingDetailScreen() {
 
     router.push({
       pathname: "/checkout",
-      params: { listingId: listing.id },
+      params: {
+        listingId: listing.id,
+        ...(acceptedOffer ? { offerId: acceptedOffer.id } : {}),
+      },
     });
+  };
+
+  const handleMakeOffer = () => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.push({
+        pathname: "/auth/welcome",
+        params: { redirect: `/listing/${listing.id}` },
+      });
+      return;
+    }
+    if (user?.id === listing.seller_id) {
+      Alert.alert("Your listing", "You cannot offer on your own listing.");
+      return;
+    }
+    setOfferModalVisible(true);
   };
 
   const handleMessageSeller = async () => {
@@ -116,7 +156,10 @@ export default function ListingDetailScreen() {
             {listing.model}
           </Text>
           {listing.reference_number && (
-            <Text style={{ ...Typography.caption, color: Colors.textMuted, marginTop: 8 }}>
+            <Text
+              style={{ ...Typography.caption, color: Colors.textMuted, marginTop: 8 }}
+              onPress={() => router.push(`/ref/${listing.reference_number}`)}
+            >
               Ref. {listing.reference_number} · {listing.year}
             </Text>
           )}
@@ -151,9 +194,23 @@ export default function ListingDetailScreen() {
             </View>
           </View>
 
-          <Text style={{ ...Typography.price, color: Colors.textPrimary, marginBottom: 32 }}>
-            {formatPrice(listing.price)}
+          <Text style={{ ...Typography.price, color: Colors.textPrimary, marginBottom: 8 }}>
+            {acceptedOffer ? formatPrice(acceptedOffer.amount) : formatPrice(listing.price)}
           </Text>
+          {acceptedOffer ? (
+            <Text style={{ ...Typography.caption, color: Colors.textSecondary, marginBottom: 24 }}>
+              Accepted offer · was {formatPrice(listing.price)}
+            </Text>
+          ) : (
+            <View style={{ marginBottom: 24 }} />
+          )}
+
+          {passport ? (
+            <View style={{ marginBottom: 24 }}>
+              <SectionHeader title="Authenticity Passport" />
+              <AuthenticityPassportCard passport={passport} />
+            </View>
+          ) : null}
 
           {listing.description && (
             <>
@@ -202,10 +259,15 @@ export default function ListingDetailScreen() {
           alignItems: "center",
         }}
       >
-        <HeaderIconButton icon="chevron-back" onPress={() => router.back()} />
+        <HeaderIconButton variant={headerButtonVariant} icon="chevron-back" onPress={() => router.back()} />
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <HeaderIconButton icon="chatbubble-ellipses-outline" onPress={handleMessageSeller} />
           <HeaderIconButton
+            variant={headerButtonVariant}
+            icon="chatbubble-ellipses-outline"
+            onPress={handleMessageSeller}
+          />
+          <HeaderIconButton
+            variant={headerButtonVariant}
             icon={favorited ? "heart" : "heart-outline"}
             filled={favorited}
             onPress={() => {
@@ -225,13 +287,45 @@ export default function ListingDetailScreen() {
           paddingHorizontal: 20,
           paddingBottom: insets.bottom + 16,
           paddingTop: 16,
-          backgroundColor: "rgba(0,0,0,0.9)",
+          backgroundColor: isLight ? Colors.background : "rgba(0,0,0,0.9)",
           borderTopWidth: 1,
           borderTopColor: Colors.border,
+          flexDirection: "row",
+          gap: 12,
         }}
       >
-        <LuxuryButton label="Buy Now" size="large" onPress={handleBuyNow} />
+        {listing.accepts_offers !== false && user?.id !== listing.seller_id ? (
+          <View style={{ flex: 1 }}>
+            <LuxuryButton
+              label="Make Offer"
+              variant="ghost"
+              size="large"
+              onPress={handleMakeOffer}
+            />
+          </View>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <LuxuryButton
+            label={acceptedOffer ? "Checkout" : "Buy Now"}
+            size="large"
+            variant="outline"
+            onPress={handleBuyNow}
+          />
+        </View>
       </View>
+
+      {user && user.id !== listing.seller_id ? (
+        <MakeOfferModal
+          visible={offerModalVisible}
+          onClose={() => setOfferModalVisible(false)}
+          listingId={listing.id}
+          listingPrice={listing.price}
+          minOfferPrice={listing.min_offer_price}
+          buyerId={user.id}
+          sellerId={listing.seller_id}
+          onOfferCreated={() => setOfferModalVisible(false)}
+        />
+      ) : null}
     </View>
   );
 }

@@ -13,10 +13,12 @@ import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
-import { Colors } from "@/constants/colors";
+import { Colors, OverlayTextColors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { Typography } from "@/constants/typography";
+import { FirstListingPlaceholderCard } from "@/components/FirstListingPlaceholderCard";
 import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
+import { useTheme } from "@/hooks/useTheme";
 import type { Listing } from "@/types";
 
 const { width } = Dimensions.get("window");
@@ -26,6 +28,7 @@ const SLIDER_TOP_RADIUS = 20;
 
 type Props = {
   listings: Listing[];
+  showEmptyPlaceholder?: boolean;
 };
 
 function FadeInText({
@@ -105,7 +108,7 @@ function FeaturedSlide({
           delay={0}
           style={{
             ...Typography.label,
-            color: Colors.textSecondary,
+            color: OverlayTextColors.muted,
             marginBottom: 8,
           }}
         >
@@ -116,7 +119,7 @@ function FeaturedSlide({
           delay={100}
           style={{
             ...Typography.hero,
-            color: Colors.textPrimary,
+            color: OverlayTextColors.primary,
             fontSize: 36,
           }}
         >
@@ -127,7 +130,7 @@ function FeaturedSlide({
           delay={200}
           style={{
             ...Typography.h2,
-            color: Colors.textSecondary,
+            color: OverlayTextColors.secondary,
             marginBottom: 16,
           }}
         >
@@ -136,7 +139,7 @@ function FeaturedSlide({
         <FadeInText
           isActive={isActive}
           delay={300}
-          style={{ ...Typography.price, color: Colors.textPrimary }}
+          style={{ ...Typography.price, color: OverlayTextColors.primary }}
         >
           {formatPrice(item.price)}
         </FadeInText>
@@ -145,8 +148,12 @@ function FeaturedSlide({
   );
 }
 
-export function FeaturedCarousel({ listings }: Props) {
+export function FeaturedCarousel({
+  listings,
+  showEmptyPlaceholder = false,
+}: Props) {
   const router = useRouter();
+  const { colorScheme } = useTheme();
   const {
     listRef,
     loopData,
@@ -171,7 +178,22 @@ export function FeaturedCarousel({ listings }: Props) {
     return () => clearInterval(timer);
   }, [realCount, advance]);
 
-  if (!listings.length) return null;
+  if (!listings.length) {
+    if (!showEmptyPlaceholder) return null;
+    return (
+      <View
+        style={{
+          marginBottom: 48,
+          paddingHorizontal: 0,
+          overflow: "hidden",
+          borderTopLeftRadius: SLIDER_TOP_RADIUS,
+          borderTopRightRadius: SLIDER_TOP_RADIUS,
+        }}
+      >
+        <FirstListingPlaceholderCard variant="featured" />
+      </View>
+    );
+  }
 
   const activeListingId = listings[realIndex]?.id;
 
@@ -189,12 +211,14 @@ export function FeaturedCarousel({ listings }: Props) {
         data={loopData}
         horizontal
         pagingEnabled
+        nestedScrollEnabled
+        removeClippedSubviews={false}
         {...HIDE_SCROLL_INDICATORS}
         decelerationRate={Platform.OS === "ios" ? "fast" : "normal"}
         overScrollMode="never"
         scrollEventThrottle={16}
         keyExtractor={(item, i) => `${item.id}-${i}`}
-        extraData={listings.map((l) => l.id).join(",")}
+        extraData={`${listings.map((l) => l.id).join(",")}-${colorScheme}`}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         onMomentumScrollEnd={onMomentumScrollEnd}

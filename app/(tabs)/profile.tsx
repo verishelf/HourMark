@@ -5,12 +5,12 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge } from "@/components/Badge";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState, emptyStateSectionStyle } from "@/components/EmptyState";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { MyListingCard } from "@/components/MyListingCard";
 import { PostGrid } from "@/components/PostGrid";
 import { ProfileCard } from "@/components/ProfileCard";
-import { ProfileTabs, profileTabStyles } from "@/components/ProfileTabs";
+import { ProfileTabs, useProfileTabStyles } from "@/components/ProfileTabs";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
 import { formatPrice } from "@/lib/stripe";
@@ -20,6 +20,9 @@ import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { CARD_GAP, RADIUS, SPACING, LISTING_CARD_RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
+import { resetToAuth } from "@/lib/navigation";
 import { getFavorites } from "@/services/favorites";
 import { deleteListing, getUserListings } from "@/services/listings";
 import { subscribeContentRefresh, notifyContentRefresh } from "@/lib/contentRefresh";
@@ -33,9 +36,11 @@ import {
 } from "@/services/verification";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { tabContentPadding, GRID_GAP } from "@/styles/layout";
-import type { Listing, Order, UserPost, VerificationStatus } from "@/types";
+import { getCollection } from "@/services/collection";
+import { CollectionItemCard } from "@/components/CollectionItemCard";
+import type { Listing, Order, UserPost, VerificationStatus, WatchCollectionItem } from "@/types";
 
-type TabKey = "posts" | "listings" | "favorites" | "orders";
+type TabKey = "listings" | "posts" | "favorites" | "orders" | "collection";
 
 function chunkListings<T>(items: T[]): T[][] {
   const rows: T[][] = [];
@@ -49,13 +54,15 @@ function ListingGrid({
   listings,
   onEdit,
   onDelete,
+  styles,
 }: {
   listings: Listing[];
   onEdit: (listing: Listing) => void;
   onDelete: (listing: Listing) => void;
+  styles: ReturnType<typeof createProfileStyles>;
 }) {
   return (
-    <View style={[styles.listingsGrid, styles.listingsGridBelowTabs]}>
+    <View style={styles.listingsGrid}>
       {chunkListings(listings).map((row, rowIndex) => (
         <View key={row.map((listing) => listing.id).join("-")} style={styles.listingsRow}>
           {row.map((listing, columnIndex) => (
@@ -75,7 +82,13 @@ function ListingGrid({
   );
 }
 
-function ListingRow({ listing }: { listing: Listing }) {
+function ListingRow({
+  listing,
+  styles,
+}: {
+  listing: Listing;
+  styles: ReturnType<typeof createProfileStyles>;
+}) {
   const router = useRouter();
   const coverImage = getListingCoverImage(listing.images);
 
@@ -103,7 +116,13 @@ function ListingRow({ listing }: { listing: Listing }) {
   );
 }
 
-function OrderRow({ order }: { order: Order }) {
+function OrderRow({
+  order,
+  styles,
+}: {
+  order: Order;
+  styles: ReturnType<typeof createProfileStyles>;
+}) {
   const router = useRouter();
   const listing = order.listing;
   const coverImage = getListingCoverImage(listing?.images);
@@ -144,6 +163,7 @@ export default function ProfileScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [collection, setCollection] = useState<WatchCollectionItem[]>([]);
   const [tab, setTab] = useState<TabKey>("listings");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
     status: "not_started",
@@ -154,6 +174,10 @@ export default function ProfileScreen() {
   });
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const { colorScheme } = useTheme();
+  const profileTabStyles = useProfileTabStyles();
+  const styles = useThemedStyles(createProfileStyles);
 
   const loadVerificationStatus = useCallback(async () => {
     if (!user) return;
@@ -193,26 +217,45 @@ export default function ProfileScreen() {
     }
   }, [user]);
 
+  const loadFavorites = useCallback(async () => {
+    if (!user) return;
+    try {
+      setFavorites(await getFavorites(user.id));
+    } catch {
+      setFavorites([]);
+    }
+  }, [user]);
+
+  const loadCollection = useCallback(async () => {
+    if (!user) return;
+    try {
+      setCollection(await getCollection(user.id));
+    } catch {
+      setCollection([]);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
-    getFavorites(user.id)
-      .then(setFavorites)
-      .catch(() => setFavorites([]));
+    void loadFavorites();
+    void loadCollection();
     getOrders(user.id)
       .then(setOrders)
       .catch(() => setOrders([]));
-  }, [user]);
+  }, [user, loadFavorites, loadCollection]);
 
   const refreshProfileData = useCallback(() => {
     loadPosts();
     loadListings();
+    loadFavorites();
+    loadCollection();
     loadVerificationStatus();
     if (user) {
       getFollowCounts(user.id)
         .then(setFollowCounts)
         .catch(() => setFollowCounts({ followers: 0, following: 0 }));
     }
-  }, [loadPosts, loadListings, loadVerificationStatus, user]);
+  }, [loadPosts, loadListings, loadFavorites, loadCollection, loadVerificationStatus, user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -256,7 +299,7 @@ export default function ProfileScreen() {
                     setDeletingAccount(true);
                     try {
                       await deleteAccount();
-                      router.replace("/auth/welcome");
+                      resetToAuth();
                     } catch (e) {
                       Alert.alert(
                         "Error",
@@ -313,6 +356,7 @@ export default function ProfileScreen() {
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "listings", label: "Listings" },
+    { key: "collection", label: "Collection" },
     { key: "posts", label: "Posts" },
     { key: "favorites", label: "Saved" },
     { key: "orders", label: "Orders" },
@@ -330,6 +374,7 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
+      key={colorScheme}
       style={styles.screen}
       contentContainerStyle={tabContentPadding(insets.bottom)}
       {...HIDE_SCROLL_INDICATORS}
@@ -350,10 +395,7 @@ export default function ProfileScreen() {
           username={profile?.username ?? "collector"}
           usernamePlacement="belowAvatar"
           namePlacement="aboveBio"
-          avatarUrl={
-            profile?.avatar_url ??
-            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200"
-          }
+          avatarUrl={profile?.avatar_url}
           verified={Boolean(profile?.verified)}
           bio={profile?.bio}
           posts={posts.length}
@@ -384,9 +426,13 @@ export default function ProfileScreen() {
         <View
           style={[
             profileTabStyles.tabContent,
-            (tab === "posts" && posts.length) || (tab === "listings" && listings.length)
-              ? null
-              : profileTabStyles.tabContentPadded,
+            (tab === "listings" || tab === "orders") && profileTabStyles.tabContentListings,
+            tab !== "listings" &&
+              tab !== "orders" &&
+              ((tab === "posts" && posts.length) ||
+              (tab === "favorites" && favorites.length)
+                ? null
+                : profileTabStyles.tabContentPadded),
           ]}
         >
           {tab === "listings" &&
@@ -395,16 +441,37 @@ export default function ProfileScreen() {
                 listings={listings}
                 onEdit={(listing) => router.push(`/listing/edit/${listing.id}`)}
                 onDelete={handleDeleteListing}
+                styles={styles}
               />
             ) : (
-              <EmptyState
-                compact
-                icon="watch-outline"
-                title="No listings yet"
-                body="List your first timepiece to start selling."
-                actionLabel="List a Watch"
-                onAction={() => router.push("/sell")}
-              />
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="watch-outline"
+                  title="No listings yet"
+                  body="List your first timepiece to start selling."
+                  actionLabel="List a Watch"
+                  onAction={() => router.push("/sell")}
+                />
+              </View>
+            ))}
+
+          {tab === "collection" &&
+            (collection.length ? (
+              collection.map((item) => (
+                <CollectionItemCard key={item.id} item={item} />
+              ))
+            ) : (
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="albums-outline"
+                  title="No watches in collection"
+                  body="Track value and provenance for watches you own."
+                  actionLabel="Add watch"
+                  onAction={() => router.push("/collection/add")}
+                />
+              </View>
             ))}
 
           {tab === "posts" &&
@@ -419,48 +486,86 @@ export default function ProfileScreen() {
                 onDelete={handleDeletePost}
               />
             ) : (
-              <EmptyState
-                compact
-                icon="images-outline"
-                title="No posts yet"
-                body="Share a photo from the + button on Home."
-                actionLabel="Create Post"
-                onAction={() => router.push("/post/create")}
-              />
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="images-outline"
+                  title="No posts yet"
+                  body="Share a photo from the + button on Home."
+                  actionLabel="Create Post"
+                  onAction={() => router.push("/post/create")}
+                />
+              </View>
             ))}
 
           {tab === "favorites" &&
             (favorites.length ? (
-              favorites.map((listing) => <ListingRow key={listing.id} listing={listing} />)
+              favorites.map((listing) => (
+                <ListingRow key={listing.id} listing={listing} styles={styles} />
+              ))
             ) : (
-              <EmptyState
-                compact
-                icon="heart-outline"
-                title="Nothing saved yet"
-                body="Tap the heart on any watch to save it here."
-              />
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="heart-outline"
+                  title="Nothing saved yet"
+                  body="Tap the heart on any watch to save it here."
+                />
+              </View>
             ))}
 
           {tab === "orders" &&
             (orders.length ? (
-              orders.map((order) => <OrderRow key={order.id} order={order} />)
+              orders.map((order) => <OrderRow key={order.id} order={order} styles={styles} />)
             ) : (
-              <EmptyState
-                compact
-                icon="receipt-outline"
-                title="No orders yet"
-                body="Your purchase history will show up here."
-              />
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="receipt-outline"
+                  title="No orders yet"
+                  body="Your purchase history will show up here."
+                />
+              </View>
             ))}
         </View>
 
         <View style={styles.settingsSection}>
+          <SettingsRow
+            label="Watch Collection"
+            icon="albums-outline"
+            subtitle="Track portfolio value and provenance."
+            onPress={() => router.push("/collection")}
+          />
+          <SettingsRow
+            label="Saved Search Alerts"
+            icon="notifications-outline"
+            subtitle="Get notified when verified listings match."
+            onPress={() => router.push("/alerts")}
+          />
+          <SettingsRow
+            label="Grail Board"
+            icon="search-outline"
+            subtitle="Post what you're hunting for."
+            onPress={() => router.push("/grails")}
+          />
+          <SettingsRow
+            label="Watch Scanner"
+            icon="scan-outline"
+            subtitle="Identify watches and see Crownly comps."
+            onPress={() => router.push("/scanner")}
+          />
           <SettingsRow
             label="Seller Verification"
             icon="shield-checkmark-outline"
             subtitle="Verify your identity (name, address, SSN) and connect payouts to start selling."
             trailing={<Badge label={verificationLabel} variant={verificationVariant} />}
             onPress={handleStartVerification}
+          />
+          <SettingsRow
+            label="Settings"
+            icon="settings-outline"
+            subtitle="Theme and app preferences."
+            onPress={() => router.push("/profile/settings")}
           />
           <SettingsRow
             label="Delete Account"
@@ -475,10 +580,20 @@ export default function ProfileScreen() {
             label="Sign Out"
             icon="log-out-outline"
             onPress={async () => {
-              await signOut();
-              router.replace("/auth/welcome");
+              if (signingOut) return;
+              setSigningOut(true);
+              try {
+                await signOut();
+                resetToAuth();
+              } catch (e) {
+                Alert.alert("Error", e instanceof Error ? e.message : "Could not sign out");
+              } finally {
+                setSigningOut(false);
+              }
             }}
             destructive
+            loading={signingOut}
+            disabled={signingOut}
             isLast
           />
         </View>
@@ -487,7 +602,8 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createProfileStyles() {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -507,9 +623,6 @@ const styles = StyleSheet.create({
   },
   listingsGrid: {
     gap: GRID_GAP,
-  },
-  listingsGridBelowTabs: {
-    marginTop: 16,
   },
   listingsRow: {
     flexDirection: "row",
@@ -573,4 +686,5 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
   },
-});
+  });
+}

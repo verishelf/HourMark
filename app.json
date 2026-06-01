@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "crownly",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -16,10 +16,23 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.crownly.app",
+      "buildNumber": "1",
       "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "Crownly needs camera access to photograph your watch listings.",
-        "NSPhotoLibraryUsageDescription": "Crownly needs photo library access to upload watch images."
+        "NSPhotoLibraryUsageDescription": "Crownly needs photo library access to upload watch images.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
       }
     },
     "android": {
@@ -39,6 +52,14 @@
       "expo-router",
       "expo-font",
       "expo-secure-store",
+      "expo-camera",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#000000"
+        }
+      ],
       [
         "@stripe/stripe-react-native",
         {
@@ -57,8 +78,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "crownly"
+        "projectId": "33b3e0b8-9e4d-488e-8411-47365cbc034c"
       }
-    }
+    },
+    "owner": "mrposada"
   }
 }

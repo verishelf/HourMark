@@ -26,7 +26,6 @@ export function loopIndexToReal(loopIndex: number, realCount: number): number {
 }
 
 type InfiniteCarouselOptions = {
-  pageWidth: number;
   initialScroll?: boolean;
 };
 
@@ -118,7 +117,7 @@ export function useInfiniteCarousel<T>(
   }, [realCount]);
 
   const getItemLayout = useCallback(
-    (_: T[] | null | undefined, index: number) => ({
+    (_data: ArrayLike<T> | null | undefined, index: number) => ({
       length: pageWidth,
       offset: pageWidth * index,
       index,

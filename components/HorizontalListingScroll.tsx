@@ -1,4 +1,5 @@
-import { FlatList, View, type ListRenderItem } from "react-native";
+import { FlatList, View } from "react-native";
+import { FirstListingPlaceholderCard } from "@/components/FirstListingPlaceholderCard";
 import { WatchCard } from "@/components/WatchCard";
 import { WatchCardSkeleton } from "@/components/SkeletonLoader";
 import { HORIZONTAL_CARD_GAP, SPACING } from "@/constants/layout";
@@ -6,6 +7,8 @@ import { smoothHorizontalScrollProps } from "@/constants/scroll";
 import type { Listing } from "@/types";
 
 export const HORIZONTAL_LISTING_CARD_WIDTH = 260;
+/** Image (160) + card body — keeps nested horizontal rows from collapsing inside ScrollView */
+export const HORIZONTAL_LISTING_ROW_HEIGHT = 300;
 
 const SNAP_INTERVAL = HORIZONTAL_LISTING_CARD_WIDTH + HORIZONTAL_CARD_GAP;
 
@@ -19,6 +22,8 @@ type Props = {
   loading?: boolean;
   loadingCount?: number;
   showBuy?: boolean;
+  /** When the marketplace has no listings yet, show sell CTA cards */
+  showEmptyPlaceholder?: boolean;
   contentContainerStyle?: {
     paddingLeft?: number;
     paddingRight?: number;
@@ -31,6 +36,7 @@ export function HorizontalListingScroll({
   loading = false,
   loadingCount = 3,
   showBuy = false,
+  showEmptyPlaceholder = false,
   contentContainerStyle,
 }: Props) {
   const scrollContentStyle = {
@@ -41,17 +47,13 @@ export function HorizontalListingScroll({
 
   const scrollProps = smoothHorizontalScrollProps(SNAP_INTERVAL);
 
-  const getItemLayout = (_: Listing[] | null | undefined, index: number) => ({
+  const listStyle = { height: HORIZONTAL_LISTING_ROW_HEIGHT, flexGrow: 0 as const };
+
+  const getItemLayout = (_data: ArrayLike<{ id: string }> | null | undefined, index: number) => ({
     length: SNAP_INTERVAL,
     offset: SNAP_INTERVAL * index,
     index,
   });
-
-  const renderListing: ListRenderItem<Listing> = ({ item, index }) => (
-    <View style={itemStyle}>
-      <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
-    </View>
-  );
 
   if (loading) {
     const placeholders = Array.from({ length: loadingCount }, (_, i) => ({ id: `sk-${i}` }));
@@ -59,6 +61,9 @@ export function HorizontalListingScroll({
       <FlatList
         data={placeholders}
         horizontal
+        nestedScrollEnabled
+        removeClippedSubviews={false}
+        style={listStyle}
         keyExtractor={(item) => item.id}
         renderItem={() => (
           <View style={itemStyle}>
@@ -72,20 +77,48 @@ export function HorizontalListingScroll({
     );
   }
 
-  if (!listings.length) return null;
+  if (!listings.length) {
+    if (!showEmptyPlaceholder) return null;
+    const placeholders = [0, 1, 2].map((i) => ({ id: `placeholder-${i}` }));
+    return (
+      <FlatList
+        data={placeholders}
+        horizontal
+        nestedScrollEnabled
+        removeClippedSubviews={false}
+        style={listStyle}
+        keyExtractor={(item) => item.id}
+        renderItem={() => (
+          <View style={itemStyle}>
+            <FirstListingPlaceholderCard variant="compact" />
+          </View>
+        )}
+        getItemLayout={getItemLayout}
+        contentContainerStyle={scrollContentStyle}
+        {...scrollProps}
+      />
+    );
+  }
 
   return (
     <FlatList
       data={listings}
       horizontal
+      nestedScrollEnabled
+      removeClippedSubviews={false}
+      style={listStyle}
       keyExtractor={(item) => item.id}
-      renderItem={renderListing}
-      getItemLayout={getItemLayout}
-      contentContainerStyle={scrollContentStyle}
-      removeClippedSubviews
-      initialNumToRender={4}
+      extraData={listings.map((l) => l.id).join(",")}
+      initialNumToRender={6}
       maxToRenderPerBatch={6}
       windowSize={5}
+      renderItem={({ item, index }) => (
+        <View style={itemStyle}>
+          <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
+        </View>
+      )}
+      getItemLayout={getItemLayout}
+      contentContainerStyle={scrollContentStyle}
       {...scrollProps}
     />
   );

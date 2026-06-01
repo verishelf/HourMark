@@ -42,28 +42,17 @@ export async function signUpWithEmail(
 
 export async function signInWithApple(identityToken: string, nonce: string) {
   if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
-  const { data, error } = await supabase.auth.signInWithIdToken({
+  return supabase.auth.signInWithIdToken({
     provider: "apple",
     token: identityToken,
     nonce,
   });
-  if (error) throw error;
-  return data;
-}
-
-export async function signInWithGoogle(idToken: string) {
-  if (!isSupabaseConfigured) throw new Error("Supabase is not configured.");
-  const { data, error } = await supabase.auth.signInWithIdToken({
-    provider: "google",
-    token: idToken,
-  });
-  if (error) throw error;
-  return data;
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error) throw error;
+  void supabase.auth.signOut();
 }
 
 async function functionInvokeErrorMessage(error: unknown): Promise<string> {

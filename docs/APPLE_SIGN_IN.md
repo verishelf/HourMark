@@ -45,7 +45,8 @@ Copy the printed JWT into **Supabase Dashboard → Authentication → Providers 
 | Field | Value |
 |-------|--------|
 | Enable | On |
-| **Client IDs** | `com.crownly.app` (bundle ID for native app). Add your **Services ID** too if you use web OAuth: `com.crownly.app.signin` |
+| **Client IDs** | Add **every** bundle ID you test with, one per line: `com.crownly.app` (dev/EAS builds), `host.exp.Exponent` (**required for Expo Go**) |
+| | Add your **Services ID** too if you use web OAuth (e.g. `com.crownly.app.signin`) |
 | **Secret Key** | JWT from the script above (rotate every ≤6 months) |
 
 Native-only note: some setups work with an empty secret if you only use `signInWithIdToken` on iOS. If Apple login fails with “invalid client”, add the JWT secret and both IDs.
@@ -66,7 +67,8 @@ Restart Expo after changing `.env`.
 
 ## 5. Run on iOS
 
-- Use a **development build** or **EAS build** (`npx expo run:ios` / `eas build`). Sign in with Apple does **not** work in Expo Go.
+- **Expo Go:** add `host.exp.Exponent` to Supabase Apple **Client IDs** (see above).
+- **Dev / production build:** add `com.crownly.app` and use `npx expo run:ios` or EAS (`eas build`).
 - Test on a device or simulator signed into an Apple ID.
 - Login screen → **Sign in with Apple**.
 

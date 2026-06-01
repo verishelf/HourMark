@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 
 type Props = {
   label: string;
@@ -16,6 +17,44 @@ type Props = {
   disabled?: boolean;
 };
 
+function createStyles() {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 12,
+    },
+    rowBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: Colors.border,
+    },
+    copy: {
+      flex: 1,
+      gap: 4,
+    },
+    label: {
+      fontSize: 16,
+      lineHeight: 22,
+      fontWeight: "500",
+      color: Colors.textPrimary,
+    },
+    subtitle: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+    disabled: {
+      opacity: 0.5,
+    },
+  });
+}
+
 export function SettingsRow({
   label,
   icon,
@@ -27,6 +66,7 @@ export function SettingsRow({
   loading,
   disabled,
 }: Props) {
+  const styles = useThemedStyles(createStyles);
   const color = destructive ? Colors.error : Colors.textPrimary;
 
   return (
@@ -56,39 +96,3 @@ export function SettingsRow({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  rowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  copy: {
-    flex: 1,
-    gap: 4,
-  },
-  label: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "500",
-    color: Colors.textPrimary,
-  },
-  subtitle: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-});

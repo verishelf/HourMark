@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
+import { useTheme } from "@/hooks/useTheme";
 
 type Props = {
   posts: number;
@@ -18,11 +20,13 @@ function Stat({
   label,
   onPress,
   compact = false,
+  styles,
 }: {
   value: number;
   label: string;
   onPress?: () => void;
   compact?: boolean;
+  styles: ReturnType<typeof createStyles>;
 }) {
   const content = (
     <>
@@ -51,6 +55,55 @@ function Stat({
   );
 }
 
+function createStyles() {
+  return StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      alignSelf: "center",
+      width: "100%",
+      gap: 32,
+    },
+    rowInline: {
+      flexShrink: 0,
+      justifyContent: "space-between",
+      alignSelf: "center",
+      width: "auto",
+      minWidth: 168,
+      gap: 12,
+      paddingLeft: 4,
+    },
+    stat: {
+      alignItems: "center",
+      minWidth: 72,
+      paddingVertical: 2,
+    },
+    statCompact: {
+      minWidth: 0,
+      flex: 1,
+    },
+    statPressed: {
+      opacity: 0.7,
+    },
+    value: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+      fontSize: 15,
+      fontWeight: "600",
+      lineHeight: 18,
+    },
+    label: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      fontSize: 10,
+      marginTop: 2,
+      letterSpacing: 0.4,
+      textTransform: "uppercase",
+    },
+  });
+}
+
 export function ProfileFollowStats({
   posts,
   followers,
@@ -60,60 +113,33 @@ export function ProfileFollowStats({
   onFollowersPress,
   onFollowingPress,
 }: Props) {
+  const { colorScheme } = useTheme();
+  const styles = useMemo(() => createStyles(), [colorScheme]);
   const inline = variant === "inline";
 
   return (
     <View style={[styles.row, inline && styles.rowInline]}>
-      <Stat value={posts} label="Posts" onPress={onPostsPress} compact={inline} />
-      <Stat value={followers} label="Followers" onPress={onFollowersPress} compact={inline} />
-      <Stat value={following} label="Following" onPress={onFollowingPress} compact={inline} />
+      <Stat
+        value={posts}
+        label="Posts"
+        onPress={onPostsPress}
+        compact={inline}
+        styles={styles}
+      />
+      <Stat
+        value={followers}
+        label="Followers"
+        onPress={onFollowersPress}
+        compact={inline}
+        styles={styles}
+      />
+      <Stat
+        value={following}
+        label="Following"
+        onPress={onFollowingPress}
+        compact={inline}
+        styles={styles}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    width: "100%",
-    gap: 32,
-  },
-  rowInline: {
-    flexShrink: 0,
-    justifyContent: "space-between",
-    alignSelf: "center",
-    width: "auto",
-    minWidth: 168,
-    gap: 12,
-    paddingLeft: 4,
-  },
-  stat: {
-    alignItems: "center",
-    minWidth: 72,
-    paddingVertical: 2,
-  },
-  statCompact: {
-    minWidth: 0,
-    flex: 1,
-  },
-  statPressed: {
-    opacity: 0.7,
-  },
-  value: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-    fontSize: 15,
-    fontWeight: "600",
-    lineHeight: 18,
-  },
-  label: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 10,
-    marginTop: 2,
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
-});

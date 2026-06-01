@@ -10,22 +10,23 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LuxuryButton } from "@/components/LuxuryButton";
+import { UserAvatar } from "@/components/UserAvatar";
+import { resolveAvatarUri } from "@/lib/avatar";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { saveProfile } from "@/services/profile";
 
-const DEFAULT_AVATAR =
-  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200";
+const EDIT_AVATAR_SIZE = 112;
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function EditProfileScreen() {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [pickedAvatar, setPickedAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
+  const styles = useThemedStyles(createEditProfileStyles);
 
   useEffect(() => {
     if (!profile) return;
@@ -46,7 +48,9 @@ export default function EditProfileScreen() {
     setAvatarUri(profile.avatar_url);
   }, [profile]);
 
-  const displayAvatar = pickedAvatar ? avatarUri : avatarUri ?? profile?.avatar_url ?? DEFAULT_AVATAR;
+  const displayAvatarUri = pickedAvatar
+    ? resolveAvatarUri(avatarUri)
+    : resolveAvatarUri(avatarUri ?? profile?.avatar_url);
 
   const pickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -123,7 +127,12 @@ export default function EditProfileScreen() {
         <View style={styles.content}>
           <Pressable onPress={pickAvatar} style={styles.avatarWrap}>
             <View style={styles.avatarContainer}>
-              <Image source={{ uri: displayAvatar ?? DEFAULT_AVATAR }} style={styles.avatar} />
+              <UserAvatar
+                uri={displayAvatarUri}
+                size={EDIT_AVATAR_SIZE}
+                borderWidth={styles.avatar.borderWidth}
+                borderColor={styles.avatar.borderColor}
+              />
               <View style={styles.avatarBadge}>
                 <Ionicons name="camera" size={18} color={Colors.textPrimary} />
               </View>
@@ -170,7 +179,7 @@ export default function EditProfileScreen() {
             label="Save Profile"
             onPress={handleSave}
             loading={saving}
-            variant="primary"
+            variant="outline"
             size="large"
           />
         </View>
@@ -179,7 +188,8 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createEditProfileStyles() {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -201,10 +211,6 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   avatar: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
-    backgroundColor: Colors.cardElevated,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -244,4 +250,5 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     textAlignVertical: "top",
   },
-});
+  });
+}

@@ -24,14 +24,33 @@ export async function releaseEscrow(orderId: string): Promise<void> {
 
 export async function updateOrderTracking(
   orderId: string,
-  trackingNumber: string
+  trackingNumber: string,
+  carrier?: string
 ): Promise<OrderStatus> {
   if (!isSupabaseConfigured) return "shipped";
 
   const { data, error } = await supabase.functions.invoke("update-order-shipping", {
-    body: { orderId, trackingNumber },
+    body: { orderId, trackingNumber, carrier },
   });
   if (error) throw new Error(error.message);
   if (data?.message) throw new Error(data.message);
   return data.status as OrderStatus;
+}
+
+export async function openOrderDispute(
+  orderId: string,
+  reason: string
+): Promise<void> {
+  if (!isSupabaseConfigured) return;
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      dispute_status: "open",
+      dispute_reason: reason,
+      escrow_status: "disputed",
+      status: "disputed",
+    })
+    .eq("id", orderId);
+  if (error) throw error;
 }

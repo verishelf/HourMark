@@ -5,7 +5,7 @@ const mockSeller: UserProfile = {
   username: "atelier_geneva",
   full_name: "Atelier Geneva",
   avatar_url:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop",
+    null,
   bio: "Curated Swiss timepieces since 2018",
   verified: true,
   is_verified_seller: true,

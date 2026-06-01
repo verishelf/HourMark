@@ -12,15 +12,17 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { Href, useRouter, useLocalSearchParams } from "expo-router";
+import { resetToApp } from "@/lib/navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as Crypto from "expo-crypto";
+import { formatAppleSignInError, performAppleSignIn } from "@/lib/appleSignIn";
 import { LuxuryButton } from "@/components/LuxuryButton";
+import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { Colors } from "@/constants/colors";
 import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { Typography } from "@/constants/typography";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
-import { signInWithEmail, signInWithApple } from "@/services/auth";
+import { signInWithEmail } from "@/services/auth";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -32,19 +34,19 @@ export default function LoginScreen() {
 
   const inputStyle = {
     ...Typography.body,
-    color: Colors.textPrimary,
+    color: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: "rgba(255,255,255,0.35)",
     paddingVertical: 14,
     marginBottom: 20,
   };
 
   const afterSignIn = () => {
     if (typeof redirect === "string" && redirect.startsWith("/")) {
-      router.replace(redirect as Href);
+      resetToApp(redirect as Href);
       return;
     }
-    router.replace("/(tabs)");
+    resetToApp();
   };
 
   const handleLogin = async () => {
@@ -57,36 +59,23 @@ export default function LoginScreen() {
         "Sign In",
         e instanceof Error ? e.message : "Check your credentials or use demo mode without Supabase."
       );
-      afterSignIn();
     } finally {
       setLoading(false);
     }
   };
 
   const handleAppleSignIn = async () => {
+    setLoading(true);
     try {
-      const nonce = Math.random().toString(36).substring(2, 10);
-      const hashedNonce = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        nonce
-      );
-
-      const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
-        nonce: hashedNonce,
-      });
-
-      if (credential.identityToken) {
-        await signInWithApple(credential.identityToken, nonce);
-        afterSignIn();
-      }
+      await performAppleSignIn();
+      afterSignIn();
     } catch (e) {
-      if ((e as { code?: string }).code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert("Apple Sign In", "Unable to sign in with Apple.");
+      const message = formatAppleSignInError(e);
+      if (message) {
+        Alert.alert("Apple Sign In", message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,31 +98,14 @@ export default function LoginScreen() {
         }}
       >
         <View style={styles.card}>
-          <Text
-            style={{
-              ...Typography.hero,
-              color: Colors.textPrimary,
-              fontSize: 36,
-              marginBottom: 8,
-              textAlign: "center",
-            }}
-          >
-            Welcome Back
-          </Text>
-          <Text
-            style={{
-              ...Typography.body,
-              color: Colors.textSecondary,
-              marginBottom: 28,
-              textAlign: "center",
-            }}
-          >
-            Sign in to Crownly
-          </Text>
+          <CrownlyLogo width={100} style={styles.logo} />
+
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to Crownly</Text>
 
           <TextInput
             placeholder="Email"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor="rgba(255,255,255,0.65)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -142,14 +114,20 @@ export default function LoginScreen() {
           />
           <TextInput
             placeholder="Password"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor="rgba(255,255,255,0.65)"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             style={inputStyle}
           />
 
-          <LuxuryButton label="Sign In" onPress={handleLogin} loading={loading} size="large" />
+          <LuxuryButton
+            label="Sign In"
+            onPress={handleLogin}
+            loading={loading}
+            size="large"
+            variant="onDark"
+          />
 
           <View style={{ height: 18 }} />
 
@@ -163,30 +141,21 @@ export default function LoginScreen() {
             />
           )}
 
-          <LuxuryButton
-            label="Continue with Google"
-            onPress={() =>
-              Alert.alert("Google Sign In", "Configure Google OAuth in Supabase dashboard.")
-            }
-            variant="outline"
-          />
-
           <Pressable
             onPress={() => router.push("/auth/signup")}
-            style={{ marginTop: 20, alignItems: "center" }}
+            style={{ marginTop: 20, alignItems: "center", paddingVertical: 8 }}
+            hitSlop={8}
           >
-            <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
-              Don't have an account? Create one
+            <Text style={styles.link}>
+              Don't have an account? <Text style={styles.linkAccent}>Create one</Text>
             </Text>
           </Pressable>
 
           <Pressable
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => resetToApp()}
             style={{ marginTop: 12, alignItems: "center" }}
           >
-            <Text style={{ ...Typography.caption, color: Colors.textMuted }}>
-              Browse as guest
-            </Text>
+            <Text style={styles.linkMuted}>Browse as guest</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -215,5 +184,34 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "rgba(10, 10, 10, 0.78)",
     padding: 20,
+  },
+  logo: {
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  title: {
+    ...Typography.hero,
+    color: "#FFFFFF",
+    fontSize: 36,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  subtitle: {
+    ...Typography.body,
+    color: "rgba(255,255,255,0.75)",
+    marginBottom: 28,
+    textAlign: "center",
+  },
+  link: {
+    ...Typography.caption,
+    color: "rgba(255,255,255,0.75)",
+  },
+  linkAccent: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  linkMuted: {
+    ...Typography.caption,
+    color: "rgba(255,255,255,0.65)",
   },
 });

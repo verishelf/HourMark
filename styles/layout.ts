@@ -31,6 +31,16 @@ export function tabContentPadding(bottomInset: number) {
   return { paddingBottom: bottomInset + SPACING.tabClearance };
 }
 
+/** Center list empty states (messages, connections, search) */
+export function emptyListContentStyle(bottomInset: number) {
+  return {
+    ...tabContentPadding(bottomInset),
+    flexGrow: 1,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+  };
+}
+
 export function screenContentPadding(bottomInset: number) {
   return {
     paddingHorizontal: SPACING.screen,

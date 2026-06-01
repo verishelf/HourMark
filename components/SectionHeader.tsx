@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, type ViewStyle } from "react-native";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 
@@ -8,6 +8,9 @@ type Props = {
   actionLabel?: string;
   onAction?: () => void;
   compact?: boolean;
+  /** Extra space above the header (e.g. after a horizontal card row) */
+  topSpacing?: number;
+  style?: ViewStyle;
 };
 
 export function SectionHeader({
@@ -16,6 +19,8 @@ export function SectionHeader({
   actionLabel,
   onAction,
   compact = false,
+  topSpacing = 0,
+  style,
 }: Props) {
   return (
     <View
@@ -23,7 +28,9 @@ export function SectionHeader({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: compact ? "center" : "flex-end",
+        marginTop: topSpacing,
         marginBottom: compact ? 12 : 20,
+        ...style,
       }}
     >
       <View style={{ flex: 1 }}>

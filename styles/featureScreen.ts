@@ -1,0 +1,192 @@
+import { StyleSheet } from "react-native";
+import { Colors } from "@/constants/colors";
+import { RADIUS, SPACING } from "@/constants/layout";
+import { Typography } from "@/constants/typography";
+
+export function createFeatureScreenStyles() {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    topBar: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: SPACING.screen,
+      paddingVertical: 8,
+      minHeight: 48,
+    },
+    scrollContent: {
+      paddingHorizontal: SPACING.screen,
+      paddingBottom: SPACING.section * 2,
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.md,
+      backgroundColor: Colors.card,
+      padding: 16,
+      overflow: "hidden",
+    },
+    formCard: {
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.md,
+      backgroundColor: Colors.card,
+      padding: 16,
+      gap: 2,
+      marginBottom: SPACING.section,
+    },
+    field: {
+      marginBottom: 14,
+    },
+    label: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      marginBottom: 6,
+      letterSpacing: 0.4,
+      fontSize: 11,
+      textTransform: "uppercase",
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.sm,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: Colors.textPrimary,
+      backgroundColor: Colors.cardElevated,
+      ...Typography.body,
+      fontSize: 16,
+    },
+    inputMultiline: {
+      minHeight: 88,
+      textAlignVertical: "top",
+      paddingTop: 12,
+    },
+    sectionTitle: {
+      ...Typography.label,
+      color: Colors.textMuted,
+      marginTop: 28,
+      marginBottom: 12,
+      letterSpacing: 0.6,
+    },
+    linkText: {
+      ...Typography.caption,
+      color: Colors.textSecondary,
+      fontWeight: "500",
+    },
+    iconTile: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: Colors.cardElevated,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    statRow: {
+      flexDirection: "row",
+      gap: 10,
+      marginBottom: 20,
+    },
+    statTile: {
+      flex: 1,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.md,
+      backgroundColor: Colors.card,
+    },
+    statLabel: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      fontSize: 10,
+      letterSpacing: 0.5,
+      textTransform: "uppercase",
+    },
+    statValue: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+      fontSize: 15,
+      marginTop: 6,
+    },
+    listRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.md,
+      backgroundColor: Colors.card,
+      marginBottom: 10,
+    },
+    listRowUnread: {
+      backgroundColor: Colors.cardElevated,
+      borderColor: Colors.borderLight,
+    },
+    rowTitle: {
+      ...Typography.body,
+      color: Colors.textPrimary,
+      fontWeight: "600",
+    },
+    rowSub: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      marginTop: 2,
+    },
+    rowBody: {
+      ...Typography.caption,
+      color: Colors.textSecondary,
+      marginTop: 4,
+      lineHeight: 18,
+    },
+    rowMeta: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      fontSize: 11,
+      marginTop: 6,
+    },
+    successText: {
+      color: Colors.success,
+    },
+    errorText: {
+      color: Colors.error,
+    },
+    dashedAction: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 28,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.md,
+      borderStyle: "dashed",
+      backgroundColor: Colors.card,
+      gap: 10,
+      marginBottom: 16,
+    },
+    orDivider: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      textAlign: "center",
+      marginVertical: 12,
+    },
+    resultCard: {
+      marginTop: 24,
+      gap: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      borderRadius: RADIUS.md,
+      backgroundColor: Colors.card,
+    },
+    resultTitle: {
+      ...Typography.h2,
+      color: Colors.textPrimary,
+      fontSize: 22,
+    },
+  });
+}

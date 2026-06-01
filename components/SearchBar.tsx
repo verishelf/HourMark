@@ -1,8 +1,9 @@
-import { TextInput, View, ViewStyle } from "react-native";
+import { Platform, StyleSheet, TextInput, View, ViewStyle } from "react-native";
+import { useMemo } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
-import { Typography } from "@/constants/typography";
 import { RADIUS } from "@/constants/layout";
+import { useTheme } from "@/hooks/useTheme";
 
 type Props = {
   value: string;
@@ -19,20 +20,48 @@ export function SearchBar({
   compact = false,
   style,
 }: Props) {
-  return (
-    <View
-      style={[
-        {
+  const { colorScheme } = useTheme();
+  const fontSize = compact ? 14 : 16;
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        shell: {
           flexDirection: "row",
           alignItems: "center",
           backgroundColor: Colors.cardElevated,
           borderWidth: 1,
           borderColor: Colors.border,
           borderRadius: RADIUS.pill,
-          paddingHorizontal: compact ? 12 : 16,
-          paddingVertical: compact ? 8 : 12,
           gap: 8,
         },
+        shellCompact: {
+          minHeight: 44,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+        },
+        shellDefault: {
+          minHeight: 48,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        },
+        input: {
+          flex: 1,
+          color: Colors.textPrimary,
+          padding: 0,
+          margin: 0,
+          includeFontPadding: false,
+          ...(Platform.OS === "android" ? { textAlignVertical: "center" as const } : {}),
+        },
+      }),
+    [colorScheme]
+  );
+
+  return (
+    <View
+      style={[
+        styles.shell,
+        compact ? styles.shellCompact : styles.shellDefault,
         style,
       ]}
     >
@@ -46,13 +75,13 @@ export function SearchBar({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={Colors.textMuted}
-        style={{
-          ...Typography.body,
-          flex: 1,
-          color: Colors.textPrimary,
-          fontSize: compact ? 14 : 16,
-          padding: 0,
-        }}
+        style={[
+          styles.input,
+          {
+            fontSize,
+            lineHeight: compact ? 18 : 20,
+          },
+        ]}
         autoCapitalize="none"
         autoCorrect={false}
       />

@@ -1,34 +1,41 @@
 import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { LuxuryButton } from "@/components/LuxuryButton";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { TrustScoreIndicator } from "@/components/TrustScoreIndicator";
 import { VerificationStatusBanner } from "@/components/VerificationStatusBanner";
 import { Colors } from "@/constants/colors";
-import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
-import { SPACING } from "@/constants/layout";
-import { Typography } from "@/constants/typography";
+import { RADIUS, SPACING } from "@/constants/layout";
 import { notifyContentRefresh } from "@/lib/contentRefresh";
+import { hasListingAuthBypass } from "@/lib/listingAuthBypass";
+import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { analyzeListing, registerVerificationAsset } from "@/services/trust";
 import { uploadTrustAsset } from "@/services/trustUpload";
+import { createFeatureScreenStyles } from "@/styles/featureScreen";
 import type { VerificationAssetType } from "@/types/trust";
 
-const ASSETS: { type: VerificationAssetType; label: string; video?: boolean }[] = [
-  { type: "serial", label: "Serial number (macro)" },
-  { type: "front", label: "Watch front" },
-  { type: "movement", label: "Movement / caseback" },
-  { type: "box_papers", label: "Box & papers" },
-  { type: "video", label: "Timestamped rotating video", video: true },
+const ASSETS: { type: VerificationAssetType; label: string; hint: string; video?: boolean }[] = [
+  { type: "serial", label: "Serial number", hint: "Macro photo of caseback serial" },
+  { type: "front", label: "Watch front", hint: "Full dial, well lit" },
+  { type: "movement", label: "Movement / caseback", hint: "Open caseback or rotor view" },
+  { type: "box_papers", label: "Box & papers", hint: "Warranty card and packaging" },
+  { type: "video", label: "Rotating video", hint: "Timestamped 360° rotation", video: true },
 ];
 
 export default function TrustVerifyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { profile } = useAuth();
+  const styles = useThemedStyles(createFeatureScreenStyles);
+  const bypassAuth = hasListingAuthBypass(profile);
   const [uris, setUris] = useState<Partial<Record<VerificationAssetType, string>>>({});
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -51,8 +58,32 @@ export default function TrustVerifyScreen() {
     }
   }, []);
 
+  const publishWithBypass = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const analysis = await analyzeListing(id);
+      notifyContentRefresh();
+      setResult({
+        trustScore: analysis.trustScore,
+        authenticationStatus: analysis.authenticationStatus,
+      });
+      Alert.alert("Published", "Your listing is live (demo mode — AI auth bypassed).", [
+        { text: "OK", onPress: () => router.replace("/(tabs)") },
+      ]);
+    } catch (e) {
+      Alert.alert("Error", e instanceof Error ? e.message : "Could not publish listing");
+    } finally {
+      setLoading(false);
+    }
+  }, [id, router]);
+
   const handleSubmit = async () => {
     if (!id) return;
+    if (bypassAuth) {
+      await publishWithBypass();
+      return;
+    }
     const missing = ASSETS.filter((a) => !uris[a.type]);
     if (missing.length) {
       Alert.alert("Incomplete", `Add: ${missing.map((m) => m.label).join(", ")}`);
@@ -96,66 +127,56 @@ export default function TrustVerifyScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <ScrollView
-        {...HIDE_SCROLL_INDICATORS}
-        contentContainerStyle={{
-          padding: SPACING.screen,
-          paddingTop: insets.top + 16,
-          paddingBottom: insets.bottom + 120,
-        }}
-      >
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
-        </Pressable>
+      <FeatureScreenScaffold contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+        <ScreenHeader
+          title={bypassAuth ? "Publish listing" : "AI Authentication"}
+          subtitle={
+            bypassAuth
+              ? "Demo mode: skip verification uploads and publish with sample photos."
+              : "Upload serial, movement, papers, and a rotating video for automated verification."
+          }
+        />
 
-        <Text style={{ ...Typography.h2, color: Colors.textPrimary, marginTop: 16 }}>
-          AI Authentication
-        </Text>
-        <Text style={{ ...Typography.body, color: Colors.textMuted, marginTop: 8 }}>
-          Upload serial, movement, papers, and a rotating video for automated verification.
-        </Text>
-
-        {result && (
-          <View style={{ marginTop: 20 }}>
+        {result ? (
+          <View style={{ marginBottom: 8 }}>
             <VerificationStatusBanner
               status={result.authenticationStatus as "auto_verified"}
               trustScore={result.trustScore}
             />
             <TrustScoreIndicator score={result.trustScore} />
           </View>
-        )}
+        ) : null}
 
-        <View style={{ marginTop: 24, gap: 16 }}>
-          {ASSETS.map((asset) => (
-            <Pressable
-              key={asset.type}
-              onPress={() => pickAsset(asset.type, asset.video)}
-              style={{
-                borderWidth: 1,
-                borderColor: Colors.border,
-                padding: 16,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-              }}
-            >
-              {uris[asset.type] ? (
-                <Image
-                  source={{ uri: uris[asset.type] }}
-                  style={{ width: 48, height: 48 }}
-                  contentFit="cover"
-                />
-              ) : (
-                <Ionicons name="cloud-upload-outline" size={28} color={Colors.textMuted} />
-              )}
-              <Text style={{ ...Typography.body, color: Colors.textPrimary, flex: 1 }}>
-                {asset.label}
-              </Text>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
+        {!bypassAuth ? (
+          <>
+            <Text style={styles.sectionTitle}>Verification media</Text>
+            {ASSETS.map((asset) => (
+              <Pressable
+                key={asset.type}
+                style={styles.listRow}
+                onPress={() => pickAsset(asset.type, asset.video)}
+              >
+                {uris[asset.type] ? (
+                  <Image
+                    source={{ uri: uris[asset.type] }}
+                    style={{ width: 48, height: 48, borderRadius: RADIUS.sm }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View style={styles.iconTile}>
+                    <Ionicons name="cloud-upload-outline" size={22} color={Colors.textPrimary} />
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{asset.label}</Text>
+                  <Text style={styles.rowSub}>{asset.hint}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              </Pressable>
+            ))}
+          </>
+        ) : null}
+      </FeatureScreenScaffold>
 
       <View
         style={{
@@ -171,7 +192,13 @@ export default function TrustVerifyScreen() {
         }}
       >
         <LuxuryButton
-          label={loading ? "Analyzing…" : "Run AI verification"}
+          label={
+            loading
+              ? "Publishing…"
+              : bypassAuth
+                ? "Publish without AI verification"
+                : "Run AI verification"
+          }
           onPress={handleSubmit}
           disabled={loading}
         />

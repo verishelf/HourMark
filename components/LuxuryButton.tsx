@@ -9,8 +9,9 @@ import {
 import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 
-type Variant = "primary" | "secondary" | "ghost" | "outline";
+type Variant = "primary" | "secondary" | "ghost" | "outline" | "onDark" | "onDarkFilled";
 type Size = "default" | "large";
 
 type Props = {
@@ -22,36 +23,6 @@ type Props = {
   disabled?: boolean;
   fullWidth?: boolean;
   style?: ViewStyle;
-};
-
-const VARIANT_STYLES: Record<
-  Variant,
-  { backgroundColor: string; borderColor: string; textColor: string; borderWidth: number }
-> = {
-  primary: {
-    backgroundColor: Colors.cardElevated,
-    borderColor: Colors.textPrimary,
-    textColor: Colors.textPrimary,
-    borderWidth: 1,
-  },
-  secondary: {
-    backgroundColor: Colors.cardElevated,
-    borderColor: Colors.borderLight,
-    textColor: Colors.textPrimary,
-    borderWidth: 1,
-  },
-  outline: {
-    backgroundColor: "transparent",
-    borderColor: Colors.textPrimary,
-    textColor: Colors.textPrimary,
-    borderWidth: 1,
-  },
-  ghost: {
-    backgroundColor: "transparent",
-    borderColor: "transparent",
-    textColor: Colors.textSecondary,
-    borderWidth: 0,
-  },
 };
 
 const SIZE_STYLES: Record<Size, { button: ViewStyle; label: TextStyle }> = {
@@ -70,9 +41,9 @@ const SIZE_STYLES: Record<Size, { button: ViewStyle; label: TextStyle }> = {
   },
   large: {
     button: {
-      paddingVertical: 18,
+      paddingVertical: 20,
       paddingHorizontal: 32,
-      minHeight: 58,
+      minHeight: 56,
       minWidth: 140,
     },
     label: {
@@ -82,6 +53,50 @@ const SIZE_STYLES: Record<Size, { button: ViewStyle; label: TextStyle }> = {
     },
   },
 };
+
+const OVERLAY_VARIANTS = {
+  onDark: {
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderColor: "#FFFFFF",
+    textColor: "#FFFFFF",
+    borderWidth: 1,
+  },
+  onDarkFilled: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#FFFFFF",
+    textColor: "#000000",
+    borderWidth: 1,
+  },
+} as const;
+
+function createVariantStyles() {
+  return {
+    primary: {
+      backgroundColor: Colors.textPrimary,
+      borderColor: Colors.textPrimary,
+      textColor: Colors.background,
+      borderWidth: 1,
+    },
+    secondary: {
+      backgroundColor: Colors.cardElevated,
+      borderColor: Colors.borderLight,
+      textColor: Colors.textPrimary,
+      borderWidth: 1,
+    },
+    outline: {
+      backgroundColor: "transparent",
+      borderColor: Colors.textPrimary,
+      textColor: Colors.textPrimary,
+      borderWidth: 1,
+    },
+    ghost: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      textColor: Colors.textSecondary,
+      borderWidth: 0,
+    },
+  } as const;
+}
 
 export function LuxuryButton({
   label,
@@ -93,7 +108,11 @@ export function LuxuryButton({
   fullWidth = true,
   style,
 }: Props) {
-  const v = VARIANT_STYLES[variant];
+  const variantStyles = useThemedStyles(createVariantStyles);
+  const v =
+    variant === "onDark" || variant === "onDarkFilled"
+      ? OVERLAY_VARIANTS[variant]
+      : variantStyles[variant];
   const sizing = SIZE_STYLES[size];
 
   const handlePress = () => {
@@ -106,6 +125,7 @@ export function LuxuryButton({
     <Pressable
       onPress={handlePress}
       disabled={disabled || loading}
+      hitSlop={12}
       style={({ pressed }) => [
         styles.base,
         sizing.button,

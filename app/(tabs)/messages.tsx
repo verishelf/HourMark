@@ -1,10 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Alert, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { ConversationRow } from "@/components/ConversationRow";
 import { EmptyState } from "@/components/EmptyState";
+import { ProfileTabs } from "@/components/ProfileTabs";
 import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -13,17 +14,33 @@ import { LOGGED_OUT_GATE_IMAGES } from "@/constants/loggedOutGate";
 import { SPACING } from "@/constants/layout";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useAuth } from "@/hooks/useAuth";
-import { deleteConversation, getConversations } from "@/services/messaging";
-import { tabContentPadding } from "@/styles/layout";
+import { useTheme } from "@/hooks/useTheme";
+import {
+  isListingConversation,
+  isProfileConversation,
+} from "@/lib/conversationDisplay";
+import {
+  deleteConversation,
+  getConversations,
+  markMessagesAsRead,
+} from "@/services/messaging";
+import { emptyListContentStyle, tabContentPadding } from "@/styles/layout";
 import type { Conversation } from "@/types";
 
-const ROW_ESTIMATED_HEIGHT = 96;
+type MessageTab = "listings" | "profile";
+
+const MESSAGE_TABS: { key: MessageTab; label: string }[] = [
+  { key: "listings", label: "Listings" },
+  { key: "profile", label: "Profile" },
+];
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colorScheme } = useTheme();
   const { user, isAuthenticated, loading } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [tab, setTab] = useState<MessageTab>("listings");
 
   const loadConversations = useCallback(async () => {
     if (!user) return;
@@ -39,6 +56,12 @@ export default function MessagesScreen() {
       loadConversations();
     }, [loadConversations])
   );
+
+  const filteredConversations = useMemo(() => {
+    const filter =
+      tab === "listings" ? isListingConversation : isProfileConversation;
+    return conversations.filter(filter);
+  }, [conversations, tab]);
 
   const confirmDeleteConversation = (conversationId: string) => {
     if (!user) return;
@@ -78,6 +101,41 @@ export default function MessagesScreen() {
         !item.last_message.read_at
     );
 
+  const openConversation = (item: Conversation) => {
+    if (!user) return;
+
+    if (isUnread(item)) {
+      const readAt = new Date().toISOString();
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === item.id && c.last_message
+            ? { ...c, last_message: { ...c.last_message, read_at: readAt } }
+            : c
+        )
+      );
+      void markMessagesAsRead(item.id, user.id);
+    }
+
+    router.push(`/chat/${item.id}`);
+  };
+
+  const emptyState =
+    tab === "listings" ? (
+      <EmptyState
+        fill
+        icon="watch-outline"
+        title="No listing messages"
+        body="Message a seller from any listing to start a conversation about a watch."
+      />
+    ) : (
+      <EmptyState
+        fill
+        icon="person-outline"
+        title="No profile messages"
+        body="Direct messages with collectors and sellers will appear here."
+      />
+    );
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <ScreenHeader
@@ -86,30 +144,31 @@ export default function MessagesScreen() {
         style={{ paddingBottom: SPACING.screen / 2 }}
       />
 
+      <View style={{ paddingHorizontal: SPACING.screen }}>
+        <ProfileTabs tabs={MESSAGE_TABS} active={tab} onChange={setTab} />
+      </View>
+
       <FlashList
-        data={conversations}
+        key={`${tab}-${colorScheme}`}
+        data={filteredConversations}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={ROW_ESTIMATED_HEIGHT}
         {...HIDE_SCROLL_INDICATORS}
-        contentContainerStyle={{
-          ...tabContentPadding(insets.bottom),
-          paddingTop: 4,
-        }}
-        ListEmptyComponent={
-          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 48 }}>
-            <EmptyState
-              icon="chatbubble-outline"
-              title="No conversations yet"
-              body="Message a seller from any listing to start a conversation."
-            />
-          </View>
+        contentContainerStyle={
+          filteredConversations.length === 0
+            ? emptyListContentStyle(insets.bottom)
+            : {
+                ...tabContentPadding(insets.bottom),
+                paddingTop: 12,
+                paddingHorizontal: SPACING.screen,
+              }
         }
+        ListEmptyComponent={emptyState}
         renderItem={({ item }) => (
           <SwipeToDeleteRow onDelete={() => confirmDeleteConversation(item.id)}>
             <ConversationRow
               conversation={item}
               unread={isUnread(item)}
-              onPress={() => router.push(`/chat/${item.id}`)}
+              onPress={() => openConversation(item)}
             />
           </SwipeToDeleteRow>
         )}

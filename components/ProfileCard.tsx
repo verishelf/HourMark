@@ -1,13 +1,15 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { Badge } from "@/components/Badge";
+import { UserAvatar } from "@/components/UserAvatar";
 import { FollowButton } from "@/components/FollowButton";
 import { MessageButton } from "@/components/MessageButton";
 import { ProfileFollowStats } from "@/components/ProfileFollowStats";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
+import { useTheme } from "@/hooks/useTheme";
 
 type FollowAction = {
   following: boolean;
@@ -18,7 +20,7 @@ type FollowAction = {
 type Props = {
   fullName?: string | null;
   username: string;
-  avatarUrl: string;
+  avatarUrl?: string | null;
   verified?: boolean;
   verifiedLabel?: string;
   bio?: string | null;
@@ -65,6 +67,137 @@ export function ProfileCard({
   namePlacement = "inline",
   usernamePlacement = "beside",
 }: Props) {
+  const { colorScheme } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          borderWidth: 1,
+          borderColor: Colors.border,
+          borderRadius: RADIUS.md,
+          backgroundColor: Colors.card,
+          padding: 16,
+          gap: 14,
+        },
+        headerRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          width: "100%",
+        },
+        headerLeft: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+          flex: 1,
+          minWidth: 0,
+        },
+        headerLeftStacked: {
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 8,
+          flexShrink: 0,
+          maxWidth: 140,
+        },
+        avatarWrap: {
+          position: "relative",
+          flexShrink: 0,
+        },
+        avatar: {
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: Colors.cardElevated,
+          borderWidth: 1,
+          borderColor: Colors.border,
+          flexShrink: 0,
+        },
+        editDot: {
+          position: "absolute",
+          right: 0,
+          bottom: 0,
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: Colors.card,
+          borderWidth: 1,
+          borderColor: Colors.border,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        identity: {
+          flex: 1,
+          minWidth: 0,
+          justifyContent: "center",
+          gap: 2,
+        },
+        identityBelowAvatar: {
+          flex: 0,
+          width: "100%",
+          alignItems: "flex-start",
+        },
+        usernameRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 5,
+          minWidth: 0,
+        },
+        username: {
+          ...Typography.h2,
+          color: Colors.textPrimary,
+          fontSize: 20,
+          lineHeight: 26,
+          flexShrink: 1,
+        },
+        usernameBelowAvatar: {
+          fontSize: 14,
+          lineHeight: 18,
+          fontWeight: "600",
+        },
+        displayName: {
+          ...Typography.body,
+          color: Colors.textMuted,
+          fontSize: 14,
+          fontWeight: "400",
+          lineHeight: 18,
+        },
+        nameAboveBio: {
+          ...Typography.body,
+          color: Colors.textPrimary,
+          fontSize: 15,
+          fontWeight: "600",
+          lineHeight: 20,
+        },
+        bio: {
+          ...Typography.body,
+          color: Colors.textMuted,
+          fontSize: 14,
+          lineHeight: 20,
+        },
+        rating: {
+          ...Typography.caption,
+          color: Colors.textSecondary,
+          fontSize: 13,
+        },
+        actionsRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          alignSelf: "center",
+          gap: 32,
+          width: "100%",
+          maxWidth: 400,
+          paddingHorizontal: 8,
+        },
+        actionButton: {
+          flex: 1,
+          maxWidth: "46%",
+        },
+      }),
+    [colorScheme]
+  );
+
   const nameAboveBio = namePlacement === "aboveBio";
   const usernameBelowAvatar = usernamePlacement === "belowAvatar";
   const displayName = fullName?.trim() || null;
@@ -88,7 +221,12 @@ export function ProfileCard({
     </View>
   ) : null;
   const avatar = (
-    <Image source={{ uri: avatarUrl }} style={styles.avatar} contentFit="cover" />
+    <UserAvatar
+      uri={avatarUrl}
+      size={72}
+      borderWidth={styles.avatar.borderWidth}
+      borderColor={styles.avatar.borderColor}
+    />
   );
 
   return (
@@ -155,129 +293,3 @@ export function ProfileCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: RADIUS.md,
-    backgroundColor: Colors.card,
-    padding: 16,
-    gap: 14,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    width: "100%",
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-    minWidth: 0,
-  },
-  headerLeftStacked: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 8,
-    flexShrink: 0,
-    maxWidth: 140,
-  },
-  avatarWrap: {
-    position: "relative",
-    flexShrink: 0,
-  },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.cardElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    flexShrink: 0,
-  },
-  editDot: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  identity: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: "center",
-    gap: 2,
-  },
-  identityBelowAvatar: {
-    flex: 0,
-    width: "100%",
-    alignItems: "flex-start",
-  },
-  usernameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    minWidth: 0,
-  },
-  username: {
-    ...Typography.h2,
-    color: Colors.textPrimary,
-    fontSize: 20,
-    lineHeight: 26,
-    flexShrink: 1,
-  },
-  usernameBelowAvatar: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: "600",
-  },
-  displayName: {
-    ...Typography.body,
-    color: Colors.textMuted,
-    fontSize: 14,
-    fontWeight: "400",
-    lineHeight: 18,
-  },
-  nameAboveBio: {
-    ...Typography.body,
-    color: Colors.textPrimary,
-    fontSize: 15,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-  bio: {
-    ...Typography.body,
-    color: Colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  rating: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: 13,
-  },
-  actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    alignSelf: "center",
-    gap: 32,
-    width: "100%",
-    maxWidth: 400,
-    paddingHorizontal: 8,
-  },
-  actionButton: {
-    flex: 1,
-    maxWidth: "46%",
-  },
-});

@@ -9,14 +9,42 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getPostDetail } from "@/services/posts";
 import type { UserPostDetail } from "@/types";
+
+function createStyles() {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    centered: {
+      flex: 1,
+      backgroundColor: Colors.background,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    muted: {
+      ...Typography.body,
+      color: Colors.textMuted,
+    },
+    header: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: SPACING.screen,
+    },
+  });
+}
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const styles = useThemedStyles(createStyles);
   const [post, setPost] = useState<UserPostDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,27 +101,3 @@ export default function PostDetailScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  muted: {
-    ...Typography.body,
-    color: Colors.textMuted,
-  },
-  header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: SPACING.screen,
-  },
-});

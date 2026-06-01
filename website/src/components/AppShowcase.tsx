@@ -9,19 +9,37 @@ const SCREENS = [
     title: "Discover",
     subtitle: "Editorial home experience",
     imageKey: "wrist" as const,
-    accent: "Featured carousel & new arrivals",
+    accent: "Featured carousel, new arrivals & follow feed",
   },
   {
     title: "Listing",
     subtitle: "Immersive product detail",
     imageKey: "blackDial" as const,
-    accent: "Gallery, seller profile & Apple Pay checkout",
+    accent: "Offers, trust badges, passport & Apple Pay",
   },
   {
     title: "Sell",
     subtitle: "List in minutes",
     imageKey: "classic" as const,
-    accent: "Multi-photo upload & preview",
+    accent: "Multi-step listing & seller verification",
+  },
+  {
+    title: "Collection",
+    subtitle: "Portfolio tracking",
+    imageKey: "greenDial" as const,
+    accent: "Value, provenance & purchase history",
+  },
+  {
+    title: "Grail Board",
+    subtitle: "Post your hunt",
+    imageKey: "metalBand" as const,
+    accent: "Brand, reference, budget & match alerts",
+  },
+  {
+    title: "Scanner",
+    subtitle: "Identify & compare",
+    imageKey: "macro" as const,
+    accent: "Find verified Crownly comps instantly",
   },
 ];
 
@@ -48,7 +66,7 @@ export function AppShowcase() {
           </p>
         </motion.div>
 
-        <div className="mt-24 grid gap-8 lg:grid-cols-3">
+        <div className="mt-24 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {SCREENS.map((screen, i) => (
             <motion.div
               key={screen.title}

@@ -11,15 +11,28 @@ import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 
 type Props = {
   following: boolean;
   loading?: boolean;
   onPress: () => void;
   style?: ViewStyle;
+  /** Connections/search row: wide pill, no icon (Instagram-style) */
+  compact?: boolean;
 };
 
-export function FollowButton({ following, loading = false, onPress, style }: Props) {
+const IG_BLUE = "#3897F0";
+
+export function FollowButton({
+  following,
+  loading = false,
+  onPress,
+  style,
+  compact = false,
+}: Props) {
+  const styles = useThemedStyles(createStyles);
+
   return (
     <Pressable
       onPress={() => {
@@ -30,13 +43,31 @@ export function FollowButton({ following, loading = false, onPress, style }: Pro
       disabled={loading}
       style={({ pressed }) => [
         styles.base,
-        following ? styles.following : styles.follow,
+        compact && styles.baseCompact,
+        compact
+          ? following
+            ? styles.following
+            : styles.followCompact
+          : following
+            ? styles.following
+            : styles.follow,
         style,
         pressed && styles.pressed,
       ]}
     >
       {loading ? (
         <ActivityIndicator size="small" color={Colors.textPrimary} />
+      ) : compact ? (
+        <Text
+          style={[
+            styles.label,
+            compact && styles.labelCompact,
+            following ? styles.labelFollowing : styles.labelFollow,
+            compact && !following && styles.labelFollowCompact,
+          ]}
+        >
+          {following ? "Following" : "Follow"}
+        </Text>
       ) : (
         <View style={styles.inner}>
           <Ionicons
@@ -53,7 +84,8 @@ export function FollowButton({ following, loading = false, onPress, style }: Pro
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles() {
+  return StyleSheet.create({
   base: {
     minHeight: 44,
     borderRadius: RADIUS.pill,
@@ -62,10 +94,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
+  baseCompact: {
+    minWidth: 96,
+    minHeight: 40,
+    height: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 0,
+    borderRadius: 12,
+  },
   follow: {
     backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: Colors.textPrimary,
+  },
+  followCompact: {
+    backgroundColor: IG_BLUE,
+    borderWidth: 0,
   },
   following: {
     backgroundColor: Colors.cardElevated,
@@ -91,4 +135,12 @@ const styles = StyleSheet.create({
   labelFollowing: {
     color: Colors.textPrimary,
   },
-});
+  labelCompact: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  labelFollowCompact: {
+    color: "#FFFFFF",
+  },
+  });
+}

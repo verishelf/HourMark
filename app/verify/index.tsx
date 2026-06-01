@@ -7,6 +7,7 @@ import { WebView, type WebViewNavigation } from "react-native-webview";
 import { Colors } from "@/constants/colors";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import {
   getConnectReturnRedirectUrl,
   startSellerVerification,
@@ -18,9 +19,79 @@ function sanitizeReturnPath(value: string | string[] | undefined): ReturnPath {
   return value === "sell" ? "sell" : "profile";
 }
 
+function createStyles() {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: SPACING.screen,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: Colors.border,
+      gap: 12,
+      backgroundColor: Colors.background,
+    },
+    headerCopy: {
+      flex: 1,
+    },
+    headerTitle: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+    },
+    headerSubtitle: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      marginTop: 2,
+    },
+    closeButton: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    webview: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    webviewLoader: {
+      ...StyleSheet.absoluteFillObject,
+      top: 88,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: Colors.background,
+    },
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: SPACING.screen,
+      gap: 12,
+    },
+    loadingText: {
+      ...Typography.body,
+      color: Colors.textMuted,
+    },
+    errorTitle: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+      textAlign: "center",
+    },
+    errorBody: {
+      ...Typography.body,
+      color: Colors.textMuted,
+      textAlign: "center",
+    },
+  });
+}
+
 export default function VerifyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const styles = useThemedStyles(createStyles);
   const params = useLocalSearchParams<{ returnPath?: string | string[] }>();
   const returnPath = sanitizeReturnPath(params.returnPath);
   const redirectPrefix = getConnectReturnRedirectUrl();
@@ -125,69 +196,3 @@ export default function VerifyScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: SPACING.screen,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    gap: 12,
-  },
-  headerCopy: {
-    flex: 1,
-  },
-  headerTitle: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-  },
-  headerSubtitle: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  webview: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  webviewLoader: {
-    ...StyleSheet.absoluteFillObject,
-    top: 88,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: SPACING.screen,
-    gap: 12,
-  },
-  loadingText: {
-    ...Typography.body,
-    color: Colors.textMuted,
-  },
-  errorTitle: {
-    ...Typography.h3,
-    color: Colors.textPrimary,
-    textAlign: "center",
-  },
-  errorBody: {
-    ...Typography.body,
-    color: Colors.textMuted,
-    textAlign: "center",
-  },
-});

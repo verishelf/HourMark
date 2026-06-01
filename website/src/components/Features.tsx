@@ -6,32 +6,47 @@ const FEATURES = [
   {
     title: "Discover",
     description:
-      "Browse featured watches, new arrivals, and rare collections from verified sellers — curated for serious collectors.",
+      "Browse featured watches, new arrivals, rare collections, and listings from collectors you follow.",
   },
   {
     title: "Search",
     description:
-      "Find exactly what you want with brand filters for Rolex, AP, Patek Philippe, Cartier, Omega, and Richard Mille.",
+      "Filter by brand, price, condition, and sort — Rolex, AP, Patek Philippe, Cartier, Omega, Richard Mille, and more.",
   },
   {
     title: "Sell",
     description:
-      "List your watch in minutes — upload photos, add reference numbers and condition, preview your listing, and go live.",
+      "Guided Photos → Details → Review flow. Add reference numbers, box & papers, and AI trust verification before going live.",
+  },
+  {
+    title: "Make an Offer",
+    description:
+      "Negotiate price in-app with offers, counters, and accept/decline — then buy at the agreed amount.",
   },
   {
     title: "Message",
     description:
-      "Chat directly with buyers and sellers to ask questions, negotiate, and close deals with confidence.",
+      "Chat with buyers and sellers on listings or profiles. Handle offer actions without leaving the conversation.",
   },
   {
     title: "Checkout",
     description:
-      "Pay with Apple Pay through Stripe Connect escrow. Funds stay held until delivery and inspection — then release to verified sellers.",
+      "Apple Pay, card, or bank wire for high-value pieces. Stripe Connect escrow holds funds until inspection ends.",
   },
   {
     title: "Verify",
     description:
       "Automated KYC, AI watch authentication, serial intelligence, trust scores, and dynamic badges on every listing.",
+  },
+  {
+    title: "Authenticity Passport",
+    description:
+      "Digital provenance certificates and serial lookup — passports transfer to buyers when a sale completes.",
+  },
+  {
+    title: "Grail Board",
+    description:
+      "Post what you are hunting with brand, reference, and budget. Get matched when a verified listing appears.",
   },
 ];
 

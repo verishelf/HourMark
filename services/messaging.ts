@@ -232,7 +232,7 @@ export async function getConversationById(
         ({
           id: otherId,
           username: otherId === "seller-1" ? "seller" : "buyer",
-          avatar_url: mockListing.seller.avatar_url ?? null,
+          avatar_url: mockListing.seller?.avatar_url ?? null,
           bio: null,
           verified: false,
           stripe_account_id: null,
@@ -336,11 +336,30 @@ export async function markMessagesAsRead(
   conversationId: string,
   userId: string
 ) {
-  if (!isSupabaseConfigured) return;
+  const readAt = new Date().toISOString();
+
+  if (!isSupabaseConfigured) {
+    const messages = MOCK_MESSAGES[conversationId];
+    if (messages) {
+      for (const message of messages) {
+        if (message.sender_id !== userId && !message.read_at) {
+          message.read_at = readAt;
+        }
+      }
+    }
+    const conversation = MOCK_CONVERSATIONS.find((c) => c.id === conversationId);
+    if (
+      conversation?.last_message &&
+      conversation.last_message.sender_id !== userId
+    ) {
+      conversation.last_message.read_at = readAt;
+    }
+    return;
+  }
 
   await supabase
     .from("messages")
-    .update({ read_at: new Date().toISOString() })
+    .update({ read_at: readAt })
     .eq("conversation_id", conversationId)
     .neq("sender_id", userId)
     .is("read_at", null);

@@ -13,9 +13,9 @@ import { MotiView } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CrownlyLogo } from "@/components/CrownlyLogo";
 import { AUTH_SLIDE_IMAGES } from "@/constants/authSlides";
-import { Colors } from "@/constants/colors";
+import { Colors, OverlayTextColors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
-import { Typography } from "@/constants/typography";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -31,7 +31,13 @@ type Props = {
   images?: readonly string[];
 };
 
-function AnimatedSlideCopy({ index }: { index: number }) {
+function AnimatedSlideCopy({
+  index,
+  styles,
+}: {
+  index: number;
+  styles: ReturnType<typeof createStyles>;
+}) {
   const copy = SLIDE_COPY[index] ?? SLIDE_COPY[0];
 
   return (
@@ -63,6 +69,7 @@ function AnimatedSlideCopy({ index }: { index: number }) {
 
 export function FullScreenAuthSlider({ images = AUTH_SLIDE_IMAGES }: Props) {
   const insets = useSafeAreaInsets();
+  const styles = useThemedStyles(createStyles);
   const {
     listRef,
     loopData,
@@ -120,7 +127,7 @@ export function FullScreenAuthSlider({ images = AUTH_SLIDE_IMAGES }: Props) {
       >
         <CrownlyLogo width={120} />
       </View>
-      <AnimatedSlideCopy index={realIndex} />
+      <AnimatedSlideCopy index={realIndex} styles={styles} />
       <View style={styles.dots} pointerEvents="none">
         {images.map((_, i) => (
           <MotiView
@@ -138,55 +145,56 @@ export function FullScreenAuthSlider({ images = AUTH_SLIDE_IMAGES }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  brandHeader: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 3,
-    alignItems: "center",
-  },
-  copy: {
-    position: "absolute",
-    left: 24,
-    right: 24,
-    bottom: 160,
-    zIndex: 2,
-  },
-  slideTitle: {
-    color: Colors.textPrimary,
-    fontSize: 34,
-    fontWeight: "300",
-    letterSpacing: -0.5,
-    marginBottom: 10,
-  },
-  slideSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    lineHeight: 24,
-    maxWidth: 300,
-  },
-  dots: {
-    position: "absolute",
-    bottom: 128,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-  },
-  dot: {
-    height: 2,
-    backgroundColor: Colors.textPrimary,
-    borderRadius: 1,
-  },
-});
+const createStyles = () =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    brandHeader: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 3,
+      alignItems: "center",
+    },
+    copy: {
+      position: "absolute",
+      left: 24,
+      right: 24,
+      bottom: 160,
+      zIndex: 2,
+    },
+    slideTitle: {
+      color: OverlayTextColors.primary,
+      fontSize: 34,
+      fontWeight: "300",
+      letterSpacing: -0.5,
+      marginBottom: 10,
+    },
+    slideSubtitle: {
+      color: OverlayTextColors.secondary,
+      fontSize: 16,
+      lineHeight: 24,
+      maxWidth: 300,
+    },
+    dots: {
+      position: "absolute",
+      bottom: 128,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 6,
+    },
+    dot: {
+      height: 2,
+      backgroundColor: OverlayTextColors.primary,
+      borderRadius: 1,
+    },
+  });

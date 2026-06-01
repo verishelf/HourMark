@@ -6,6 +6,8 @@ export const LOGGED_OUT_GATE_IMAGES = {
     "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=1400&q=80",
   sell:
     "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=1400&q=80",
+  sellerVerification:
+    "https://images.unsplash.com/photo-1730757679771-b53e798846cf?w=1400&q=80&auto=format&fit=crop",
   login:
     "https://images.unsplash.com/photo-1587836374828-4dbafa94fb0c?w=1400&q=80",
   signup:

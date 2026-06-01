@@ -1,0 +1,10 @@
+website/
+apps/api/
+supabase/.temp/
+**/*.md
+!README.md
+.git/
+.cursor/
+agent-transcripts/
+**/*.p8
+AuthKey_*

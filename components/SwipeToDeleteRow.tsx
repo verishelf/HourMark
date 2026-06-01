@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 
 type Props = {
   children: ReactNode;
@@ -12,10 +13,38 @@ type Props = {
   deleteLabel?: string;
 };
 
+function createStyles() {
+  return StyleSheet.create({
+    deleteAction: {
+      width: 88,
+      backgroundColor: Colors.error,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+      borderTopRightRadius: RADIUS.md,
+      borderBottomRightRadius: RADIUS.md,
+    },
+    deleteLabel: {
+      ...Typography.caption,
+      color: "#FFFFFF",
+      fontSize: 11,
+      fontWeight: "600",
+    },
+    swipeContainer: {
+      backgroundColor: Colors.background,
+    },
+    rowContent: {
+      flex: 1,
+    },
+  });
+}
+
 export function SwipeToDeleteRow({ children, onDelete, deleteLabel = "Delete" }: Props) {
+  const styles = useThemedStyles(createStyles);
+
   const renderRightActions = () => (
     <Pressable onPress={onDelete} style={styles.deleteAction}>
-      <Ionicons name="trash-outline" size={22} color={Colors.textPrimary} />
+      <Ionicons name="trash-outline" size={22} color="#FFFFFF" />
       <Text style={styles.deleteLabel}>{deleteLabel}</Text>
     </Pressable>
   );
@@ -32,27 +61,3 @@ export function SwipeToDeleteRow({ children, onDelete, deleteLabel = "Delete" }:
     </Swipeable>
   );
 }
-
-const styles = StyleSheet.create({
-  deleteAction: {
-    width: 88,
-    backgroundColor: Colors.error,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    borderTopRightRadius: RADIUS.md,
-    borderBottomRightRadius: RADIUS.md,
-  },
-  deleteLabel: {
-    ...Typography.caption,
-    color: Colors.textPrimary,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  swipeContainer: {
-    backgroundColor: Colors.background,
-  },
-  rowContent: {
-    flex: 1,
-  },
-});

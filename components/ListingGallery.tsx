@@ -14,6 +14,7 @@ import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
 import { resolveListingImageUrl } from "@/lib/listingImages";
 
 const { width, height } = Dimensions.get("window");
+const GALLERY_HEIGHT = height * 0.55;
 
 type Props = {
   images: string[];
@@ -43,34 +44,39 @@ export function ListingGallery({ images }: Props) {
 
   return (
     <View>
-      <FlatList
-        ref={listRef}
-        data={loopData}
-        horizontal
-        pagingEnabled
-        {...HIDE_SCROLL_INDICATORS}
-        decelerationRate={Platform.OS === "ios" ? "fast" : "normal"}
-        overScrollMode="never"
-        scrollEventThrottle={16}
-        onMomentumScrollEnd={onMomentumScrollEnd}
-        getItemLayout={getItemLayout}
-        keyExtractor={(_, i) => String(i)}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-        onScrollToIndexFailed={(info) => {
-          setTimeout(() => {
-            listRef.current?.scrollToIndex({ index: info.index, animated: true });
-          }, 80);
-        }}
-        renderItem={({ item }) => (
-          <Image
-            source={{ uri: item }}
-            style={{ width, height: height * 0.55 }}
-            contentFit="cover"
-            transition={300}
-          />
-        )}
-      />
+      <View style={{ height: GALLERY_HEIGHT }}>
+        <FlatList
+          ref={listRef}
+          data={loopData}
+          horizontal
+          pagingEnabled
+          nestedScrollEnabled
+          removeClippedSubviews={false}
+          style={{ height: GALLERY_HEIGHT, flexGrow: 0 }}
+          {...HIDE_SCROLL_INDICATORS}
+          decelerationRate={Platform.OS === "ios" ? "fast" : "normal"}
+          overScrollMode="never"
+          scrollEventThrottle={16}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          getItemLayout={getItemLayout}
+          keyExtractor={(_, i) => String(i)}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+          onScrollToIndexFailed={(info) => {
+            setTimeout(() => {
+              listRef.current?.scrollToIndex({ index: info.index, animated: true });
+            }, 80);
+          }}
+          renderItem={({ item }) => (
+            <Image
+              source={{ uri: item }}
+              style={{ width, height: GALLERY_HEIGHT }}
+              contentFit="cover"
+              transition={300}
+            />
+          )}
+        />
+      </View>
       {realCount > 1 && (
         <View
           style={{

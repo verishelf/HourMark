@@ -24,6 +24,7 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { notifyContentRefresh } from "@/lib/contentRefresh";
 import { createPost, uploadPostImage } from "@/services/posts";
 
@@ -39,6 +40,7 @@ export default function CreatePostScreen() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const captionYRef = useRef(0);
+  const styles = useThemedStyles(createPostStyles);
 
   const canPost = Boolean(imageUri) && !publishing;
   const keyboardOpen = keyboardHeight > 0;
@@ -246,7 +248,8 @@ export default function CreatePostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createPostStyles() {
+  return StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -338,7 +341,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: RADIUS.pill,
-    backgroundColor: Colors.overlay,
+    backgroundColor: Colors.cardElevated,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -450,4 +453,5 @@ const styles = StyleSheet.create({
   footerButtonLabelDisabled: {
     color: Colors.textMuted,
   },
-});
+  });
+}
