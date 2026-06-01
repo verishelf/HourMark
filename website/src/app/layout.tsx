@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist } from "next/font/google";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { StructuredData } from "@/components/StructuredData";
@@ -31,6 +32,7 @@ export default function RootLayout({
         <GoogleAnalytics />
         <StructuredData data={[organizationJsonLd(), webSiteJsonLd()]} />
         {children}
+        <Analytics />
       </body>
     </html>
   );
