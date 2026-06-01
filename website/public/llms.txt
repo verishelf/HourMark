@@ -1,0 +1,32 @@
+# Crownly
+
+> Crownly is a premium iOS marketplace for buying and selling authenticated luxury watches.
+
+Crownly connects collectors and verified sellers for high-value timepieces. The app includes curated discovery, search and filters, in-app offers and messaging, Stripe Connect escrow checkout (Apple Pay, card, and wire), AI-assisted trust verification, Authenticity Passports, a personal watch collection, Grail Board want-list matching, and a watch scanner for identification.
+
+## Official links
+
+- Website: https://crownly.app
+- Privacy Policy: https://crownly.app/privacy
+- Terms of Service: https://crownly.app/terms
+- Support: hello@crownly.app
+- Privacy: privacy@crownly.app
+
+## Product summary
+
+- Platform: iOS (App Store launch)
+- Categories: Luxury watches, pre-owned and new, authenticated listings
+- Brands: Rolex, Patek Philippe, Audemars Piguet, Richard Mille, Cartier, Omega, Tudor, IWC, and more
+- Payments: Stripe Connect escrow; Apple Pay, card, bank wire for high-value sales
+- Trust: Seller KYC, AI listing review, trust scores, verification badges, Authenticity Passports
+- Key features: Discover feed, search, sell flow, offers, messages, collection tracking, Grail Board, watch scanner
+
+## Company
+
+- Name: Crownly Inc.
+- App name: Crownly
+- Bundle ID: com.crownly.app
+
+## Optional
+
+For extended product and policy context, see https://crownly.app/terms and https://crownly.app/privacy.

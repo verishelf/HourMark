@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { LegalLayout } from "@/components/LegalLayout";
 import { LegalList, LegalSection, LegalSubsection } from "@/components/LegalSection";
 import { LEGAL } from "@/lib/legal";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: `Terms of Service & EULA — ${LEGAL.appName}`,
-  description: `Terms of Service and End User License Agreement for the ${LEGAL.appName} app and marketplace.`,
-};
+  description: `Terms of Service and End User License Agreement for the ${LEGAL.appName} iOS luxury watch marketplace.`,
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

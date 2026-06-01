@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { BrandMarquee } from "@/components/BrandMarquee";
@@ -11,12 +12,25 @@ import { Community } from "@/components/Community";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Download } from "@/components/Download";
 import { Footer } from "@/components/Footer";
+import { StructuredData } from "@/components/StructuredData";
+import {
+  buildPageMetadata,
+  faqPageJsonLd,
+  softwareApplicationJsonLd,
+} from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  path: "/",
+});
 
 export default function Home() {
   return (
     <>
+      <StructuredData
+        data={[softwareApplicationJsonLd(), faqPageJsonLd()]}
+      />
       <Header />
-      <main>
+      <main id="main-content">
         <Hero />
         <BrandMarquee />
         <PartnerMarquee />

@@ -11,7 +11,7 @@ export function Hero() {
       <div className="absolute inset-0">
         <Image
           src={watchImage("hero", 1920)}
-          alt="Luxury watch"
+          alt="Authenticated luxury watch on Crownly marketplace"
           fill
           priority
           className="object-cover opacity-40"

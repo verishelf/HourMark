@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { StructuredData } from "@/components/StructuredData";
+import {
+  organizationJsonLd,
+  rootMetadata,
+  webSiteJsonLd,
+} from "@/lib/seo";
 import "./globals.css";
 
 const geist = Geist({
@@ -7,23 +13,7 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://crownly.app"),
-  title: "Crownly — Luxury Watch Marketplace",
-  description:
-    "Buy and sell authenticated luxury watches on iOS. Offers, Authenticity Passports, escrow checkout, Grail Board, collection tracking, AI verification, and verified sellers.",
-  icons: {
-    icon: [{ url: "/favicon.png", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-  },
-  openGraph: {
-    title: "Crownly — Luxury Watch Marketplace",
-    description:
-      "The premium iOS marketplace for luxury watches — offers, provenance passports, escrow, and collector tools.",
-    type: "website",
-    images: [{ url: "/crownly-logo.png", width: 500, height: 500, alt: "Crownly" }],
-  },
-};
+export const metadata: Metadata = rootMetadata;
 
 export default function RootLayout({
   children,
@@ -32,7 +22,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geist.variable} antialiased`}>{children}</body>
+      <head>
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="llms-txt" href="/llms.txt" />
+      </head>
+      <body className={`${geist.variable} antialiased`}>
+        <StructuredData data={[organizationJsonLd(), webSiteJsonLd()]} />
+        {children}
+      </body>
     </html>
   );
 }

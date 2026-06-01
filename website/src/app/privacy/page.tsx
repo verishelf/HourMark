@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { LegalLayout } from "@/components/LegalLayout";
 import { LegalList, LegalSection, LegalSubsection } from "@/components/LegalSection";
 import { LEGAL } from "@/lib/legal";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: `Privacy Policy — ${LEGAL.appName}`,
-  description: `How ${LEGAL.appName} collects, uses, and protects your personal information.`,
-};
+  description: `How ${LEGAL.appName} collects, uses, and protects your personal information when you use our luxury watch marketplace.`,
+  path: "/privacy",
+});
 
 export default function PrivacyPolicyPage() {
   return (
