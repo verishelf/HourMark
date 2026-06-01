@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { LEGAL } from "@/lib/legal";
 
 export function Download() {
   return (
@@ -31,7 +32,7 @@ export function Download() {
 
             <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="mailto:hello@crownly.app?subject=Crownly%20Waitlist"
+                href={`mailto:${LEGAL.supportEmail}?subject=Crownly%20Waitlist`}
                 className="w-full max-w-xs bg-white px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-black transition-opacity hover:opacity-90 sm:w-auto"
               >
                 Join the Waitlist

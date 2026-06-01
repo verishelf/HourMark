@@ -6,11 +6,11 @@ Crownly connects collectors and verified sellers for high-value timepieces. The 
 
 ## Official links
 
-- Website: https://crownly.app
-- Privacy Policy: https://crownly.app/privacy
-- Terms of Service: https://crownly.app/terms
-- Support: hello@crownly.app
-- Privacy: privacy@crownly.app
+- Website: https://crownly.art
+- Privacy Policy: https://crownly.art/privacy
+- Terms of Service: https://crownly.art/terms
+- Support: hello@crownly.art
+- Privacy: privacy@crownly.art
 
 ## Product summary
 
@@ -29,4 +29,4 @@ Crownly connects collectors and verified sellers for high-value timepieces. The 
 
 ## Optional
 
-For extended product and policy context, see https://crownly.app/terms and https://crownly.app/privacy.
+For extended product and policy context, see https://crownly.art/terms and https://crownly.art/privacy.

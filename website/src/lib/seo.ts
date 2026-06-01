@@ -215,6 +215,6 @@ const FAQ_ITEMS = [
   {
     question: "Is Crownly available on Android?",
     answer:
-      "Crownly is launching first on iOS via the App Store. Join the waitlist at crownly.app to get notified when downloads are available.",
+      "Crownly is launching first on iOS via the App Store. Join the waitlist at crownly.art to get notified when downloads are available.",
   },
 ] as const;

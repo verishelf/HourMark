@@ -47,6 +47,15 @@ Deploy to [Vercel](https://vercel.com) from the repo root. The root `vercel.json
 
 **Recommended:** In Vercel project settings, set **Root Directory** to `website` and remove custom root-level build overrides if you prefer the default Next.js flow.
 
+### Custom domain (`crownly.art`)
+
+Production URL is configured in `src/lib/legal.ts` as `https://crownly.art` (SEO, sitemap, Open Graph, and `llms.txt`).
+
+1. In Vercel → **Project → Settings → Domains**, add `crownly.art` and `www.crownly.art`.
+2. At your registrar, set DNS per Vercel’s instructions (usually `A` / `CNAME` to Vercel).
+3. Set up email forwarding for `hello@`, `privacy@`, and `legal@crownly.art` if you use those addresses.
+4. After deploy, submit `https://crownly.art/sitemap.xml` in [Google Search Console](https://search.google.com/search-console).
+
 ## Design
 
 Matches the mobile app aesthetic:
