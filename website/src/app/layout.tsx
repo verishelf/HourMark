@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { StructuredData } from "@/components/StructuredData";
 import {
   organizationJsonLd,
@@ -27,6 +28,7 @@ export default function RootLayout({
         <link rel="llms-txt" href="/llms.txt" />
       </head>
       <body className={`${geist.variable} antialiased`}>
+        <GoogleAnalytics />
         <StructuredData data={[organizationJsonLd(), webSiteJsonLd()]} />
         {children}
       </body>

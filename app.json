@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.crownly.app",
       "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
@@ -30,7 +31,9 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ]
       }
@@ -68,7 +71,8 @@
         }
       ],
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-firebase/app"
     ],
     "experiments": {
       "typedRoutes": true

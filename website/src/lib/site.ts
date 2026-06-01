@@ -37,6 +37,7 @@ export const SITE = {
   ogImageHeight: 1792,
   logo: "/crownly-logo.png",
   twitterHandle: "@crownlyapp",
+  googleAnalyticsId: "G-XJNZ4HPPG3",
 } as const;
 
 export const SITE_ROUTES = [

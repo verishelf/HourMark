@@ -1,10 +1,13 @@
 import "react-native-reanimated";
 import "../global.css";
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StripeProvider } from "@stripe/stripe-react-native";
+import { AnalyticsNavigationTracker } from "@/components/AnalyticsNavigationTracker";
 import { AuthNavigationGuard } from "@/components/AuthNavigationGuard";
+import { setAnalyticsUserId } from "@/lib/analytics";
 import { ThemeProvider, useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -24,6 +27,7 @@ function RootNavigation() {
         urlScheme="crownly"
       >
         <StatusBar style={colorScheme === "light" ? "dark" : "light"} />
+        <AnalyticsNavigationTracker />
         <AuthNavigationGuard />
         <Stack
           screenOptions={{
