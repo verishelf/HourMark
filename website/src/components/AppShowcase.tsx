@@ -2,46 +2,45 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { watchImage } from "@/lib/watchImages";
 
 const SCREENS = [
   {
     title: "Discover",
     subtitle: "Editorial home experience",
-    imageKey: "wrist" as const,
+    image: "/screenshots/discover.png",
     accent: "Featured carousel, new arrivals & follow feed",
   },
   {
     title: "Listing",
     subtitle: "Immersive product detail",
-    imageKey: "blackDial" as const,
+    image: "/screenshots/listing.png",
     accent: "Offers, trust badges, passport & Apple Pay",
   },
   {
     title: "Sell",
     subtitle: "List in minutes",
-    imageKey: "classic" as const,
+    image: "/screenshots/sell.png",
     accent: "Multi-step listing & seller verification",
   },
   {
     title: "Collection",
     subtitle: "Portfolio tracking",
-    imageKey: "greenDial" as const,
+    image: "/screenshots/collection.png",
     accent: "Value, provenance & purchase history",
   },
   {
     title: "Grail Board",
     subtitle: "Post your hunt",
-    imageKey: "metalBand" as const,
+    image: "/screenshots/grail-board.png",
     accent: "Brand, reference, budget & match alerts",
   },
   {
     title: "Scanner",
     subtitle: "Identify & compare",
-    imageKey: "macro" as const,
+    image: "/screenshots/scanner.png",
     accent: "Find verified Crownly comps instantly",
   },
-];
+] as const;
 
 export function AppShowcase() {
   return (
@@ -81,10 +80,10 @@ export function AppShowcase() {
                   <div className="h-1 w-16 rounded-full bg-[#1a1a1a]" />
                 </div>
                 <Image
-                  src={watchImage(screen.imageKey, 600, 80)}
-                  alt={screen.title}
+                  src={screen.image}
+                  alt={`Crownly app — ${screen.title}`}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   sizes="280px"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/90 to-transparent p-6 pt-24">
