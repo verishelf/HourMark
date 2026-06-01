@@ -1,10 +1,10 @@
 import { LogoMarquee, type LogoMarqueeItem } from "@/components/LogoMarquee";
 
 const PARTNER_LOGOS: LogoMarqueeItem[] = [
-  { name: "Stripe", src: "/logos/partners/stripe-wordmark.svg", width: 132, height: 32 },
-  { name: "Apple", src: "/logos/partners/apple-wordmark.svg", width: 132, height: 32 },
-  { name: "Supabase", src: "/logos/partners/supabase-wordmark.svg", width: 152, height: 32 },
-  { name: "Expo", src: "/logos/partners/expo-wordmark.svg", width: 132, height: 32 },
+  { name: "Stripe", src: "/logos/partners/stripe-wordmark.svg", width: 198, height: 48 },
+  { name: "Apple", src: "/logos/partners/apple-wordmark.svg", width: 198, height: 48 },
+  { name: "Supabase", src: "/logos/partners/supabase-wordmark.svg", width: 228, height: 48 },
+  { name: "Expo", src: "/logos/partners/expo-wordmark.svg", width: 198, height: 48 },
 ];
 
 export function PartnerMarquee() {
@@ -18,7 +18,7 @@ export function PartnerMarquee() {
         direction="right"
         durationSeconds={50}
         className="border-t-0"
-        slotClassName="h-6 w-[5.5rem] sm:h-7 sm:w-24 md:h-8 md:w-28"
+        slotClassName="h-10 w-32 sm:h-11 sm:w-36 md:h-12 md:w-40"
       />
     </section>
   );
