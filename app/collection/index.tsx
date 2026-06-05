@@ -5,7 +5,6 @@ import { CollectionItemCard } from "@/components/CollectionItemCard";
 import { EmptyState } from "@/components/EmptyState";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { formatPrice } from "@/lib/stripe";
@@ -32,14 +31,14 @@ export default function CollectionScreen() {
 
   return (
     <FeatureScreenScaffold
+      title="My Collection"
+      subtitle="Track value and provenance"
       trailing={
         <Pressable onPress={() => router.push("/scanner")}>
           <Text style={styles.linkText}>Scanner</Text>
         </Pressable>
       }
     >
-      <ScreenHeader title="My Collection" subtitle="Track value and provenance" />
-
       {items.length > 0 ? (
         <View style={styles.statRow}>
           <View style={styles.statTile}>

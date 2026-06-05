@@ -18,6 +18,8 @@ type Props = {
   bottomContent?: ReactNode;
   /** When true (default), adds horizontal screen padding. Set false inside already-padded containers. */
   padded?: boolean;
+  /** Inside FeatureScreenScaffold top bar — skip duplicate safe-area inset. */
+  embedded?: boolean;
   style?: ViewStyle;
 };
 
@@ -30,6 +32,7 @@ export function ScreenHeader({
   rightAction,
   bottomContent,
   padded = true,
+  embedded = false,
   style,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -38,9 +41,9 @@ export function ScreenHeader({
     <View
       style={[
         {
-          paddingTop: insets.top + 12,
+          paddingTop: embedded ? 0 : insets.top + 12,
           paddingHorizontal: padded ? SPACING.screen : 0,
-          paddingBottom: bottomContent ? 12 : 16,
+          paddingBottom: bottomContent ? 12 : embedded ? 12 : 16,
         },
         style,
       ]}

@@ -101,6 +101,10 @@ function RootNavigation() {
           />
           <Stack.Screen name="notifications/index" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="scanner/index" options={{ animation: "slide_from_bottom", presentation: "modal" }} />
+          <Stack.Screen
+            name="scanner/camera"
+            options={{ animation: "slide_from_bottom", presentation: "fullScreenModal" }}
+          />
           <Stack.Screen name="collection/index" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="collection/add" options={{ animation: "slide_from_bottom", presentation: "modal" }} />
           <Stack.Screen name="alerts/index" options={{ animation: "slide_from_right" }} />
@@ -109,6 +113,7 @@ function RootNavigation() {
           <Stack.Screen name="passport/[code]" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="passport/lookup" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="order/[id]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="offer/[id]" options={{ animation: "slide_from_right" }} />
         </Stack>
       </StripeProvider>
     </GestureHandlerRootView>

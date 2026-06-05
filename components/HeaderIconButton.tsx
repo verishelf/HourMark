@@ -7,8 +7,8 @@ type Props = {
   icon: keyof typeof Ionicons.glyphMap;
   filled?: boolean;
   badge?: number;
-  /** `surface` for page headers; `overlay` for buttons on photos */
-  variant?: "surface" | "overlay";
+  /** `surface` for page headers; `overlay` for buttons on photos; `ghost` for bare icons */
+  variant?: "surface" | "overlay" | "ghost";
 };
 
 export function HeaderIconButton({
@@ -19,19 +19,22 @@ export function HeaderIconButton({
   variant = "surface",
 }: Props) {
   const isOverlay = variant === "overlay";
+  const isGhost = variant === "ghost";
 
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
       style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: isOverlay
-          ? ImageOverlayButtonColors.background
-          : Colors.cardElevated,
-        borderWidth: isOverlay ? 0 : 1,
+        width: isGhost ? 36 : 40,
+        height: isGhost ? 36 : 40,
+        borderRadius: isGhost ? 0 : 20,
+        backgroundColor: isGhost
+          ? "transparent"
+          : isOverlay
+            ? ImageOverlayButtonColors.background
+            : Colors.cardElevated,
+        borderWidth: isGhost || isOverlay ? 0 : 1,
         borderColor: isOverlay ? "transparent" : Colors.border,
         alignItems: "center",
         justifyContent: "center",
@@ -39,15 +42,17 @@ export function HeaderIconButton({
     >
       <Ionicons
         name={icon}
-        size={22}
+        size={isGhost ? 24 : 22}
         color={
-          isOverlay
-            ? filled
-              ? ImageOverlayButtonColors.icon
-              : ImageOverlayButtonColors.iconMuted
-            : filled
-              ? Colors.textPrimary
-              : Colors.textSecondary
+          isGhost
+            ? Colors.textPrimary
+            : isOverlay
+              ? filled
+                ? ImageOverlayButtonColors.icon
+                : ImageOverlayButtonColors.iconMuted
+              : filled
+                ? Colors.textPrimary
+                : Colors.textSecondary
         }
       />
       {badge != null && badge > 0 ? (

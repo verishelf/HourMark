@@ -5,7 +5,7 @@ import { Typography } from "@/constants/typography";
 
 type Props = {
   label: string;
-  variant?: "default" | "success" | "muted";
+  variant?: "default" | "success" | "muted" | "error" | "warning";
   style?: ViewStyle;
 };
 
@@ -21,6 +21,14 @@ const VARIANT_STYLES = {
   muted: {
     borderColor: Colors.border,
     color: Colors.textMuted,
+  },
+  error: {
+    borderColor: Colors.error,
+    color: Colors.error,
+  },
+  warning: {
+    borderColor: "#EAB308",
+    color: "#EAB308",
   },
 };
 

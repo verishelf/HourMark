@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { FeatureFormField } from "@/components/FeatureFormField";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { addToCollection } from "@/services/collection";
@@ -44,12 +43,10 @@ export default function AddCollectionItemScreen() {
   };
 
   return (
-    <FeatureScreenScaffold>
-      <ScreenHeader
-        title="Add to Collection"
-        subtitle="Log a watch you own for portfolio tracking"
-      />
-
+    <FeatureScreenScaffold
+      title="Add to Collection"
+      subtitle="Log a watch you own for portfolio tracking"
+    >
       <View style={styles.formCard}>
         <FeatureFormField label="Brand" value={brand} onChangeText={setBrand} placeholder="Rolex" />
         <FeatureFormField label="Model" value={model} onChangeText={setModel} placeholder="Submariner" />

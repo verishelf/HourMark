@@ -245,7 +245,7 @@ export async function getConversationById(
 
   const { data, error } = await supabase
     .from("conversations")
-    .select("*")
+    .select("*, listing:listings(*)")
     .eq("id", conversationId)
     .maybeSingle();
   if (error) throw error;

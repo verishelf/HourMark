@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,6 +26,7 @@ import { resetToAuth } from "@/lib/navigation";
 import { getFavorites } from "@/services/favorites";
 import { deleteListing, getUserListings } from "@/services/listings";
 import { subscribeContentRefresh, notifyContentRefresh } from "@/lib/contentRefresh";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
 import { deletePost, getUserPosts } from "@/services/posts";
 import { getOrders } from "@/services/payments";
 import { deleteAccount, signOut } from "@/services/auth";
@@ -132,7 +133,9 @@ function OrderRow({
     order.status === "paid" ||
     order.status === "payment_held"
       ? "success"
-      : "muted";
+      : order.status === "cancelled" || order.status === "refunded"
+        ? "warning"
+        : "muted";
 
   return (
     <Pressable onPress={() => router.push(`/order/${order.id}`)} style={styles.listCard}>
@@ -158,7 +161,7 @@ function OrderRow({
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, profile, isAuthenticated, loading, refreshProfile } = useAuth();
+  const { user, profile, isAuthenticated, loading } = useAuth();
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [favorites, setFavorites] = useState<Listing[]>([]);
@@ -173,22 +176,18 @@ export default function ProfileScreen() {
     rejectionReason: null,
   });
   const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
+  const [dataLoading, setDataLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const loadRequestId = useRef(0);
+  const hasLoadedOnceRef = useRef(false);
+  const isFirstFocusRef = useRef(true);
+  const userId = user?.id;
   const { colorScheme } = useTheme();
   const profileTabStyles = useProfileTabStyles();
   const styles = useThemedStyles(createProfileStyles);
-
-  const loadVerificationStatus = useCallback(async () => {
-    if (!user) return;
-    try {
-      const status = await getSellerVerificationStatus();
-      setVerificationStatus(status);
-      await refreshProfile();
-    } catch {
-      // Keep profile-derived fallback when API is unavailable.
-    }
-  }, [refreshProfile, user]);
 
   const handleStartVerification = () => {
     if (!user) return;
@@ -199,69 +198,90 @@ export default function ProfileScreen() {
     router.push("/profile/edit");
   };
 
-  const loadPosts = useCallback(async () => {
-    if (!user) return;
-    try {
-      setPosts(await getUserPosts(user.id));
-    } catch {
-      setPosts([]);
-    }
-  }, [user]);
+  const refreshProfileData = useCallback(async () => {
+    if (!userId) return;
 
-  const loadListings = useCallback(async () => {
-    if (!user) return;
-    try {
-      setListings(await getUserListings(user.id));
-    } catch {
-      setListings([]);
-    }
-  }, [user]);
+    const requestId = ++loadRequestId.current;
+    const isStale = () => requestId !== loadRequestId.current;
 
-  const loadFavorites = useCallback(async () => {
-    if (!user) return;
-    try {
-      setFavorites(await getFavorites(user.id));
-    } catch {
-      setFavorites([]);
+    if (!hasLoadedOnceRef.current) {
+      setDataLoading(true);
     }
-  }, [user]);
+    setLoadFailed(false);
 
-  const loadCollection = useCallback(async () => {
-    if (!user) return;
     try {
-      setCollection(await getCollection(user.id));
+      const [
+        postsData,
+        listingsData,
+        favoritesData,
+        collectionData,
+        counts,
+        ordersData,
+      ] = await fetchWithRetry(() =>
+        Promise.all([
+          getUserPosts(userId),
+          getUserListings(userId),
+          getFavorites(userId),
+          getCollection(userId),
+          getFollowCounts(userId),
+          getOrders(userId),
+        ])
+      );
+
+      if (isStale()) return;
+
+      setPosts(postsData);
+      setListings(listingsData);
+      setFavorites(favoritesData);
+      setCollection(collectionData);
+      setFollowCounts(counts);
+      setOrders(ordersData);
+      hasLoadedOnceRef.current = true;
+      setHasLoadedOnce(true);
+      void getSellerVerificationStatus()
+        .then(setVerificationStatus)
+        .catch(() => {});
     } catch {
-      setCollection([]);
+      if (!isStale()) setLoadFailed(true);
+    } finally {
+      if (!isStale()) setDataLoading(false);
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!user) return;
-    void loadFavorites();
-    void loadCollection();
-    getOrders(user.id)
-      .then(setOrders)
-      .catch(() => setOrders([]));
-  }, [user, loadFavorites, loadCollection]);
-
-  const refreshProfileData = useCallback(() => {
-    loadPosts();
-    loadListings();
-    loadFavorites();
-    loadCollection();
-    loadVerificationStatus();
-    if (user) {
-      getFollowCounts(user.id)
-        .then(setFollowCounts)
-        .catch(() => setFollowCounts({ followers: 0, following: 0 }));
+    if (!userId) {
+      loadRequestId.current += 1;
+      isFirstFocusRef.current = true;
+      hasLoadedOnceRef.current = false;
+      setHasLoadedOnce(false);
+      setPosts([]);
+      setListings([]);
+      setFavorites([]);
+      setCollection([]);
+      setOrders([]);
+      setFollowCounts({ followers: 0, following: 0 });
+      setDataLoading(false);
+      setLoadFailed(false);
+      return;
     }
-  }, [loadPosts, loadListings, loadFavorites, loadCollection, loadVerificationStatus, user]);
+
+    void refreshProfileData();
+  }, [userId, refreshProfileData]);
 
   useFocusEffect(
     useCallback(() => {
-      refreshProfileData();
-      return subscribeContentRefresh(refreshProfileData);
-    }, [refreshProfileData])
+      if (!userId) return;
+
+      if (isFirstFocusRef.current) {
+        isFirstFocusRef.current = false;
+      } else {
+        void refreshProfileData();
+      }
+
+      return subscribeContentRefresh(() => {
+        void refreshProfileData();
+      });
+    }, [userId, refreshProfileData])
   );
 
   const handleDeletePost = (post: UserPost) => {
@@ -329,11 +349,12 @@ export default function ProfileScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            setListings((prev) => prev.filter((l) => l.id !== listing.id));
             try {
               await deleteListing(listing.id, user.id);
-              setListings((prev) => prev.filter((l) => l.id !== listing.id));
               notifyContentRefresh();
             } catch (e) {
+              void refreshProfileData();
               Alert.alert("Error", e instanceof Error ? e.message : "Failed to delete");
             }
           },
@@ -435,8 +456,25 @@ export default function ProfileScreen() {
                 : profileTabStyles.tabContentPadded),
           ]}
         >
-          {tab === "listings" &&
-            (listings.length ? (
+          {dataLoading && !hasLoadedOnce ? (
+            <View style={styles.tabLoader}>
+              <ActivityIndicator color={Colors.textPrimary} />
+            </View>
+          ) : null}
+
+          {(!dataLoading || hasLoadedOnce) && tab === "listings" &&
+            (loadFailed && !listings.length ? (
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="cloud-offline-outline"
+                  title="Couldn't load profile"
+                  body="Check your connection and try again."
+                  actionLabel="Retry"
+                  onAction={() => void refreshProfileData()}
+                />
+              </View>
+            ) : listings.length ? (
               <ListingGrid
                 listings={listings}
                 onEdit={(listing) => router.push(`/listing/edit/${listing.id}`)}
@@ -456,7 +494,7 @@ export default function ProfileScreen() {
               </View>
             ))}
 
-          {tab === "collection" &&
+          {(!dataLoading || hasLoadedOnce) && tab === "collection" &&
             (collection.length ? (
               collection.map((item) => (
                 <CollectionItemCard key={item.id} item={item} />
@@ -474,8 +512,19 @@ export default function ProfileScreen() {
               </View>
             ))}
 
-          {tab === "posts" &&
-            (posts.length ? (
+          {(!dataLoading || hasLoadedOnce) && tab === "posts" &&
+            (loadFailed && !posts.length ? (
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="cloud-offline-outline"
+                  title="Couldn't load posts"
+                  body="Check your connection and try again."
+                  actionLabel="Retry"
+                  onAction={() => void refreshProfileData()}
+                />
+              </View>
+            ) : posts.length ? (
               <PostGrid
                 posts={posts}
                 editable
@@ -498,7 +547,7 @@ export default function ProfileScreen() {
               </View>
             ))}
 
-          {tab === "favorites" &&
+          {(!dataLoading || hasLoadedOnce) && tab === "favorites" &&
             (favorites.length ? (
               favorites.map((listing) => (
                 <ListingRow key={listing.id} listing={listing} styles={styles} />
@@ -514,7 +563,7 @@ export default function ProfileScreen() {
               </View>
             ))}
 
-          {tab === "orders" &&
+          {(!dataLoading || hasLoadedOnce) && tab === "orders" &&
             (orders.length ? (
               orders.map((order) => <OrderRow key={order.id} order={order} styles={styles} />)
             ) : (
@@ -607,6 +656,15 @@ function createProfileStyles() {
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  centeredLoader: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabLoader: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 48,
   },
   content: {
     paddingHorizontal: SPACING.screen,

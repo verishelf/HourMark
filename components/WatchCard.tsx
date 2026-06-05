@@ -24,6 +24,8 @@ type Props = {
   showFavorite?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  onCardPress?: () => void;
+  statusBadge?: { label: string; variant: "success" | "muted" | "error" | "warning" } | null;
 };
 
 export function WatchCard({
@@ -34,6 +36,8 @@ export function WatchCard({
   showFavorite,
   onEdit,
   onDelete,
+  onCardPress,
+  statusBadge,
 }: Props) {
   const router = useRouter();
   const { user } = useAuth();
@@ -55,6 +59,14 @@ export function WatchCard({
   const showHeart = showFavorite ?? isGrid;
   const showOwnerActions = Boolean(onEdit || onDelete);
   const coverImage = getListingCoverImage(listing.images);
+
+  const openListing = () => {
+    if (onCardPress) {
+      onCardPress();
+      return;
+    }
+    router.push(`/listing/${listing.id}`);
+  };
 
   const goToCheckout = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -89,7 +101,7 @@ export function WatchCard({
       >
         <View style={{ position: "relative" }}>
           <Pressable
-            onPress={() => router.push(`/listing/${listing.id}`)}
+            onPress={openListing}
             style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
           >
             {coverImage ? (
@@ -116,6 +128,11 @@ export function WatchCard({
               />
             )}
           </Pressable>
+          {statusBadge ? (
+            <View style={{ position: "absolute", top: 8, left: 8 }}>
+              <Badge label={statusBadge.label} variant={statusBadge.variant} />
+            </View>
+          ) : null}
           {showOwnerActions && (
             <View
               style={{
@@ -153,7 +170,7 @@ export function WatchCard({
           )}
         </View>
         <Pressable
-          onPress={() => router.push(`/listing/${listing.id}`)}
+          onPress={openListing}
           style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
         >
           <View style={{ padding: isGrid ? 10 : isCompact ? 12 : 16 }}>

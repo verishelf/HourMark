@@ -14,8 +14,29 @@ export function createFeatureScreenStyles() {
       justifyContent: "space-between",
       alignItems: "center",
       paddingHorizontal: SPACING.screen,
-      paddingVertical: 8,
-      minHeight: 48,
+      paddingBottom: 12,
+      minHeight: 44,
+      gap: 8,
+    },
+    topBarLeft: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      minWidth: 0,
+    },
+    topBarTitles: {
+      flex: 1,
+      minWidth: 0,
+    },
+    topBarTitle: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+    },
+    topBarSubtitle: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      marginTop: 2,
     },
     scrollContent: {
       paddingHorizontal: SPACING.screen,
@@ -127,6 +148,12 @@ export function createFeatureScreenStyles() {
     listRowUnread: {
       backgroundColor: Colors.cardElevated,
       borderColor: Colors.borderLight,
+    },
+    offerAmount: {
+      ...Typography.h2,
+      color: Colors.textPrimary,
+      fontSize: 28,
+      marginTop: 4,
     },
     rowTitle: {
       ...Typography.body,

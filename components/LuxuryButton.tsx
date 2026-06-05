@@ -9,9 +9,10 @@ import {
 import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { RADIUS } from "@/constants/layout";
+import { useTheme } from "@/hooks/useTheme";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 
-type Variant = "primary" | "secondary" | "ghost" | "outline" | "onDark" | "onDarkFilled";
+type Variant = "primary" | "secondary" | "ghost" | "outline" | "onDark" | "onDarkFilled" | "glass";
 type Size = "default" | "large";
 
 type Props = {
@@ -108,11 +109,21 @@ export function LuxuryButton({
   fullWidth = true,
   style,
 }: Props) {
+  const { colorScheme } = useTheme();
   const variantStyles = useThemedStyles(createVariantStyles);
+  const glassVariant = {
+    backgroundColor:
+      colorScheme === "light" ? "rgba(255, 255, 255, 0.55)" : "rgba(255, 255, 255, 0.12)",
+    borderColor: colorScheme === "light" ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.28)",
+    textColor: Colors.textPrimary,
+    borderWidth: 1,
+  };
   const v =
-    variant === "onDark" || variant === "onDarkFilled"
-      ? OVERLAY_VARIANTS[variant]
-      : variantStyles[variant];
+    variant === "glass"
+      ? glassVariant
+      : variant === "onDark" || variant === "onDarkFilled"
+        ? OVERLAY_VARIANTS[variant]
+        : variantStyles[variant];
   const sizing = SIZE_STYLES[size];
 
   const handlePress = () => {

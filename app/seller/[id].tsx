@@ -22,6 +22,7 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
 import { useTheme } from "@/hooks/useTheme";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getSellerActiveListings } from "@/services/listings";
@@ -83,14 +84,16 @@ export default function SellerProfileScreen() {
       setLoading(true);
       try {
         const [profile, userPosts, activeListings, counts, sellerReviews, sellerCollection] =
-          await Promise.all([
-          getPublicProfile(id),
-          getUserPosts(id),
-          getSellerActiveListings(id),
-          getFollowCounts(id),
-          getSellerReviews(id),
-          getCollection(id),
-        ]);
+          await fetchWithRetry(() =>
+            Promise.all([
+              getPublicProfile(id),
+              getUserPosts(id),
+              getSellerActiveListings(id),
+              getFollowCounts(id),
+              getSellerReviews(id),
+              getCollection(id),
+            ])
+          );
         if (cancelled) return;
         setSeller(profile);
         setPosts(userPosts);

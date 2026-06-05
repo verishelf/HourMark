@@ -1,14 +1,19 @@
 import { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { Colors } from "@/constants/colors";
 import { RADIUS, SPACING } from "@/constants/layout";
@@ -29,11 +34,15 @@ function createModalStyles() {
       backgroundColor: Colors.card,
       borderTopLeftRadius: RADIUS.lg,
       borderTopRightRadius: RADIUS.lg,
-      padding: SPACING.screen,
-      paddingBottom: 40,
-      gap: 12,
+      paddingHorizontal: SPACING.screen,
+      paddingTop: SPACING.screen,
+      maxHeight: "90%",
       borderTopWidth: 1,
       borderColor: Colors.border,
+    },
+    sheetContent: {
+      gap: 12,
+      paddingBottom: 8,
     },
     handle: {
       width: 36,
@@ -131,6 +140,7 @@ export function MakeOfferModal({
   sellerId,
   onOfferCreated,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const styles = useThemedStyles(createModalStyles);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
@@ -174,38 +184,60 @@ export function MakeOfferModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>Make an Offer</Text>
-          <Text style={styles.subtitle}>
-            Asking price {formatPrice(listingPrice)}
-            {minOfferPrice ? ` · Min ${formatPrice(minOfferPrice)}` : ""}
-          </Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <Pressable style={styles.backdrop} onPress={onClose}>
+          <Pressable
+            style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <ScrollView
+              {...HIDE_SCROLL_INDICATORS}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+              contentContainerStyle={styles.sheetContent}
+            >
+              <View style={styles.handle} />
+              <Text style={styles.title}>Make an Offer</Text>
+              <Text style={styles.subtitle}>
+                Asking price {formatPrice(listingPrice)}
+                {minOfferPrice ? ` · Min ${formatPrice(minOfferPrice)}` : ""}
+              </Text>
 
-          <Text style={styles.label}>Your offer (USD)</Text>
-          <TextInput
-            style={styles.input}
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="0.00"
-            placeholderTextColor={Colors.textMuted}
-            keyboardType="decimal-pad"
-          />
+              <Text style={styles.label}>Your offer (USD)</Text>
+              <TextInput
+                style={styles.input}
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="0.00"
+                placeholderTextColor={Colors.textMuted}
+                keyboardType="decimal-pad"
+                returnKeyType="done"
+              />
 
-          <Text style={styles.label}>Message (optional)</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Add a note for the seller…"
-            placeholderTextColor={Colors.textMuted}
-            multiline
-          />
+              <Text style={styles.label}>Message (optional)</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Add a note for the seller…"
+                placeholderTextColor={Colors.textMuted}
+                multiline
+                returnKeyType="done"
+                blurOnSubmit
+              />
 
-          <LuxuryButton label={loading ? "Sending…" : "Send Offer"} onPress={handleSubmit} disabled={loading} />
+              <LuxuryButton
+                label={loading ? "Sending…" : "Send Offer"}
+                onPress={handleSubmit}
+                disabled={loading}
+              />
+            </ScrollView>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

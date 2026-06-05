@@ -6,7 +6,6 @@ import { FeatureFormField } from "@/components/FeatureFormField";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { GrailRequestCard } from "@/components/GrailRequestCard";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import {
@@ -63,9 +62,7 @@ export default function GrailsScreen() {
   const communityFiltered = community.filter((g) => g.user_id !== user?.id).slice(0, 20);
 
   return (
-    <FeatureScreenScaffold>
-      <ScreenHeader title="Grail Board" subtitle="Post what you're hunting for" />
-
+    <FeatureScreenScaffold title="Grail Board" subtitle="Post what you're hunting for">
       <View style={styles.formCard}>
         <FeatureFormField label="Brand" value={brand} onChangeText={setBrand} placeholder="Rolex" />
         <FeatureFormField label="Reference" value={ref} onChangeText={setRef} placeholder="126610LN" />

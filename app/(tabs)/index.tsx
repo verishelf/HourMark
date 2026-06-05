@@ -4,9 +4,10 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { BuyerSellerAssuranceCard } from "@/components/BuyerSellerAssuranceCard";
+import { HomeFixedHeader } from "@/components/HomeFixedHeader";
+import { HomeQuickActions } from "@/components/HomeQuickActions";
+import { TrustAssuranceCarousel } from "@/components/TrustAssuranceCarousel";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
-import { HeaderIconButton } from "@/components/HeaderIconButton";
 import { FilterChip } from "@/components/FilterChip";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { ListingGrid } from "@/components/ListingGrid";
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const [gridListings, setGridListings] = useState<Listing[]>([]);
   const [marketplaceEmpty, setMarketplaceEmpty] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [marqueeHeight, setMarqueeHeight] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const gridColumnWidth = (screenWidth - SPACING.screen * 2 - CARD_GAP) / 2;
 
@@ -51,19 +53,12 @@ export default function HomeScreen() {
       .filter((l) => l.authenticated || (l.price ?? 0) > 5_000_000)
       .slice(0, 6);
 
-    const carouselIds = new Set(
-      [...newArr, ...verifiedList, ...rare].map((l) => l.id)
-    );
-    const grid = displayable
-      .filter((l) => !carouselIds.has(l.id))
-      .slice(0, 12);
-
     setMarketplaceEmpty(displayable.length === 0);
     setFeatured(feat.filter(isDisplayableListing));
     setNewArrivals(newArr);
     setVerified(verifiedList);
     setRareCollections(rare);
-    setGridListings(grid.length ? grid : displayable.slice(0, 12));
+    setGridListings(displayable.slice(0, 12));
   }, []);
 
   const loadHome = useCallback(async () => {
@@ -123,36 +118,48 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <View
-        pointerEvents="box-none"
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           zIndex: 10,
-          paddingTop: insets.top + 12,
+        }}
+      >
+        <HomeFixedHeader onLayoutHeight={setMarqueeHeight} />
+      </View>
+
+      <View
+        pointerEvents="box-none"
+        style={{
+          position: "absolute",
+          top: marqueeHeight + 4,
+          left: 0,
+          right: 0,
+          zIndex: 10,
           paddingHorizontal: SPACING.screen,
           flexDirection: "row",
           justifyContent: "flex-end",
-          alignItems: "center",
-          gap: 10,
         }}
       >
-        <HeaderIconButton
-          icon="notifications-outline"
-          onPress={() => router.push("/notifications")}
-          badge={unreadNotifs > 0 ? unreadNotifs : undefined}
+        <HomeQuickActions
+          unreadNotifs={unreadNotifs}
+          onNotifications={() => router.push("/notifications")}
+          onScanner={() => router.push("/scanner/camera")}
+          onCreatePost={openCreatePost}
         />
-        <HeaderIconButton icon="scan-outline" onPress={() => router.push("/scanner")} />
-        <HeaderIconButton icon="add" onPress={openCreatePost} />
       </View>
 
       <ScrollView
         {...HIDE_SCROLL_INDICATORS}
-        contentContainerStyle={tabContentPadding(insets.bottom)}
+        contentContainerStyle={{
+          ...tabContentPadding(insets.bottom),
+          paddingTop: marqueeHeight,
+        }}
       >
         <ScreenHeader
-          style={{ paddingRight: SPACING.screen + 48 }}
+          embedded
+          style={{ paddingTop: 4 }}
           label="Crownly"
           title="Curated Timepieces"
           subtitle="Authenticated luxury watches from verified sellers"
@@ -169,7 +176,7 @@ export default function HomeScreen() {
           />
         )}
 
-        <BuyerSellerAssuranceCard />
+        <TrustAssuranceCarousel />
 
         {followingListings.length > 0 ? (
           <View style={{ paddingHorizontal: SPACING.screen, marginTop: 24 }}>

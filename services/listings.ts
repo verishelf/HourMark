@@ -211,7 +211,7 @@ export async function getUserListings(userId: string): Promise<Listing[]> {
       if (shouldFallbackToMock(error)) return mockResult();
       throw error;
     }
-    return (data ?? []) as Listing[];
+    return normalizeListings((data ?? []) as Listing[]);
   } catch (error) {
     if (shouldFallbackToMock(error)) return mockResult();
     throw error;

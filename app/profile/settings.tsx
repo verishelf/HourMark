@@ -1,12 +1,12 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { HeaderIconButton } from "@/components/HeaderIconButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
 import { Colors } from "@/constants/colors";
 import { RADIUS, SPACING } from "@/constants/layout";
+import { Typography } from "@/constants/typography";
 import { useTheme, type ThemePreference } from "@/hooks/useTheme";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { screenContentPadding } from "@/styles/layout";
@@ -50,6 +50,25 @@ function createSettingsStyles() {
       backgroundColor: Colors.card,
       overflow: "hidden",
     },
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingBottom: 12,
+    },
+    topBarTitles: {
+      flex: 1,
+      minWidth: 0,
+    },
+    topBarTitle: {
+      ...Typography.h3,
+      color: Colors.textPrimary,
+    },
+    topBarSubtitle: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      marginTop: 2,
+    },
   });
 }
 
@@ -62,10 +81,14 @@ export default function SettingsScreen() {
   return (
     <View key={colorScheme} style={styles.screen}>
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: SPACING.screen }}>
-        <HeaderIconButton icon="chevron-back" onPress={() => router.back()} />
+        <View style={styles.topBar}>
+          <HeaderIconButton icon="chevron-back" onPress={() => router.back()} />
+          <View style={styles.topBarTitles}>
+            <Text style={styles.topBarTitle}>Settings</Text>
+            <Text style={styles.topBarSubtitle}>App preferences</Text>
+          </View>
+        </View>
       </View>
-
-      <ScreenHeader title="Settings" subtitle="App preferences" />
 
       <View style={screenContentPadding(insets.bottom)}>
         <View style={styles.card}>

@@ -16,6 +16,7 @@ import { SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
 import { getPostDetail, getUserPosts } from "@/services/posts";
 import type { UserPost, UserPostDetail } from "@/types";
 
@@ -65,11 +66,11 @@ export default function ProfilePostsFeedScreen() {
     if (!userId) return;
     setLoading(true);
     try {
-      const list = await getUserPosts(userId);
+      const list = await fetchWithRetry(() => getUserPosts(userId));
       setPosts(list);
 
-      const details = await Promise.all(
-        list.map((p) => getPostDetail(p.id, user?.id))
+      const details = await fetchWithRetry(() =>
+        Promise.all(list.map((p) => getPostDetail(p.id, user?.id)))
       );
       const map: Record<string, UserPostDetail> = {};
       for (const detail of details) {
@@ -77,15 +78,14 @@ export default function ProfilePostsFeedScreen() {
       }
       setDetailsById(map);
     } catch {
-      setPosts([]);
-      setDetailsById({});
+      // Keep existing posts on transient failures.
     } finally {
       setLoading(false);
     }
   }, [userId, user?.id]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   useEffect(() => {

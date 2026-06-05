@@ -10,6 +10,7 @@ import {
   Text,
   TextInput,
   View,
+  type ViewStyle,
 } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -17,6 +18,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/EmptyState";
+import { BlurredWatchBackground } from "@/components/BlurredWatchBackground";
 import { ImageOverlayGate } from "@/components/ImageOverlayGate";
 import { LoggedOutGate } from "@/components/LoggedOutGate";
 import { SellerVerificationTrustPanel } from "@/components/SellerVerificationTrustPanel";
@@ -29,10 +31,9 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { notifyContentRefresh } from "@/lib/contentRefresh";
-import { hasListingAuthBypass } from "@/lib/listingAuthBypass";
-import { analyzeListing } from "@/services/trust";
 import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { createListing, uploadListingImage } from "@/services/listings";
 import { isSellerKycApproved } from "@/services/kyc";
@@ -81,17 +82,37 @@ function FormSection({
   title,
   children,
   styles,
+  surfaceStyle,
 }: {
   title: string;
   children: ReactNode;
   styles: ReturnType<typeof createSellStyles>;
+  surfaceStyle?: ViewStyle;
 }) {
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, surfaceStyle]}>
       <Text style={styles.sectionTitle}>{title}</Text>
       {children}
     </View>
   );
+}
+
+function createGlassSurface(colorScheme: "light" | "dark"): ViewStyle {
+  return {
+    backgroundColor:
+      colorScheme === "light" ? "rgba(255, 255, 255, 0.55)" : "rgba(255, 255, 255, 0.12)",
+    borderColor:
+      colorScheme === "light" ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.28)",
+  };
+}
+
+function createGlassInset(colorScheme: "light" | "dark"): ViewStyle {
+  return {
+    backgroundColor:
+      colorScheme === "light" ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.06)",
+    borderColor:
+      colorScheme === "light" ? "rgba(0, 0, 0, 0.15)" : "rgba(255, 255, 255, 0.32)",
+  };
 }
 
 export default function SellScreen() {
@@ -112,7 +133,10 @@ export default function SellScreen() {
   const [includesWarrantyCard, setIncludesWarrantyCard] = useState(false);
   const [step, setStep] = useState<Step>("Photos");
   const [loading, setLoading] = useState(false);
+  const { colorScheme } = useTheme();
   const styles = useThemedStyles(createSellStyles);
+  const glassSurface = useMemo(() => createGlassSurface(colorScheme), [colorScheme]);
+  const glassInset = useMemo(() => createGlassInset(colorScheme), [colorScheme]);
 
   const handleStartVerification = () => {
     router.push("/verify?returnPath=sell");
@@ -212,20 +236,11 @@ export default function SellScreen() {
       });
 
       notifyContentRefresh();
-
-      if (hasListingAuthBypass(profile)) {
-        await analyzeListing(listing.id);
-        notifyContentRefresh();
-        Alert.alert("Published", "Your listing is live (demo mode — AI auth bypassed).", [
-          { text: "OK", onPress: () => router.replace("/(tabs)") },
-        ]);
-      } else {
-        router.push(`/listing/trust-verify/${listing.id}`);
-        Alert.alert(
-          "Almost there",
-          "Complete AI authentication uploads to publish your listing."
-        );
-      }
+      router.push(`/listing/trust-verify/${listing.id}`);
+      Alert.alert(
+        "Almost there",
+        "Complete AI authentication uploads to publish your listing."
+      );
       setStep("Photos");
       setImages([]);
       setBrand("");
@@ -293,10 +308,11 @@ export default function SellScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
+    <BlurredWatchBackground imageUri={LOGGED_OUT_GATE_IMAGES.sell}>
+      <KeyboardAvoidingView
+        style={styles.screenTransparent}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
       <ScrollView
         {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={{
@@ -312,8 +328,8 @@ export default function SellScreen() {
         <StepProgress current={step} styles={styles} />
 
         {step === "Photos" && (
-          <FormSection title="Photos" styles={styles}>
-            <Pressable onPress={pickImages} style={styles.uploadArea}>
+          <FormSection title="Photos" styles={styles} surfaceStyle={glassSurface}>
+            <Pressable onPress={pickImages} style={[styles.uploadArea, glassInset]}>
               <Ionicons name="camera-outline" size={28} color={Colors.textMuted} />
               <Text style={styles.uploadLabel}>Add Photos</Text>
               <Text style={styles.uploadHint}>{images.length}/8 uploaded</Text>
@@ -356,7 +372,7 @@ export default function SellScreen() {
 
         {step === "Details" && (
           <>
-            <FormSection title="Watch Details" styles={styles}>
+            <FormSection title="Watch Details" styles={styles} surfaceStyle={glassSurface}>
               <Text style={styles.fieldLabel}>Brand</Text>
               <ScrollView
                 horizontal
@@ -407,7 +423,7 @@ export default function SellScreen() {
               />
             </FormSection>
 
-            <FormSection title="Condition" styles={styles}>
+            <FormSection title="Condition" styles={styles} surfaceStyle={glassSurface}>
               <ScrollView
                 horizontal
                 {...HIDE_SCROLL_INDICATORS}
@@ -427,7 +443,7 @@ export default function SellScreen() {
               </ScrollView>
             </FormSection>
 
-            <FormSection title="What's included" styles={styles}>
+            <FormSection title="What's included" styles={styles} surfaceStyle={glassSurface}>
               <Text style={styles.fieldLabel}>Tap to toggle — faded items are not included</Text>
               <View style={[styles.chipRow, { marginTop: 8, flexWrap: "wrap" }]}>
                 <Pressable
@@ -497,7 +513,7 @@ export default function SellScreen() {
               </View>
             </FormSection>
 
-            <FormSection title="Description" styles={styles}>
+            <FormSection title="Description" styles={styles} surfaceStyle={glassSurface}>
               <TextInput
                 placeholder="Describe your watch, box & papers, service history…"
                 placeholderTextColor={Colors.textMuted}
@@ -513,7 +529,7 @@ export default function SellScreen() {
 
         {step === "Review" && (
           <>
-            <FormSection title="Pricing" styles={styles}>
+            <FormSection title="Pricing" styles={styles} surfaceStyle={glassSurface}>
               <TextInput
                 placeholder="Asking Price (USD)"
                 placeholderTextColor={Colors.textMuted}
@@ -555,25 +571,37 @@ export default function SellScreen() {
         )}
       </ScrollView>
 
-      <View style={[styles.footer, { bottom: footerBottom, paddingBottom: 16 }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            bottom: footerBottom,
+            paddingBottom: 16,
+            backgroundColor:
+              colorScheme === "light" ? "rgba(255, 255, 255, 0.72)" : "rgba(0, 0, 0, 0.72)",
+            borderTopColor:
+              colorScheme === "light" ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.1)",
+          },
+        ]}
+      >
         {step === "Photos" && (
-          <LuxuryButton label="Next" onPress={goNext} variant="outline" size="large" />
+          <LuxuryButton label="Next" onPress={goNext} variant="glass" size="large" />
         )}
         {step === "Details" && (
           <View style={styles.footerRow}>
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Back" onPress={goBack} variant="outline" size="large" />
+              <LuxuryButton label="Back" onPress={goBack} variant="glass" size="large" />
             </View>
             <View style={styles.footerSpacer} />
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Next" onPress={goNext} variant="outline" size="large" />
+              <LuxuryButton label="Next" onPress={goNext} variant="glass" size="large" />
             </View>
           </View>
         )}
         {step === "Review" && (
           <View style={styles.footerRow}>
             <View style={styles.footerBtn}>
-              <LuxuryButton label="Back" onPress={goBack} variant="outline" size="large" />
+              <LuxuryButton label="Back" onPress={goBack} variant="glass" size="large" />
             </View>
             <View style={styles.footerSpacer} />
             <View style={styles.footerBtn}>
@@ -581,14 +609,15 @@ export default function SellScreen() {
                 label="Publish"
                 onPress={handlePublish}
                 loading={loading}
-                variant="outline"
+                variant="glass"
                 size="large"
               />
             </View>
           </View>
         )}
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </BlurredWatchBackground>
   );
 }
 
@@ -597,6 +626,10 @@ function createSellStyles() {
   screen: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  screenTransparent: {
+    flex: 1,
+    backgroundColor: "transparent",
   },
   loggedOutBody: {
     flex: 1,
@@ -796,8 +829,6 @@ function createSellStyles() {
     paddingHorizontal: SPACING.screen,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
   },
   footerRow: {
     flexDirection: "row",

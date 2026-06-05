@@ -24,7 +24,7 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useAuth } from "@/hooks/useAuth";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { formatPrice } from "@/lib/stripe";
-import { confirmDelivery, releaseEscrow, updateOrderTracking, openOrderDispute } from "@/services/escrow";
+import { confirmDelivery, releaseEscrow, updateOrderTracking, openOrderDispute, cancelOrder, canCancelOrder } from "@/services/escrow";
 import { getOrderById } from "@/services/payments";
 import { getReviewForOrder } from "@/services/reviews";
 import { addOrderToCollection } from "@/services/collection";
@@ -46,6 +46,7 @@ export default function OrderDetailScreen() {
   const [carrier, setCarrier] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
   const [review, setReview] = useState<SellerReview | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -126,6 +127,46 @@ export default function OrderDetailScreen() {
     }
   };
 
+  const handleCancelOrder = () => {
+    Alert.alert(
+      "Cancel order?",
+      order.payment_method === "wire_transfer"
+        ? "This will cancel your wire transfer request and return the listing to the marketplace."
+        : "This will cancel checkout before payment is processed. You can purchase again later.",
+      [
+        { text: "Keep order", style: "cancel" },
+        {
+          text: "Cancel order",
+          style: "destructive",
+          onPress: async () => {
+            setCancelling(true);
+            try {
+              await cancelOrder(order.id);
+              const refreshed = await getOrderById(order.id);
+              setOrder(refreshed ?? { ...order, status });
+              Alert.alert("Order cancelled", "Your order has been cancelled.");
+            } catch (e) {
+              Alert.alert("Error", e instanceof Error ? e.message : "Failed to cancel order");
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const paymentDetail =
+    order.status === "cancelled"
+      ? "Cancelled"
+      : canCancelOrder(order)
+        ? order.payment_method === "wire_transfer"
+          ? "Wire transfer · Awaiting payment"
+          : "Card · Awaiting payment"
+        : order.payment_method === "wire_transfer"
+          ? "Wire transfer"
+          : "Card · Escrow held";
+
   return (
     <View style={styles.screen}>
       <Image source={{ uri: coverImage }} style={styles.backgroundImage} contentFit="cover" blurRadius={18} />
@@ -184,7 +225,7 @@ export default function OrderDetailScreen() {
           <DetailRow
             icon="card-outline"
             label="Payment"
-            value={order.payment_method === "wire_transfer" ? "Wire transfer" : "Card · Escrow held"}
+            value={paymentDetail}
           />
           <DetailRow
             icon="calendar-outline"
@@ -207,6 +248,23 @@ export default function OrderDetailScreen() {
             value={`Step ${Math.max(stepIndex + 1, 1)} of 5`}
           />
         </View>
+
+        {isBuyer && canCancelOrder(order) ? (
+          <View style={styles.actionCard}>
+            <Text style={styles.actionTitle}>Cancel order</Text>
+            <Text style={styles.actionBody}>
+              {order.payment_method === "wire_transfer"
+                ? "Changed your mind before sending the wire? Cancel to release the listing back to the seller."
+                : "Payment has not been processed yet. You can cancel and return to checkout later."}
+            </Text>
+            <LuxuryButton
+              label="Cancel order"
+              variant="ghost"
+              loading={cancelling}
+              onPress={handleCancelOrder}
+            />
+          </View>
+        ) : null}
 
         {isSeller && ["payment_held", "paid"].includes(order.status) ? (
           <View style={styles.actionCard}>

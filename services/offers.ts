@@ -180,6 +180,37 @@ export async function respondToOffer(
   throw new Error("Invalid action");
 }
 
+export async function removeOffer(offerId: string, userId: string): Promise<void> {
+  const offer = await getOfferById(offerId);
+  if (!offer) throw new Error("Offer not found");
+
+  const isParticipant = offer.buyer_id === userId || offer.seller_id === userId;
+  if (!isParticipant) throw new Error("Forbidden");
+
+  if (offer.status === "pending") {
+    if (offer.buyer_id === userId) {
+      await withdrawOffer(offerId, userId);
+      return;
+    }
+    if (offer.seller_id === userId) {
+      await respondToOffer(offerId, userId, "decline");
+      return;
+    }
+  }
+
+  if (!isSupabaseConfigured) {
+    const index = MOCK_OFFERS.findIndex((o) => o.id === offerId);
+    if (index >= 0) MOCK_OFFERS.splice(index, 1);
+    return;
+  }
+
+  const { error } = await supabase
+    .from("listing_offers")
+    .delete()
+    .eq("id", offerId);
+  if (error) throw error;
+}
+
 export async function withdrawOffer(offerId: string, buyerId: string): Promise<void> {
   if (!isSupabaseConfigured) {
     const offer = MOCK_OFFERS.find((o) => o.id === offerId);

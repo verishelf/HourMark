@@ -4,7 +4,6 @@ import { useLocalSearchParams } from "expo-router";
 import { AuthenticityPassportCard } from "@/components/AuthenticityPassportCard";
 import { EmptyState } from "@/components/EmptyState";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getPassportByCode, lookupSerial } from "@/services/passport";
 import { createFeatureScreenStyles } from "@/styles/featureScreen";
@@ -22,9 +21,10 @@ export default function PassportScreen() {
   }, [code, serial]);
 
   return (
-    <FeatureScreenScaffold>
-      <ScreenHeader title="Authenticity Passport" subtitle="Crownly verified provenance" />
-
+    <FeatureScreenScaffold
+      title="Authenticity Passport"
+      subtitle="Crownly verified provenance"
+    >
       {passport ? <AuthenticityPassportCard passport={passport} /> : null}
 
       {lookup ? (

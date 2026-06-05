@@ -26,6 +26,7 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import {
   addPostComment,
@@ -289,15 +290,13 @@ export function PostCard({ postId, initialPost, showFeedDivider }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [detail, postComments] = await Promise.all([
-        getPostDetail(postId, user?.id),
-        getPostComments(postId),
-      ]);
+      const [detail, postComments] = await fetchWithRetry(() =>
+        Promise.all([getPostDetail(postId, user?.id), getPostComments(postId)])
+      );
       setPost(detail);
       setComments(postComments);
     } catch {
-      setPost(null);
-      setComments([]);
+      // Keep any existing post data instead of clearing on transient failures.
     } finally {
       setLoading(false);
     }

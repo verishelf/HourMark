@@ -99,6 +99,35 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
     .is("read_at", null);
 }
 
+export async function deleteNotification(notificationId: string, userId: string): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const index = MOCK_NOTIFICATIONS.findIndex(
+      (n) => n.id === notificationId && n.user_id === userId
+    );
+    if (index >= 0) MOCK_NOTIFICATIONS.splice(index, 1);
+    return;
+  }
+
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", notificationId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function deleteAllNotifications(userId: string): Promise<void> {
+  if (!isSupabaseConfigured) {
+    for (let i = MOCK_NOTIFICATIONS.length - 1; i >= 0; i -= 1) {
+      if (MOCK_NOTIFICATIONS[i].user_id === userId) MOCK_NOTIFICATIONS.splice(i, 1);
+    }
+    return;
+  }
+
+  const { error } = await supabase.from("notifications").delete().eq("user_id", userId);
+  if (error) throw error;
+}
+
 export async function registerPushToken(
   userId: string,
   token: string,

@@ -14,6 +14,7 @@ import { AnimatePresence, MotiView } from "moti";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChatListingPanel } from "@/components/ChatListingPanel";
 import { EmptyState } from "@/components/EmptyState";
 import { MessageBubble } from "@/components/MessageBubble";
 import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
@@ -30,8 +31,8 @@ import {
   deleteMessage,
   getConversationById,
 } from "@/services/messaging";
+import { getListingById } from "@/services/listings";
 import { getOffersForListing } from "@/services/offers";
-import { OfferActionRow } from "@/components/OfferModal";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
   getConversationAvatarUri,
@@ -39,7 +40,7 @@ import {
   getConversationSubtitle,
   isWatchConversation,
 } from "@/lib/conversationDisplay";
-import type { Conversation, ListingOffer, Message } from "@/types";
+import type { Conversation, Listing, ListingOffer, Message } from "@/types";
 
 const MESSAGE_ENTER_TRANSITION = { type: "timing" as const, duration: 220 };
 const MESSAGE_EXIT_TRANSITION = { type: "timing" as const, duration: 280 };
@@ -60,6 +61,7 @@ export default function ChatScreen() {
   const { user, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [listing, setListing] = useState<Listing | null>(null);
   const [offers, setOffers] = useState<ListingOffer[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<ScrollView>(null);
@@ -69,13 +71,25 @@ export default function ChatScreen() {
     getMessages(id).then(setMessages);
     markMessagesAsRead(id, user.id);
     getConversationById(id, user.id)
-      .then((conv) => {
+      .then(async (conv) => {
         setConversation(conv);
-        if (conv?.listing_id) {
-          getOffersForListing(conv.listing_id).then(setOffers);
+        if (!conv?.listing_id) {
+          setListing(null);
+          setOffers([]);
+          return;
         }
+        const [listingRow, listingOffers] = await Promise.all([
+          conv.listing ? Promise.resolve(conv.listing) : getListingById(conv.listing_id),
+          getOffersForListing(conv.listing_id),
+        ]);
+        setListing(listingRow);
+        setOffers(listingOffers);
       })
-      .catch(() => setConversation(null));
+      .catch(() => {
+        setConversation(null);
+        setListing(null);
+        setOffers([]);
+      });
 
     const unsubscribe = subscribeToMessages(id, (msg) => {
       setMessages((prev) => upsertMessageById(prev, msg));
@@ -171,8 +185,18 @@ export default function ChatScreen() {
         </View>
       </View>
 
+      {aboutWatch && listing && user ? (
+        <ChatListingPanel
+          listing={listing}
+          offers={offers}
+          userId={user.id}
+          onOffersChange={setOffers}
+        />
+      ) : null}
+
       <ScrollView
         ref={scrollRef}
+        style={{ flex: 1 }}
         {...HIDE_SCROLL_INDICATORS}
         contentContainerStyle={[
           styles.listContent,
@@ -181,26 +205,6 @@ export default function ChatScreen() {
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         keyboardShouldPersistTaps="handled"
       >
-        {offers.length > 0 && conversation?.listing_id ? (
-          <View style={{ marginBottom: 16, gap: 4 }}>
-            <Text style={{ ...Typography.label, color: Colors.textMuted, marginBottom: 4 }}>
-              Offers
-            </Text>
-            {offers.slice(0, 5).map((offer) => (
-              <OfferActionRow
-                key={offer.id}
-                offer={offer}
-                isSeller={user?.id === offer.seller_id}
-                onUpdate={(updated) =>
-                  setOffers((prev) =>
-                    prev.map((o) => (o.id === updated.id ? updated : o))
-                  )
-                }
-              />
-            ))}
-          </View>
-        ) : null}
-
         {messages.length === 0 ? (
           <EmptyState
             fill
@@ -333,7 +337,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: SPACING.screen,
     paddingTop: 16,
-    paddingBottom: 16,
+    paddingBottom: 32,
   },
   listContentEmpty: {
     flexGrow: 1,

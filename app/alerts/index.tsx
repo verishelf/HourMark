@@ -6,7 +6,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { FeatureFormField } from "@/components/FeatureFormField";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { Colors } from "@/constants/colors";
 import { useAuth } from "@/hooks/useAuth";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
@@ -55,9 +54,10 @@ export default function AlertsScreen() {
   };
 
   return (
-    <FeatureScreenScaffold>
-      <ScreenHeader title="Saved Searches" subtitle="Alerts for AI-verified listings only" />
-
+    <FeatureScreenScaffold
+      title="Saved Searches"
+      subtitle="Alerts for AI-verified listings only"
+    >
       <View style={styles.formCard}>
         <FeatureFormField label="Brand" value={brand} onChangeText={setBrand} placeholder="Rolex" />
         <FeatureFormField

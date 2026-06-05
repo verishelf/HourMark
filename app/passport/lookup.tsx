@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { FeatureFormField } from "@/components/FeatureFormField";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { lookupSerial } from "@/services/passport";
 import { createFeatureScreenStyles } from "@/styles/featureScreen";
@@ -27,9 +26,7 @@ export default function SerialLookupScreen() {
   };
 
   return (
-    <FeatureScreenScaffold>
-      <ScreenHeader title="Serial Lookup" subtitle="Check Crownly registry" />
-
+    <FeatureScreenScaffold title="Serial Lookup" subtitle="Check Crownly registry">
       <View style={styles.formCard}>
         <FeatureFormField
           label="Serial number"

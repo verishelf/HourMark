@@ -1,5 +1,22 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { OrderStatus } from "@/types";
+import type { Order, OrderStatus } from "@/types";
+
+const CANCELLABLE_STATUSES: OrderStatus[] = ["pending", "awaiting_payment"];
+
+export function canCancelOrder(order: Pick<Order, "status">): boolean {
+  return CANCELLABLE_STATUSES.includes(order.status);
+}
+
+export async function cancelOrder(orderId: string): Promise<OrderStatus> {
+  if (!isSupabaseConfigured) return "cancelled";
+
+  const { data, error } = await supabase.functions.invoke("cancel-order", {
+    body: { orderId },
+  });
+  if (error) throw new Error(error.message);
+  if (data?.message) throw new Error(data.message as string);
+  return (data?.status as OrderStatus) ?? "cancelled";
+}
 
 export async function confirmDelivery(orderId: string): Promise<OrderStatus> {
   if (!isSupabaseConfigured) return "inspection_period";

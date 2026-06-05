@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
+    paddingHorizontal: TIMELINE_PADDING,
   },
   eyebrow: {
     ...Typography.caption,
@@ -214,6 +215,7 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textSecondary,
     marginTop: -4,
+    paddingHorizontal: TIMELINE_PADDING,
   },
   scrollContent: {
     paddingHorizontal: TIMELINE_PADDING,

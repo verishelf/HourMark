@@ -49,6 +49,14 @@ export function getListingCoverImage(images: string[] | undefined | null): strin
   return null;
 }
 
+/** Live on home, search, and checkout (not draft / pending verification). */
+export function isListingMarketplaceLive(listing: {
+  status?: string | null;
+  authentication_status?: string | null;
+}): boolean {
+  return listing.status === "active" && listing.authentication_status === "auto_verified";
+}
+
 /** Skip empty grid cells in browse/search feeds. */
 export function isDisplayableListing(listing: {
   brand?: string | null;
@@ -56,12 +64,9 @@ export function isDisplayableListing(listing: {
   images?: string[] | null;
   authenticated?: boolean;
   authentication_status?: string | null;
+  status?: string | null;
 }): boolean {
-  if (listing.authentication_status) {
-    if (listing.authentication_status !== "auto_verified") return false;
-  } else if ("authenticated" in listing && !listing.authenticated) {
-    return false;
-  }
+  if (!isListingMarketplaceLive(listing)) return false;
   const hasMeta = Boolean(listing.brand?.trim() && listing.model?.trim());
   const hasImage = Boolean(getListingCoverImage(listing.images));
   return hasMeta && hasImage;

@@ -250,9 +250,6 @@ export default function CheckoutScreen() {
         merchantDisplayName: "Crownly",
         returnURL: STRIPE_RETURN_URL,
         allowsDelayedPaymentMethods: false,
-        applePay: {
-          merchantCountryCode: APPLE_PAY_MERCHANT_COUNTRY,
-        },
         defaultBillingDetails: {
           email: shippingDetails.buyerEmail,
           name: shippingDetails.buyerName,
@@ -411,9 +408,7 @@ export default function CheckoutScreen() {
       key: "card",
       icon: "card-outline",
       label: "Credit or Debit Card",
-      subtitle: showApplePayOnIos
-        ? "Card or Apple Pay in checkout sheet"
-        : "Visa, Mastercard, Amex, and more",
+      subtitle: "Visa, Mastercard, Amex, and more",
       onPress: handleCardPayment,
     },
     {

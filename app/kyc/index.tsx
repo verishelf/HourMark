@@ -8,7 +8,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { FeatureFormField } from "@/components/FeatureFormField";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { Colors } from "@/constants/colors";
 import { RADIUS, SPACING } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
@@ -109,12 +108,11 @@ export default function KycScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <FeatureScreenScaffold contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
-        <ScreenHeader
-          title="Seller Verification"
-          subtitle="Government ID, selfie, and phone for your Verified Seller badge"
-        />
-
+      <FeatureScreenScaffold
+        title="Seller Verification"
+        subtitle="Government ID, selfie, and phone for your Verified Seller badge"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+      >
         {uploadRow("Government ID", "Front of driver's license or passport", idUri, () => pick(setIdUri), {
           width: 56,
           height: 36,

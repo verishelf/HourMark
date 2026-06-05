@@ -157,9 +157,9 @@ export default function MessagesScreen() {
           filteredConversations.length === 0
             ? emptyListContentStyle(insets.bottom)
             : {
-                ...tabContentPadding(insets.bottom),
                 paddingTop: 12,
                 paddingHorizontal: SPACING.screen,
+                paddingBottom: insets.bottom + SPACING.tabClearance + SPACING.screen,
               }
         }
         ListEmptyComponent={emptyState}

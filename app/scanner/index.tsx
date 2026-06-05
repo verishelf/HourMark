@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { consumePendingScanResult } from "@/lib/scannerSession";
 import { Ionicons } from "@expo/vector-icons";
 import { FeatureFormField } from "@/components/FeatureFormField";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { WatchScannerCameraModal } from "@/components/WatchScannerCameraModal";
 import { Colors } from "@/constants/colors";
@@ -23,6 +23,11 @@ export default function ScannerScreen() {
   const [result, setResult] = useState<WatchScanResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+
+  useEffect(() => {
+    const pending = consumePendingScanResult();
+    if (pending) setResult(pending);
+  }, []);
 
   const runTextScan = async () => {
     if (!query.trim()) return;
@@ -46,13 +51,11 @@ export default function ScannerScreen() {
 
   return (
     <>
-      <FeatureScreenScaffold>
-        <ScreenHeader
-          title="Watch Scanner"
-          subtitle="Identify watches and browse Crownly verified listings"
-        />
-
-        <Pressable style={styles.dashedAction} onPress={() => setCameraOpen(true)}>
+      <FeatureScreenScaffold
+        title="Watch Scanner"
+        subtitle="Identify watches and browse Crownly verified listings"
+      >
+        <Pressable style={styles.dashedAction} onPress={() => router.push("/scanner/camera")}>
           <View style={styles.iconTile}>
             <Ionicons name="camera-outline" size={26} color={Colors.textPrimary} />
           </View>

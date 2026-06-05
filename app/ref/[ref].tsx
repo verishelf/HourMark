@@ -5,7 +5,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { PostGrid } from "@/components/PostGrid";
-import { ScreenHeader } from "@/components/ScreenHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { getListingsByReference, getPostsByReference } from "@/services/grails";
@@ -25,9 +24,10 @@ export default function ReferenceFeedScreen() {
   }, [ref]);
 
   return (
-    <FeatureScreenScaffold>
-      <ScreenHeader title={`Ref. ${ref ?? ""}`} subtitle="Listings and community posts" />
-
+    <FeatureScreenScaffold
+      title={`Ref. ${ref ?? ""}`}
+      subtitle="Listings and community posts"
+    >
       {listings.length > 0 ? (
         <>
           <SectionHeader title="Verified listings" compact topSpacing={8} />

@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
+import { ScrollView, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HeaderIconButton } from "@/components/HeaderIconButton";
@@ -9,6 +9,10 @@ import { createFeatureScreenStyles } from "@/styles/featureScreen";
 
 type Props = {
   children: ReactNode;
+  title?: string;
+  subtitle?: string;
+  /** Custom header below the top bar (use embedded ScreenHeader). */
+  header?: ReactNode;
   trailing?: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
   scroll?: boolean;
@@ -16,6 +20,9 @@ type Props = {
 
 export function FeatureScreenScaffold({
   children,
+  title,
+  subtitle,
+  header,
   trailing,
   contentContainerStyle,
   scroll = true,
@@ -37,11 +44,26 @@ export function FeatureScreenScaffold({
   );
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.topBar}>
-        <HeaderIconButton icon="chevron-back" onPress={() => router.back()} />
+    <View style={styles.screen}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+        <View style={styles.topBarLeft}>
+          <HeaderIconButton icon="chevron-back" onPress={() => router.back()} />
+          {title ? (
+            <View style={styles.topBarTitles}>
+              <Text style={styles.topBarTitle} numberOfLines={1}>
+                {title}
+              </Text>
+              {subtitle ? (
+                <Text style={styles.topBarSubtitle} numberOfLines={1}>
+                  {subtitle}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
         {trailing ?? <View style={{ width: 40 }} />}
       </View>
+      {header}
       {body}
     </View>
   );
