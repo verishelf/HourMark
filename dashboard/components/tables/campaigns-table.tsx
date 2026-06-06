@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MoreHorizontal, Pencil, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -20,17 +21,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { DataTable } from "@/components/dashboard/data-table";
+import {
+  CampaignFormFields,
+  type CampaignFormState,
+} from "@/components/campaigns/campaign-form-fields";
+import { EmailTemplatesPanel } from "@/components/campaigns/email-templates-panel";
 import {
   createCampaign,
   deleteCampaign,
@@ -39,20 +35,14 @@ import {
   updateCampaign,
 } from "@/actions/campaigns";
 import { formatDate } from "@/lib/utils";
-import type { CampaignAudience, EmailCampaign } from "@/types/database";
+import type { CampaignAudience, EmailCampaign, EmailCampaignTemplate } from "@/types/database";
 
-type CampaignForm = {
-  subject: string;
-  template_html: string;
-  audience: CampaignAudience;
-  testEmail: string;
-};
-
-const EMPTY_FORM: CampaignForm = {
+const EMPTY_FORM: CampaignFormState = {
   subject: "",
   template_html: "",
   audience: "all",
   testEmail: "",
+  selectedTemplateId: "blank",
 };
 
 function canEditCampaign(status: EmailCampaign["status"]) {
@@ -63,11 +53,24 @@ function canDeleteCampaign(status: EmailCampaign["status"]) {
   return status !== "sending";
 }
 
-export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaign[]; adminId: string }) {
+export function CampaignsTable({
+  campaigns,
+  templates,
+  adminId,
+}: {
+  campaigns: EmailCampaign[];
+  templates: EmailCampaignTemplate[];
+  adminId: string;
+}) {
+  const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
   const [editCampaign, setEditCampaign] = useState<EmailCampaign | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<EmailCampaign | null>(null);
-  const [form, setForm] = useState<CampaignForm>(EMPTY_FORM);
+  const [form, setForm] = useState<CampaignFormState>(EMPTY_FORM);
+
+  function refreshTemplates() {
+    router.refresh();
+  }
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -75,6 +78,15 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
 
   function openCreateDialog() {
     resetForm();
+    const defaultTemplate = templates[0];
+    if (defaultTemplate) {
+      setForm({
+        ...EMPTY_FORM,
+        selectedTemplateId: defaultTemplate.id,
+        subject: defaultTemplate.default_subject,
+        template_html: defaultTemplate.html,
+      });
+    }
     setCreateOpen(true);
   }
 
@@ -84,6 +96,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
       template_html: campaign.template_html,
       audience: campaign.audience,
       testEmail: "",
+      selectedTemplateId: campaign.template_id ?? "blank",
     });
     setEditCampaign(campaign);
   }
@@ -93,6 +106,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
       subject: form.subject,
       template_html: form.template_html,
       audience: form.audience,
+      template_id: form.selectedTemplateId === "blank" ? null : form.selectedTemplateId,
     });
     if (result.error) {
       toast.error(result.error);
@@ -101,6 +115,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
     toast.success("Campaign created");
     setCreateOpen(false);
     resetForm();
+    router.refresh();
   }
 
   async function handleUpdate() {
@@ -109,6 +124,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
       subject: form.subject,
       template_html: form.template_html,
       audience: form.audience,
+      template_id: form.selectedTemplateId === "blank" ? null : form.selectedTemplateId,
     });
     if (result.error) {
       toast.error(result.error);
@@ -117,6 +133,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
     toast.success("Campaign updated");
     setEditCampaign(null);
     resetForm();
+    router.refresh();
   }
 
   async function handleDelete() {
@@ -128,6 +145,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
     }
     toast.success("Campaign deleted");
     setDeleteTarget(null);
+    router.refresh();
   }
 
   async function handleSend(campaignId: string) {
@@ -137,6 +155,7 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
       return;
     }
     toast.success(`Campaign sent to ${result.sent ?? 0} recipient(s)`);
+    router.refresh();
   }
 
   async function handleTest() {
@@ -156,42 +175,13 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
     toast.success("Test email sent");
   }
 
-  function renderCampaignForm(onSubmit: () => void, submitLabel: string) {
-    return (
-      <div className="space-y-4">
-        <div>
-          <Label>Subject</Label>
-          <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
-        </div>
-        <div>
-          <Label>Audience</Label>
-          <Select value={form.audience} onValueChange={(v) => setForm({ ...form, audience: v as CampaignAudience })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="sellers">Sellers</SelectItem>
-              <SelectItem value="buyers">Buyers</SelectItem>
-              <SelectItem value="dealers">Dealers</SelectItem>
-              <SelectItem value="new_leads">New Leads</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Email Template (HTML)</Label>
-          <Textarea value={form.template_html} onChange={(e) => setForm({ ...form, template_html: e.target.value })} rows={12} />
-        </div>
-        <div className="flex gap-2">
-          <Input placeholder="Test email address" value={form.testEmail} onChange={(e) => setForm({ ...form, testEmail: e.target.value })} />
-          <Button variant="outline" onClick={handleTest}>Send Test</Button>
-        </div>
-        <Button onClick={onSubmit}>{submitLabel}</Button>
-      </div>
-    );
-  }
-
   const columns = [
     { key: "subject", header: "Subject", cell: (row: EmailCampaign) => row.subject },
-    { key: "audience", header: "Audience", cell: (row: EmailCampaign) => <Badge variant="secondary">{row.audience}</Badge> },
+    {
+      key: "audience",
+      header: "Audience",
+      cell: (row: EmailCampaign) => <Badge variant="secondary">{row.audience}</Badge>,
+    },
     { key: "status", header: "Status", cell: (row: EmailCampaign) => <Badge>{row.status}</Badge> },
     { key: "opens", header: "Opens", cell: (row: EmailCampaign) => row.open_count },
     { key: "clicks", header: "Clicks", cell: (row: EmailCampaign) => row.click_count },
@@ -239,6 +229,8 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
 
   return (
     <>
+      <EmailTemplatesPanel templates={templates} adminId={adminId} />
+
       <Button className="mb-4" onClick={openCreateDialog}>
         <Plus className="h-4 w-4" /> Create Campaign
       </Button>
@@ -246,15 +238,35 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Create Email Campaign</DialogTitle></DialogHeader>
-          {renderCampaignForm(handleCreate, "Create Campaign")}
+          <DialogHeader>
+            <DialogTitle>Create Email Campaign</DialogTitle>
+          </DialogHeader>
+          <CampaignFormFields
+            adminId={adminId}
+            form={form}
+            setForm={setForm}
+            templates={templates}
+            onTest={handleTest}
+            onTemplatesChanged={refreshTemplates}
+          />
+          <Button onClick={handleCreate}>Create Campaign</Button>
         </DialogContent>
       </Dialog>
 
       <Dialog open={Boolean(editCampaign)} onOpenChange={(open) => !open && setEditCampaign(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Edit Email Campaign</DialogTitle></DialogHeader>
-          {renderCampaignForm(handleUpdate, "Save Changes")}
+          <DialogHeader>
+            <DialogTitle>Edit Email Campaign</DialogTitle>
+          </DialogHeader>
+          <CampaignFormFields
+            adminId={adminId}
+            form={form}
+            setForm={setForm}
+            templates={templates}
+            onTest={handleTest}
+            onTemplatesChanged={refreshTemplates}
+          />
+          <Button onClick={handleUpdate}>Save Changes</Button>
         </DialogContent>
       </Dialog>
 
@@ -269,8 +281,12 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

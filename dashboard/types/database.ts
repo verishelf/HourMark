@@ -144,6 +144,7 @@ export type EmailCampaign = {
   id: string;
   subject: string;
   template_html: string;
+  template_id?: string | null;
   audience: CampaignAudience;
   audience_filters: Record<string, unknown>;
   status: CampaignStatus;
@@ -154,6 +155,17 @@ export type EmailCampaign = {
   reply_count: number;
   created_by: string;
   created_at: string;
+};
+
+export type EmailCampaignTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  default_subject: string;
+  html: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type AuditLog = {

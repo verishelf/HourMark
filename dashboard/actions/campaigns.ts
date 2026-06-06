@@ -45,13 +45,18 @@ export async function createCampaign(
     template_html: string;
     audience: CampaignAudience;
     scheduled_at?: string | null;
+    template_id?: string | null;
   }
 ) {
   const supabase = createServiceClient();
   const { data: campaign, error } = await supabase
     .from("email_campaigns")
     .insert({
-      ...data,
+      subject: data.subject,
+      template_html: data.template_html,
+      audience: data.audience,
+      scheduled_at: data.scheduled_at ?? null,
+      template_id: data.template_id ?? null,
       status: data.scheduled_at ? "scheduled" : "draft",
       created_by: adminId,
       open_count: 0,
@@ -83,6 +88,7 @@ export async function updateCampaign(
     template_html: string;
     audience: CampaignAudience;
     scheduled_at?: string | null;
+    template_id?: string | null;
   }
 ) {
   const supabase = createServiceClient();
@@ -104,6 +110,7 @@ export async function updateCampaign(
       template_html: data.template_html,
       audience: data.audience,
       scheduled_at: data.scheduled_at ?? null,
+      template_id: data.template_id ?? null,
       status: data.scheduled_at ? "scheduled" : "draft",
     })
     .eq("id", campaignId);

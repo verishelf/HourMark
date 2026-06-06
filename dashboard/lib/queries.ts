@@ -11,6 +11,7 @@ import type {
   SupportTicket,
   AdminNotification,
   EmailCampaign,
+  EmailCampaignTemplate,
   AuditLog,
   PlatformSettings,
 } from "@/types/database";
@@ -216,6 +217,15 @@ export async function getEmailCampaigns(): Promise<EmailCampaign[]> {
     .select("*")
     .order("created_at", { ascending: false });
   return (data ?? []) as EmailCampaign[];
+}
+
+export async function getEmailCampaignTemplates(): Promise<EmailCampaignTemplate[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("email_campaign_templates")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  return (data ?? []) as EmailCampaignTemplate[];
 }
 
 export async function getAuditLogs(): Promise<AuditLog[]> {
