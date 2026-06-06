@@ -28,7 +28,8 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-side only) |
 | `RESEND_API_KEY` | Resend API key for email campaigns |
-| `RESEND_FROM_EMAIL` | Sender email address |
+| `RESEND_FROM_EMAIL` | Verified sender on your Resend domain (e.g. `hello@marketing.crownly.art`) |
+| `RESEND_REPLY_TO_EMAIL` | Optional reply-to inbox (defaults to `hello@crownly.art`) |
 | `NEXT_PUBLIC_APP_URL` | Dashboard URL (for email tracking) |
 
 ### 2. Database Migration

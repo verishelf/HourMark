@@ -9,7 +9,10 @@ export function getResend(): Resend {
   return resendClient;
 }
 
-export const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "admin@crownly.com";
+export const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL ?? "hello@marketing.crownly.art";
+export const REPLY_TO_EMAIL =
+  process.env.RESEND_REPLY_TO_EMAIL ?? "hello@crownly.art";
 
 export async function sendEmail({
   to,
@@ -25,6 +28,7 @@ export async function sendEmail({
   const resend = getResend();
   return resend.emails.send({
     from: `Crownly <${FROM_EMAIL}>`,
+    replyTo: REPLY_TO_EMAIL,
     to,
     subject,
     html,

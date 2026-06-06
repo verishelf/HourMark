@@ -1,3 +1,4 @@
+import { isInvalidRefreshTokenError } from "@/lib/authSession";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { UserProfile } from "@/types";
 
@@ -51,8 +52,8 @@ export async function signInWithApple(identityToken: string, nonce: string) {
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut({ scope: "local" });
-  if (error) throw error;
-  void supabase.auth.signOut();
+  if (error && !isInvalidRefreshTokenError(error)) throw error;
+  void supabase.auth.signOut().catch(() => {});
 }
 
 async function functionInvokeErrorMessage(error: unknown): Promise<string> {
@@ -85,7 +86,13 @@ export async function deleteAccount() {
 
 export async function getSession() {
   const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
+  if (error) {
+    if (isInvalidRefreshTokenError(error)) {
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+      return null;
+    }
+    throw error;
+  }
   return data.session;
 }
 
