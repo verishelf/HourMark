@@ -12,6 +12,7 @@ import type {
   AdminNotification,
   EmailCampaign,
   EmailCampaignTemplate,
+  WebsiteSignup,
   AuditLog,
   PlatformSettings,
 } from "@/types/database";
@@ -226,6 +227,15 @@ export async function getEmailCampaignTemplates(): Promise<EmailCampaignTemplate
     .select("*")
     .order("updated_at", { ascending: false });
   return (data ?? []) as EmailCampaignTemplate[];
+}
+
+export async function getWebsiteSignups(): Promise<WebsiteSignup[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("website_signups")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return (data ?? []) as WebsiteSignup[];
 }
 
 export async function getAuditLogs(): Promise<AuditLog[]> {

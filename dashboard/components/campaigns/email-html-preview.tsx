@@ -29,7 +29,7 @@ export function EmailHtmlPreview({
             <iframe
               title={title}
               srcDoc={html}
-              className="h-[70vh] w-full rounded-md border border-border bg-white"
+              className="h-[55vh] w-full rounded-md border border-border bg-white sm:h-[70vh]"
               sandbox=""
             />
           ) : (

@@ -34,8 +34,8 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="rounded-lg border border-border">
-      <Table>
+    <div className="-mx-1 overflow-x-auto rounded-lg border border-border">
+      <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
             {columns.map((col) => (

@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/dashboard/page-header";
 import { CampaignsTable } from "@/components/tables/campaigns-table";
+import { WebsiteSignupsPanel } from "@/components/campaigns/website-signups-panel";
 import { ensureDefaultEmailTemplates } from "@/actions/email-templates";
-import { getEmailCampaigns, getEmailCampaignTemplates } from "@/lib/queries";
+import { getEmailCampaigns, getEmailCampaignTemplates, getWebsiteSignups } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function CampaignsPage() {
@@ -14,9 +15,10 @@ export default async function CampaignsPage() {
     await ensureDefaultEmailTemplates(user.id);
   }
 
-  const [campaigns, templates] = await Promise.all([
+  const [campaigns, templates, signups] = await Promise.all([
     getEmailCampaigns(),
     getEmailCampaignTemplates(),
+    getWebsiteSignups(),
   ]);
 
   return (
@@ -25,6 +27,7 @@ export default async function CampaignsPage() {
         title="Email Campaign Center"
         description="Create campaigns, save reusable HTML templates, and preview before sending"
       />
+      <WebsiteSignupsPanel signups={signups} />
       <CampaignsTable
         campaigns={campaigns}
         templates={templates}

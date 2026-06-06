@@ -231,13 +231,13 @@ export function CampaignsTable({
     <>
       <EmailTemplatesPanel templates={templates} adminId={adminId} />
 
-      <Button className="mb-4" onClick={openCreateDialog}>
+      <Button className="mb-4 w-full sm:w-auto" onClick={openCreateDialog}>
         <Plus className="h-4 w-4" /> Create Campaign
       </Button>
       <DataTable columns={columns} data={campaigns} />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Create Email Campaign</DialogTitle>
           </DialogHeader>
@@ -254,7 +254,7 @@ export function CampaignsTable({
       </Dialog>
 
       <Dialog open={Boolean(editCampaign)} onOpenChange={(open) => !open && setEditCampaign(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Edit Email Campaign</DialogTitle>
           </DialogHeader>

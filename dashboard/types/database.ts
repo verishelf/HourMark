@@ -27,7 +27,13 @@ export type TicketPriority = "low" | "medium" | "high" | "urgent";
 export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
 export type CampaignStatus = "draft" | "scheduled" | "sending" | "sent" | "cancelled";
-export type CampaignAudience = "sellers" | "buyers" | "dealers" | "new_leads" | "all";
+export type CampaignAudience =
+  | "sellers"
+  | "buyers"
+  | "dealers"
+  | "new_leads"
+  | "web_signups"
+  | "all";
 
 export type UserProfile = {
   id: string;
@@ -166,6 +172,14 @@ export type EmailCampaignTemplate = {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type WebsiteSignup = {
+  id: string;
+  email: string;
+  source: string;
+  subscribed: boolean;
+  created_at: string;
 };
 
 export type AuditLog = {

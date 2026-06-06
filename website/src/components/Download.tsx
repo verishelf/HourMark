@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LEGAL } from "@/lib/legal";
+import { EmailSignupForm } from "@/components/EmailSignupForm";
 
 export function Download() {
   return (
@@ -30,16 +30,12 @@ export function Download() {
               or wire — all from your iPhone.
             </p>
 
-            <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href={`mailto:${LEGAL.supportEmail}?subject=Crownly%20Waitlist`}
-                className="w-full max-w-xs bg-white px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-black transition-opacity hover:opacity-90 sm:w-auto"
-              >
-                Join the Waitlist
-              </Link>
+            <EmailSignupForm source="website_waitlist" buttonLabel="Join the Waitlist" />
+
+            <div className="mt-6 flex justify-center">
               <Link
                 href="#how-it-works"
-                className="w-full max-w-xs border border-[#1a1a1a] px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-white transition-colors hover:border-[#333] sm:w-auto"
+                className="border border-[#1a1a1a] px-8 py-4 text-[10px] font-medium uppercase tracking-[0.2em] text-white transition-colors hover:border-[#333]"
               >
                 Learn More
               </Link>

@@ -1,6 +1,5 @@
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/lib/supabase/server";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
 import type { AdminRole } from "@/types/database";
 
 export default async function DashboardLayout({
@@ -9,7 +8,9 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   let fullName = "Admin";
   let role: AdminRole | null = null;
@@ -26,12 +27,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar role={role} />
-      <div className="pl-64">
-        <Header userName={fullName} role={role} />
-        <main className="p-8">{children}</main>
-      </div>
-    </div>
+    <DashboardShell userName={fullName} role={role}>
+      {children}
+    </DashboardShell>
   );
 }

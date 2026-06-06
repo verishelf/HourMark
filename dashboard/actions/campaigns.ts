@@ -15,6 +15,14 @@ async function getAudienceEmails(audience: CampaignAudience): Promise<string[]> 
     return [...new Set((data ?? []).map((l) => l.email?.trim()).filter(Boolean))] as string[];
   }
 
+  if (audience === "web_signups") {
+    const { data } = await supabase
+      .from("website_signups")
+      .select("email")
+      .eq("subscribed", true);
+    return [...new Set((data ?? []).map((row) => row.email?.trim()).filter(Boolean))] as string[];
+  }
+
   if (audience === "sellers") {
     const { data } = await supabase.from("users").select("id").eq("is_verified_seller", true);
     return getAuthEmailsByUserIds((data ?? []).map((u) => u.id));

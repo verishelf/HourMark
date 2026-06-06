@@ -106,9 +106,9 @@ export function CampaignFormFields({
       <div className="space-y-4">
         <div>
           <Label>Saved Template</Label>
-          <div className="mt-1 flex flex-wrap gap-2">
+          <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Select value={form.selectedTemplateId} onValueChange={applyTemplate}>
-              <SelectTrigger className="min-w-[220px] flex-1">
+              <SelectTrigger className="w-full sm:min-w-[220px] sm:flex-1">
                 <SelectValue placeholder="Choose a template" />
               </SelectTrigger>
               <SelectContent>
@@ -120,10 +120,10 @@ export function CampaignFormFields({
                 ))}
               </SelectContent>
             </Select>
-            <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setPreviewOpen(true)}>
               <Eye className="h-4 w-4" /> Preview
             </Button>
-            <Button type="button" variant="outline" onClick={() => setSaveOpen(true)}>
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setSaveOpen(true)}>
               <Save className="h-4 w-4" /> Save as Template
             </Button>
           </div>
@@ -152,6 +152,7 @@ export function CampaignFormFields({
               <SelectItem value="buyers">Buyers</SelectItem>
               <SelectItem value="dealers">Dealers</SelectItem>
               <SelectItem value="new_leads">New Leads</SelectItem>
+              <SelectItem value="web_signups">Website Signups</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -168,13 +169,13 @@ export function CampaignFormFields({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             placeholder="Test email address"
             value={form.testEmail}
             onChange={(e) => setForm({ ...form, testEmail: e.target.value })}
           />
-          <Button type="button" variant="outline" onClick={onTest}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={onTest}>
             Send Test
           </Button>
         </div>
