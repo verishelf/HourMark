@@ -7,9 +7,19 @@ type FormState = "idle" | "loading" | "success" | "error";
 export function EmailSignupForm({
   source = "website_waitlist",
   buttonLabel = "Join the Waitlist",
+  formId = "waitlist-email-form",
+  inputId = "waitlist-email",
+  className = "",
+  stacked = false,
+  onSuccess,
 }: {
   source?: string;
   buttonLabel?: string;
+  formId?: string;
+  inputId?: string;
+  className?: string;
+  stacked?: boolean;
+  onSuccess?: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<FormState>("idle");
@@ -44,6 +54,7 @@ export function EmailSignupForm({
       setState("success");
       setMessage(data.message ?? "Thanks — you are on the list.");
       setEmail("");
+      onSuccess?.();
     } catch {
       setState("error");
       setMessage("Network error. Please try again.");
@@ -51,13 +62,13 @@ export function EmailSignupForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto mt-12 w-full max-w-md">
-      <label htmlFor="waitlist-email" className="sr-only">
+    <form id={formId} onSubmit={handleSubmit} className={className}>
+      <label htmlFor={inputId} className="sr-only">
         Email address
       </label>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className={stacked ? "flex flex-col gap-3" : "flex flex-col gap-3 sm:flex-row"}>
         <input
-          id="waitlist-email"
+          id={inputId}
           type="email"
           name="email"
           autoComplete="email"
@@ -77,7 +88,6 @@ export function EmailSignupForm({
         </button>
       </div>
 
-      {/* Honeypot */}
       <input
         type="text"
         name="company"

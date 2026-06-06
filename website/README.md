@@ -47,6 +47,23 @@ Deploy to [Vercel](https://vercel.com) from the repo root. The root `vercel.json
 
 **Recommended:** In Vercel project settings, set **Root Directory** to `website` and remove custom root-level build overrides if you prefer the default Next.js flow.
 
+### Environment variables (required for email signup)
+
+The waitlist form and popup call `/api/subscribe`, which writes to Supabase using **server-only** credentials. Without these, production returns **503** (*Signup is temporarily unavailable*).
+
+In Vercel → **Project (crownly.art) → Settings → Environment Variables**, add:
+
+| Variable | Value | Environments |
+|----------|--------|--------------|
+| `SUPABASE_URL` | Your Supabase project URL (e.g. `https://xxxx.supabase.co`) | Production, Preview, Development |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key from Supabase → Project Settings → API | Production, Preview, Development |
+
+Use the **same Supabase project** as the dashboard. The service role key must never be exposed to the client (do not prefix with `NEXT_PUBLIC_`).
+
+After saving, **redeploy** (Deployments → ⋯ → Redeploy) so the API route picks up the new vars.
+
+Also run the `website_signups` migration in Supabase if you have not already (`supabase/migrations/20260606140000_website_signups.sql`).
+
 ### Custom domain (`crownly.art`)
 
 Production URL is configured in `src/lib/legal.ts` as `https://crownly.art` (SEO, sitemap, Open Graph, and `llms.txt`).

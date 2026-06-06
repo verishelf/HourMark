@@ -12,6 +12,7 @@ import { Community } from "@/components/Community";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Download } from "@/components/Download";
 import { Footer } from "@/components/Footer";
+import { EmailSignupPopup } from "@/components/EmailSignupPopup";
 import { StructuredData } from "@/components/StructuredData";
 import {
   buildPageMetadata,
@@ -44,6 +45,7 @@ export default function Home() {
         <Download />
       </main>
       <Footer />
+      <EmailSignupPopup />
     </>
   );
 }

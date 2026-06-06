@@ -30,7 +30,11 @@ export function Download() {
               or wire — all from your iPhone.
             </p>
 
-            <EmailSignupForm source="website_waitlist" buttonLabel="Join the Waitlist" />
+            <EmailSignupForm
+              source="website_waitlist"
+              buttonLabel="Join the Waitlist"
+              className="mx-auto mt-12 w-full max-w-md"
+            />
 
             <div className="mt-6 flex justify-center">
               <Link
