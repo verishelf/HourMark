@@ -3,6 +3,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 import { sendEmail } from "@/lib/resend";
+import { getAuthEmailForUser } from "@/lib/userEmails";
 import { revalidatePath } from "next/cache";
 import type { AdminRole } from "@/types/database";
 
@@ -54,12 +55,20 @@ export async function sendUserEmail(adminId: string, email: string, subject: str
     </div>`,
   });
 
+  if (!result.ok) return { error: result.error };
+
   await logAdminAction({
     adminId,
     action: "send_email",
     resourceType: "user",
-    details: { email, subject },
+    details: { email, subject, messageId: result.id },
   });
 
-  return { success: !result.error, error: result.error?.message };
+  return { success: true, id: result.id };
+}
+
+export async function getUserEmail(userId: string) {
+  const email = await getAuthEmailForUser(userId);
+  if (!email) return { error: "No deliverable email found for this user." };
+  return { email };
 }

@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/server";
+import { getAuthEmailForUser } from "@/lib/userEmails";
 import type {
   DashboardKPIs,
   ChartDataPoint,
@@ -149,11 +150,12 @@ export async function getUsers(): Promise<UserProfile[]> {
 
   const enriched = await Promise.all(
     users.map(async (user) => {
-      const [{ count: sales }, { count: purchases }] = await Promise.all([
+      const [{ count: sales }, { count: purchases }, email] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("seller_id", user.id).eq("status", "completed"),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("buyer_id", user.id).eq("status", "completed"),
+        getAuthEmailForUser(user.id),
       ]);
-      return { ...user, total_sales: sales ?? 0, total_purchases: purchases ?? 0 };
+      return { ...user, email, total_sales: sales ?? 0, total_purchases: purchases ?? 0 };
     })
   );
 

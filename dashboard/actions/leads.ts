@@ -60,7 +60,7 @@ export async function assignLead(adminId: string, leadId: string, assigneeId: st
 }
 
 export async function sendLeadEmail(adminId: string, email: string, subject: string, body: string) {
-  await sendEmail({
+  const result = await sendEmail({
     to: email,
     subject,
     html: `<div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
@@ -70,13 +70,15 @@ export async function sendLeadEmail(adminId: string, email: string, subject: str
     tags: [{ name: "category", value: "seller_lead" }],
   });
 
+  if (!result.ok) return { error: result.error };
+
   await logAdminAction({
     adminId,
     action: "send_lead_email",
     resourceType: "seller_lead",
-    details: { email, subject },
+    details: { email, subject, messageId: result.id },
   });
-  return { success: true };
+  return { success: true, id: result.id };
 }
 
 export async function createLead(data: {

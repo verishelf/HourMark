@@ -2,7 +2,8 @@
 
 import { createServiceClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
-import { sendEmail, FROM_EMAIL } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend";
+import { getAllAuthEmails, getAuthEmailsByUserIds } from "@/lib/userEmails";
 import { revalidatePath } from "next/cache";
 import type { CampaignAudience } from "@/types/database";
 
@@ -11,24 +12,30 @@ async function getAudienceEmails(audience: CampaignAudience): Promise<string[]> 
 
   if (audience === "new_leads") {
     const { data } = await supabase.from("seller_leads").select("email").eq("status", "new");
-    return (data ?? []).map((l) => l.email).filter(Boolean);
+    return [...new Set((data ?? []).map((l) => l.email?.trim()).filter(Boolean))] as string[];
   }
 
   if (audience === "sellers") {
-    const { data } = await supabase.from("users").select("username").eq("is_verified_seller", true);
-    return (data ?? []).map((u) => u.username).filter((e): e is string => !!e && e.includes("@"));
+    const { data } = await supabase.from("users").select("id").eq("is_verified_seller", true);
+    return getAuthEmailsByUserIds((data ?? []).map((u) => u.id));
+  }
+
+  if (audience === "dealers") {
+    const { data } = await supabase
+      .from("users")
+      .select("id")
+      .eq("is_verified_seller", true)
+      .eq("stripe_onboarding_status", "complete");
+    return getAuthEmailsByUserIds((data ?? []).map((u) => u.id));
   }
 
   if (audience === "buyers") {
     const { data: orders } = await supabase.from("orders").select("buyer_id");
     const buyerIds = [...new Set((orders ?? []).map((o) => o.buyer_id))];
-    if (buyerIds.length === 0) return [];
-    const { data } = await supabase.from("users").select("username").in("id", buyerIds);
-    return (data ?? []).map((u) => u.username).filter((e): e is string => !!e && e.includes("@"));
+    return getAuthEmailsByUserIds(buyerIds);
   }
 
-  const { data } = await supabase.from("users").select("username");
-  return (data ?? []).map((u) => u.username).filter((e): e is string => !!e && e.includes("@"));
+  return getAllAuthEmails();
 }
 
 export async function createCampaign(
@@ -70,13 +77,15 @@ export async function createCampaign(
 
 export async function sendTestEmail(adminId: string, to: string, subject: string, html: string) {
   const result = await sendEmail({ to, subject: `[TEST] ${subject}`, html });
+  if (!result.ok) return { error: result.error };
+
   await logAdminAction({
     adminId,
     action: "send_test_email",
     resourceType: "email_campaign",
-    details: { to },
+    details: { to, messageId: result.id },
   });
-  return { success: !result.error };
+  return { success: true, id: result.id };
 }
 
 export async function sendCampaign(adminId: string, campaignId: string) {
@@ -89,13 +98,22 @@ export async function sendCampaign(adminId: string, campaignId: string) {
 
   if (!campaign) return { error: "Campaign not found" };
 
+  const emails = await getAudienceEmails(campaign.audience);
+  if (emails.length === 0) {
+    return {
+      error:
+        "No deliverable email addresses found for this audience. User accounts may use Apple Hide My Email, or the audience list may be empty.",
+    };
+  }
+
   await supabase.from("email_campaigns").update({ status: "sending" }).eq("id", campaignId);
 
-  const emails = await getAudienceEmails(campaign.audience);
   const trackingPixel = `<img src="${process.env.NEXT_PUBLIC_APP_URL}/api/track/open?campaign=${campaignId}" width="1" height="1" />`;
+  let sent = 0;
+  const failures: string[] = [];
 
   for (const email of emails.slice(0, 100)) {
-    await sendEmail({
+    const result = await sendEmail({
       to: email,
       subject: campaign.subject,
       html: campaign.template_html + trackingPixel,
@@ -104,6 +122,17 @@ export async function sendCampaign(adminId: string, campaignId: string) {
         { name: "category", value: "campaign" },
       ],
     });
+
+    if (result.ok) {
+      sent += 1;
+    } else {
+      failures.push(`${email}: ${result.error}`);
+    }
+  }
+
+  if (sent === 0) {
+    await supabase.from("email_campaigns").update({ status: "draft" }).eq("id", campaignId);
+    return { error: failures[0] ?? "All campaign emails failed to send." };
   }
 
   await supabase
@@ -116,9 +145,14 @@ export async function sendCampaign(adminId: string, campaignId: string) {
     action: "send_campaign",
     resourceType: "email_campaign",
     resourceId: campaignId,
-    details: { recipientCount: emails.length },
+    details: { recipientCount: emails.length, sent, failures: failures.slice(0, 5) },
   });
 
   revalidatePath("/campaigns");
-  return { success: true, sent: emails.length };
+  return {
+    success: true,
+    sent,
+    failed: failures.length,
+    error: failures.length > 0 ? `${failures.length} recipient(s) failed.` : undefined,
+  };
 }

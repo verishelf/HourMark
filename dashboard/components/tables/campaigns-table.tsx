@@ -36,22 +36,42 @@ export function CampaignsTable({ campaigns, adminId }: { campaigns: EmailCampaig
   });
 
   async function handleCreate() {
-    await createCampaign(adminId, {
+    const result = await createCampaign(adminId, {
       subject: form.subject,
       template_html: form.template_html,
       audience: form.audience,
     });
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
     toast.success("Campaign created");
     setCreateOpen(false);
   }
 
   async function handleSend(campaignId: string) {
     const result = await sendCampaign(adminId, campaignId);
-    toast.success(`Campaign sent to ${result.sent ?? 0} recipients`);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`Campaign sent to ${result.sent ?? 0} recipient(s)`);
   }
 
   async function handleTest() {
-    await sendTestEmail(adminId, form.testEmail, form.subject, form.template_html);
+    if (!form.testEmail.trim()) {
+      toast.error("Enter a test email address.");
+      return;
+    }
+    if (!form.subject.trim() || !form.template_html.trim()) {
+      toast.error("Subject and HTML template are required.");
+      return;
+    }
+    const result = await sendTestEmail(adminId, form.testEmail, form.subject, form.template_html);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
     toast.success("Test email sent");
   }
 

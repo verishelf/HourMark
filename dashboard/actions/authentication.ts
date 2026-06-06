@@ -56,7 +56,7 @@ export async function notifyAuthParty(
   email: string,
   message: string
 ) {
-  await sendEmail({
+  const result = await sendEmail({
     to: email,
     subject: `Authentication Update — ${party === "buyer" ? "Your Watch" : "Listing Verification"}`,
     html: `<div style="font-family: Georgia, serif; padding: 40px 20px; max-width: 600px; margin: 0 auto;">
@@ -65,6 +65,8 @@ export async function notifyAuthParty(
       <p style="color: #666; font-size: 12px; margin-top: 32px;">Reference: ${requestId.slice(0, 8)}</p>
     </div>`,
   });
+
+  if (!result.ok) return { error: result.error };
 
   await logAdminAction({
     adminId,

@@ -48,8 +48,16 @@ export function UsersTable({ users, adminId }: { users: UserProfile[]; adminId: 
 
   async function handleSendEmail() {
     if (!emailDialog) return;
-    const email = emailDialog.email ?? emailDialog.username ?? "";
-    await sendUserEmail(adminId, email, emailSubject, emailBody);
+    const email = emailDialog.email ?? "";
+    if (!email) {
+      toast.error("This user has no deliverable email (Apple Hide My Email or missing auth email).");
+      return;
+    }
+    const result = await sendUserEmail(adminId, email, emailSubject, emailBody);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
     toast.success("Email sent");
     setEmailDialog(null);
   }
@@ -68,7 +76,7 @@ export function UsersTable({ users, adminId }: { users: UserProfile[]; adminId: 
     {
       key: "email",
       header: "Email",
-      cell: (row: UserProfile) => row.username ?? "—",
+      cell: (row: UserProfile) => row.email ?? row.username ?? "—",
     },
     {
       key: "role",
