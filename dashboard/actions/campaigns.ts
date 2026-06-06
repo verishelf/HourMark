@@ -75,6 +75,80 @@ export async function createCampaign(
   return { success: true, id: campaign.id };
 }
 
+export async function updateCampaign(
+  adminId: string,
+  campaignId: string,
+  data: {
+    subject: string;
+    template_html: string;
+    audience: CampaignAudience;
+    scheduled_at?: string | null;
+  }
+) {
+  const supabase = createServiceClient();
+  const { data: existing } = await supabase
+    .from("email_campaigns")
+    .select("status")
+    .eq("id", campaignId)
+    .single();
+
+  if (!existing) return { error: "Campaign not found" };
+  if (existing.status === "sending" || existing.status === "sent") {
+    return { error: "Sent campaigns cannot be edited." };
+  }
+
+  const { error } = await supabase
+    .from("email_campaigns")
+    .update({
+      subject: data.subject,
+      template_html: data.template_html,
+      audience: data.audience,
+      scheduled_at: data.scheduled_at ?? null,
+      status: data.scheduled_at ? "scheduled" : "draft",
+    })
+    .eq("id", campaignId);
+
+  if (error) return { error: error.message };
+
+  await logAdminAction({
+    adminId,
+    action: "update_campaign",
+    resourceType: "email_campaign",
+    resourceId: campaignId,
+  });
+
+  revalidatePath("/campaigns");
+  return { success: true };
+}
+
+export async function deleteCampaign(adminId: string, campaignId: string) {
+  const supabase = createServiceClient();
+  const { data: existing } = await supabase
+    .from("email_campaigns")
+    .select("status, subject")
+    .eq("id", campaignId)
+    .single();
+
+  if (!existing) return { error: "Campaign not found" };
+  if (existing.status === "sending") {
+    return { error: "Campaign is currently sending and cannot be deleted." };
+  }
+
+  const { error } = await supabase.from("email_campaigns").delete().eq("id", campaignId);
+  if (error) return { error: error.message };
+
+  await logAdminAction({
+    adminId,
+    action: "delete_campaign",
+    resourceType: "email_campaign",
+    resourceId: campaignId,
+    details: { subject: existing.subject, status: existing.status },
+  });
+
+  revalidatePath("/campaigns");
+  return { success: true };
+}
+
 export async function sendTestEmail(adminId: string, to: string, subject: string, html: string) {
   const result = await sendEmail({ to, subject: `[TEST] ${subject}`, html });
   if (!result.ok) return { error: result.error };
