@@ -72,7 +72,16 @@
       ],
       "expo-apple-authentication",
       "expo-web-browser",
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "forceStaticLinking": ["RNFBApp", "RNFBAnalytics"]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

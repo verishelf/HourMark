@@ -240,11 +240,17 @@ export async function getWebsiteSignups(): Promise<WebsiteSignup[]> {
 
 export async function getAuditLogs(): Promise<AuditLog[]> {
   const supabase = createServiceClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("audit_logs")
     .select("*, admin:users!admin_id(id, full_name, username)")
     .order("created_at", { ascending: false })
     .limit(100);
+
+  if (error) {
+    console.error("[getAuditLogs]", error.message);
+    return [];
+  }
+
   return (data ?? []) as AuditLog[];
 }
 

@@ -17,6 +17,8 @@ The plist may show `IS_ANALYTICS_ENABLED` as false; the SDK still collects event
 
 ## Build & run
 
+Requires `expo-build-properties` with `useFrameworks: "static"` and `forceStaticLinking` for `RNFBApp` / `RNFBAnalytics` in `app.json` (Expo SDK 54 + React Native Firebase).
+
 ```bash
 # Development build (simulator or device)
 eas build --profile development --platform ios
