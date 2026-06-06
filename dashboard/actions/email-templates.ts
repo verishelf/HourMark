@@ -7,18 +7,26 @@ import { revalidatePath } from "next/cache";
 
 export async function ensureDefaultEmailTemplates(adminId: string) {
   const supabase = createServiceClient();
-  const { count, error: countError } = await supabase
+  const { error: tableError } = await supabase
     .from("email_campaign_templates")
-    .select("id", { count: "exact", head: true });
+    .select("id")
+    .limit(1);
 
-  if (countError) {
-    // Table may not exist until migration is applied.
-    return { error: countError.message };
+  if (tableError) {
+    return { error: tableError.message };
   }
 
-  if ((count ?? 0) > 0) return { success: true };
+  let inserted = 0;
 
   for (const template of DEFAULT_EMAIL_TEMPLATES) {
+    const { data: existing } = await supabase
+      .from("email_campaign_templates")
+      .select("id")
+      .eq("name", template.name)
+      .maybeSingle();
+
+    if (existing) continue;
+
     const { error } = await supabase.from("email_campaign_templates").insert({
       name: template.name,
       description: template.description,
@@ -26,11 +34,16 @@ export async function ensureDefaultEmailTemplates(adminId: string) {
       html: template.html,
       created_by: adminId,
     });
+
     if (error) return { error: error.message };
+    inserted += 1;
   }
 
-  revalidatePath("/campaigns");
-  return { success: true };
+  if (inserted > 0) {
+    revalidatePath("/campaigns");
+  }
+
+  return { success: true, inserted };
 }
 
 export async function createEmailTemplate(
