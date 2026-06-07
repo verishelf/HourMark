@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import Animated, {
   cancelAnimation,
   Easing,
@@ -10,49 +10,55 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import type { MarketTickerItem } from "@/constants/marketTicker";
-import { useMarketTicker } from "@/hooks/useMarketTicker";
+import { Ionicons } from "@expo/vector-icons";
+import { ListingImage } from "@/components/ListingImage";
+import type { RecentSaleItem } from "@/constants/recentSales";
+import { useRecentSales } from "@/hooks/useRecentSales";
+import { resolveListingImageUrl } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 
-function formatTickerPrice(value: number): string {
+function formatSalePrice(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
   if (value >= 1_000) return `$${value.toLocaleString("en-US")}`;
   return `$${value.toFixed(0)}`;
 }
 
-function TickerChip({ item }: { item: MarketTickerItem }) {
-  const isUp = item.changePercent >= 0;
-  const changeColor = isUp ? Colors.success : Colors.error;
+function SaleChip({ item, onPress }: { item: RecentSaleItem; onPress: () => void }) {
+  const imageUri = item.imageUrl ? resolveListingImageUrl(item.imageUrl) : null;
 
   return (
-    <View style={styles.chip}>
-      <Text style={styles.chipName} numberOfLines={1}>
-        {item.name}
-      </Text>
-      <Text style={styles.chipRef}>{item.reference}</Text>
-      <Text style={styles.chipPrice}>{formatTickerPrice(item.price)}</Text>
-      <View style={styles.changeRow}>
-        <Ionicons
-          name={isUp ? "caret-up" : "caret-down"}
-          size={12}
-          color={changeColor}
-          style={styles.changeIcon}
-        />
-        <Text style={[styles.chipChange, { color: changeColor }]}>
-          {isUp ? "+" : ""}
-          {item.changePercent.toFixed(1)}%
-        </Text>
+    <Pressable onPress={onPress} style={styles.chip}>
+      <View style={styles.avatarWrap}>
+        {imageUri ? (
+          <ListingImage uri={imageUri} style={styles.avatar} recyclingKey={item.listingId} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarPlaceholder]}>
+            <Ionicons name="watch-outline" size={14} color={Colors.textMuted} />
+          </View>
+        )}
       </View>
-    </View>
+      <View style={styles.chipTextWrap}>
+        <Text style={styles.chipName} numberOfLines={1}>
+          {item.brand} {item.model}
+        </Text>
+        <Text style={styles.chipPrice}>{formatSalePrice(item.price)}</Text>
+      </View>
+    </Pressable>
   );
 }
 
-function TickerSegment({ items }: { items: MarketTickerItem[] }) {
+function SalesSegment({
+  items,
+  onPressItem,
+}: {
+  items: RecentSaleItem[];
+  onPressItem: (item: RecentSaleItem) => void;
+}) {
   return (
     <View style={styles.segment}>
       {items.map((item) => (
-        <TickerChip key={item.id} item={item} />
+        <SaleChip key={item.id} item={item} onPress={() => onPressItem(item)} />
       ))}
     </View>
   );
@@ -60,17 +66,18 @@ function TickerSegment({ items }: { items: MarketTickerItem[] }) {
 
 export function MarketTickerMarquee() {
   const insets = useSafeAreaInsets();
-  const { items, isLive } = useMarketTicker();
+  const router = useRouter();
+  const { items, loading } = useRecentSales();
   const [segmentWidth, setSegmentWidth] = useState(0);
   const offset = useSharedValue(0);
 
   useEffect(() => {
-    if (segmentWidth <= 0) return;
+    if (segmentWidth <= 0 || items.length === 0) return;
 
     offset.value = 0;
     offset.value = withRepeat(
       withTiming(-segmentWidth, {
-        duration: Math.max(segmentWidth * 18, 12_000),
+        duration: Math.max(segmentWidth * 16, 14_000),
         easing: Easing.linear,
       }),
       -1,
@@ -84,33 +91,43 @@ export function MarketTickerMarquee() {
     transform: [{ translateX: offset.value }],
   }));
 
+  function openListing(item: RecentSaleItem) {
+    router.push(`/listing/${item.listingId}`);
+  }
+
   return (
     <View style={[styles.wrap, { paddingTop: insets.top }]}>
       <View style={styles.labelRow}>
-        <View style={[styles.liveDot, isLive ? styles.liveDotActive : styles.liveDotIdle]} />
-        <Text style={styles.label}>{isLive ? "Live" : "Market"}</Text>
+        <View style={styles.liveDot} />
+        <Text style={styles.label}>Sold</Text>
       </View>
       <View style={styles.track}>
-        <Animated.View style={[styles.scroller, animatedStyle]}>
-          <View
-            onLayout={(event) => {
-              const width = event.nativeEvent.layout.width;
-              if (width > 0) setSegmentWidth(width);
-            }}
-          >
-            <TickerSegment items={items} />
-          </View>
-          <TickerSegment items={items} />
-        </Animated.View>
+        {!loading && items.length === 0 ? (
+          <Text style={styles.emptyText}>No recent sales yet</Text>
+        ) : (
+          <Animated.View style={[styles.scroller, animatedStyle]}>
+            <View
+              onLayout={(event) => {
+                const width = event.nativeEvent.layout.width;
+                if (width > 0) setSegmentWidth(width);
+              }}
+            >
+              <SalesSegment items={items} onPressItem={openListing} />
+            </View>
+            {items.length > 1 ? <SalesSegment items={items} onPressItem={openListing} /> : null}
+          </Animated.View>
+        )}
       </View>
     </View>
   );
 }
 
+const AVATAR_SIZE = 28;
+
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "stretch",
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
     backgroundColor: Colors.card,
@@ -119,9 +136,9 @@ const styles = StyleSheet.create({
   labelRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 10,
     borderRightWidth: 1,
     borderRightColor: Colors.border,
     backgroundColor: Colors.cardElevated,
@@ -130,12 +147,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
-  liveDotActive: {
     backgroundColor: Colors.success,
-  },
-  liveDotIdle: {
-    backgroundColor: Colors.textMuted,
   },
   label: {
     ...Typography.caption,
@@ -148,6 +160,13 @@ const styles = StyleSheet.create({
   track: {
     flex: 1,
     overflow: "hidden",
+    justifyContent: "center",
+  },
+  emptyText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+    paddingHorizontal: 16,
   },
   scroller: {
     flexDirection: "row",
@@ -160,42 +179,42 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRightWidth: 1,
     borderRightColor: Colors.border,
+  },
+  avatarWrap: {
+    borderRadius: AVATAR_SIZE / 2,
+    overflow: "hidden",
+  },
+  avatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+  },
+  avatarPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.cardElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  chipTextWrap: {
+    maxWidth: 140,
   },
   chipName: {
     ...Typography.caption,
     color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: "600",
-    maxWidth: 108,
-  },
-  chipRef: {
-    ...Typography.caption,
-    color: Colors.textMuted,
     fontSize: 11,
+    fontWeight: "600",
   },
   chipPrice: {
     ...Typography.caption,
-    color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: "600",
-    fontVariant: ["tabular-nums"],
-  },
-  changeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  changeIcon: {
-    marginRight: 1,
-  },
-  chipChange: {
-    ...Typography.caption,
-    fontSize: 11,
-    fontWeight: "600",
+    color: Colors.textMuted,
+    fontSize: 10,
+    marginTop: 2,
     fontVariant: ["tabular-nums"],
   },
 });

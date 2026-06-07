@@ -1,19 +1,19 @@
 import { handleCors, jsonResponse } from "../_shared/cors.ts";
 import { getServiceClient } from "../_shared/auth.ts";
 import {
-  buildBenchmarkFromCrownly,
-  buildLiveInventoryTickers,
-  fetchWatchChartsBenchmark,
-  MARKET_TICKER_BENCHMARKS,
-  type TickerListingRow,
-  type TickerOrderRow,
-} from "../_shared/marketTicker.ts";
+  appendSoldListings,
+  mapOrdersToRecentSales,
+  type ListingRow,
+  type OrderRow,
+} from "../_shared/recentSales.ts";
 
-const CACHE_MS = 30 * 60 * 1000;
+const CACHE_MS = 10 * 60 * 1000;
+const MAX_ITEMS = 24;
+
 let cached:
   | {
       expiresAt: number;
-      body: { items: unknown[]; sources: string[]; updatedAt: string };
+      body: { items: unknown[]; updatedAt: string };
     }
   | null = null;
 
@@ -28,71 +28,56 @@ Deno.serve(async (req) => {
   const now = Date.now();
   if (cached && cached.expiresAt > now) {
     return jsonResponse(cached.body, 200, {
-      "Cache-Control": "public, max-age=1800",
+      "Cache-Control": "public, max-age=600",
     });
   }
 
   try {
     const supabase = getServiceClient();
-    const sixtyDaysAgo = new Date(now - 60 * 24 * 60 * 60 * 1000).toISOString();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 
-    const [listingsRes, ordersRes] = await Promise.all([
-      supabase
-        .from("listings")
-        .select("brand, model, reference_number, price, created_at")
-        .eq("status", "active")
-        .eq("authentication_status", "auto_verified")
-        .order("created_at", { ascending: false })
-        .limit(500),
-      supabase
-        .from("orders")
-        .select("amount, created_at, listing:listings(brand, model, reference_number)")
-        .eq("status", "completed")
-        .gte("created_at", sixtyDaysAgo)
-        .order("created_at", { ascending: false })
-        .limit(500),
-    ]);
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select(
+        "id, amount, created_at, listing_id, listing:listings(id, brand, model, reference_number, price, images, updated_at)"
+      )
+      .eq("status", "completed")
+      .order("created_at", { ascending: false })
+      .limit(MAX_ITEMS);
 
-    const listings = (listingsRes.data ?? []) as TickerListingRow[];
-    const orders = (ordersRes.data ?? []) as TickerOrderRow[];
-    const watchChartsKey = Deno.env.get("WATCHCHARTS_API_KEY") ?? "";
-
-    const items = [];
-    const sources = new Set<string>();
-    const usedIds = new Set<string>();
-
-    for (const benchmark of MARKET_TICKER_BENCHMARKS) {
-      let item = buildBenchmarkFromCrownly(benchmark, listings, orders, now);
-
-      if (!item && watchChartsKey) {
-        item = await fetchWatchChartsBenchmark(benchmark, watchChartsKey);
-      }
-
-      if (item) {
-        items.push(item);
-        sources.add(item.source);
-        usedIds.add(item.id);
-      }
+    if (ordersError) {
+      console.error("[market-ticker] orders", ordersError.message);
     }
 
-    for (const extra of buildLiveInventoryTickers(listings, usedIds)) {
-      items.push(extra);
-      sources.add(extra.source);
+    let items = mapOrdersToRecentSales(supabaseUrl, (orders ?? []) as OrderRow[]);
+
+    if (items.length < MAX_ITEMS) {
+      const { data: soldListings, error: listingsError } = await supabase
+        .from("listings")
+        .select("id, brand, model, reference_number, price, images, updated_at")
+        .eq("status", "sold")
+        .order("updated_at", { ascending: false })
+        .limit(MAX_ITEMS);
+
+      if (listingsError) {
+        console.error("[market-ticker] listings", listingsError.message);
+      } else {
+        items = appendSoldListings(supabaseUrl, items, (soldListings ?? []) as ListingRow[], MAX_ITEMS);
+      }
     }
 
     const body = {
       items,
-      sources: Array.from(sources),
       updatedAt: new Date().toISOString(),
     };
 
     cached = { expiresAt: now + CACHE_MS, body };
 
     return jsonResponse(body, 200, {
-      "Cache-Control": "public, max-age=1800",
+      "Cache-Control": "public, max-age=600",
     });
   } catch (error) {
     console.error("[market-ticker]", error);
-    return jsonResponse({ message: "Failed to load market ticker" }, 500);
+    return jsonResponse({ message: "Failed to load recent sales" }, 500);
   }
 });

@@ -1,47 +1,48 @@
-# Market ticker (home marquee)
+# Recent sales ticker (home marquee)
 
-The home **Live** ticker pulls real prices from Crownly marketplace data, with optional [WatchCharts](https://watchcharts.com/api) enrichment.
+The home **Sold** bar shows recently completed Crownly sales with a circular watch photo, brand/model, and sale price.
 
-## Data sources (priority)
+## Data sources
 
-1. **Crownly listings** — median ask price for tracked references on active, verified listings
-2. **Crownly sales** — completed order amounts (30-day vs prior 30-day for % change)
-3. **Live inventory** — top active Crownly listings not already in the benchmark list
-4. **WatchCharts** (optional) — market price + 1Y history when `WATCHCHARTS_API_KEY` is set and Crownly has no data for a reference
-5. **Fallback** — static offline values only if the API is unreachable
+1. **Completed orders** — `orders.status = 'completed'`, joined to listing images
+2. **Sold listings** — `listings.status = 'sold'` when there are not enough completed orders yet
 
-## Deploy the edge function
+No third-party market APIs are used.
+
+## Deploy
 
 ```bash
 supabase functions deploy market-ticker
 ```
 
-Public GET endpoint (no auth required):
+Public GET:
 
 ```
 https://YOUR_PROJECT.supabase.co/functions/v1/market-ticker
 ```
 
-The app calls this via `EXPO_PUBLIC_API_URL` or `${EXPO_PUBLIC_SUPABASE_URL}/functions/v1`.
+Response shape:
 
-## Optional: WatchCharts API
-
-WatchCharts requires a Professional + API subscription (~$5k/yr) and a **distribution license** to show data in a consumer app. If you have access:
-
-```bash
-supabase secrets set WATCHCHARTS_API_KEY=your_key_here
+```json
+{
+  "items": [
+    {
+      "id": "order-uuid",
+      "listingId": "listing-uuid",
+      "brand": "Rolex",
+      "model": "Submariner",
+      "reference": "126610LN",
+      "price": 14200,
+      "imageUrl": "https://.../listing-images/...",
+      "soldAt": "2026-06-07T..."
+    }
+  ],
+  "updatedAt": "..."
+}
 ```
 
-Redeploy `market-ticker` after setting the secret.
+The app caches results for 10 minutes on device; the edge function caches for 10 minutes server-side.
 
-## Tracked references
+## Tap behavior
 
-Edit `constants/marketTicker.ts` and mirror benchmarks in `supabase/functions/_shared/marketTicker.ts` (keep both in sync when adding references).
-
-## % change logic
-
-- **Sales:** average completed sale price last 30 days vs 31–60 days ago
-- **Listings only:** median listing price for recent vs prior 30-day cohorts
-- **WatchCharts:** 1-year price history (latest vs earliest point)
-
-When insufficient history exists, change shows as `0.0%`.
+Each chip opens the listing detail screen for that watch.

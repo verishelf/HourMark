@@ -13,7 +13,6 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,9 +34,11 @@ import { useTheme } from "@/hooks/useTheme";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import { notifyContentRefresh } from "@/lib/contentRefresh";
 import { ListingSetIcons } from "@/components/ListingSetIcons";
+import { SellerPayoutBreakdown } from "@/components/SellerPayoutBreakdown";
 import { createListing, uploadListingImage } from "@/services/listings";
 import { isSellerKycApproved } from "@/services/kyc";
 import { dollarsToCents } from "@/lib/stripe";
+import { ensurePhotoLibraryPermission, pickManyFromPhotoLibrary } from "@/lib/imagePicker";
 
 const STEPS = ["Photos", "Details", "Review"] as const;
 type Step = (typeof STEPS)[number];
@@ -161,17 +162,19 @@ export default function SellScreen() {
   }, []);
 
   const pickImages = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+    const allowed = await ensurePhotoLibraryPermission(
+      "Allow photo access to add listing photos."
+    );
+    if (!allowed) return;
+
+    const assets = await pickManyFromPhotoLibrary({
       allowsMultipleSelection: true,
-      quality: 0.9,
       selectionLimit: 8,
-      preferredAssetRepresentationMode:
-        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+      quality: 0.9,
     });
-    if (!result.canceled) {
+    if (assets.length) {
       setImages((prev) =>
-        [...prev, ...result.assets.map((a) => a.uri)].slice(0, 8)
+        [...prev, ...assets.map((a) => a.uri)].slice(0, 8)
       );
     }
   };
@@ -581,6 +584,7 @@ export default function SellScreen() {
                 onChangeText={setSerialNumber}
                 style={[styles.input, styles.inputClear, { marginBottom: 0 }]}
               />
+              <SellerPayoutBreakdown priceDollars={price} tone="glass" />
             </FormSection>
 
             {images[0] && (

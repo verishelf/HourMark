@@ -19,7 +19,7 @@ export function SettingsForm({
   adminId: string;
 }) {
   const [commission, setCommission] = useState(settings?.commission_percentage ?? 5);
-  const [sellerFee, setSellerFee] = useState(settings?.seller_fee_percentage ?? 0);
+  const [sellerFee, setSellerFee] = useState(settings?.seller_fee_percentage ?? 7);
   const [buyerFee, setBuyerFee] = useState(settings?.buyer_fee_percentage ?? 0);
   const [welcomeTemplate, setWelcomeTemplate] = useState(
     settings?.email_templates?.welcome ?? "Welcome to Crownly, the premier luxury watch marketplace."
@@ -38,12 +38,22 @@ export function SettingsForm({
 
   return (
     <Tabs defaultValue="fees">
-      <TabsList>
-        <TabsTrigger value="fees">Fees & Commission</TabsTrigger>
-        <TabsTrigger value="email">Email Templates</TabsTrigger>
-        <TabsTrigger value="auth">Authentication Rules</TabsTrigger>
-        <TabsTrigger value="platform">Platform Settings</TabsTrigger>
-      </TabsList>
+      <div className="-mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:overflow-visible md:px-0 md:pb-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <TabsList className="inline-flex h-auto w-max flex-nowrap justify-start gap-1 md:h-9 md:w-full md:justify-center">
+          <TabsTrigger value="fees" className="shrink-0">
+            Fees & Commission
+          </TabsTrigger>
+          <TabsTrigger value="email" className="shrink-0">
+            Email Templates
+          </TabsTrigger>
+          <TabsTrigger value="auth" className="shrink-0">
+            Authentication Rules
+          </TabsTrigger>
+          <TabsTrigger value="platform" className="shrink-0">
+            Platform Settings
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="fees">
         <Card>
@@ -57,7 +67,10 @@ export function SettingsForm({
               <Input type="number" value={commission} onChange={(e) => setCommission(Number(e.target.value))} />
             </div>
             <div>
-              <Label>Seller Fee (%)</Label>
+              <Label>Seller listing fee (%)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Deducted from seller payout on Stripe sales (default 7%).
+              </p>
               <Input type="number" value={sellerFee} onChange={(e) => setSellerFee(Number(e.target.value))} />
             </div>
             <div>

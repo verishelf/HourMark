@@ -1,6 +1,9 @@
 import { handleCors, jsonResponse } from "../_shared/cors.ts";
 import { getAuthenticatedUser, getServiceClient } from "../_shared/auth.ts";
-import { COMMISSION_RATE } from "../_shared/stripe.ts";
+import {
+  calculateSellerListingFee,
+  getSellerFeeRate,
+} from "../_shared/fees.ts";
 
 type ShippingPayload = {
   buyerName?: string;
@@ -100,7 +103,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "You cannot buy your own listing" }, 400);
     }
 
-    const commissionFee = Math.round(amount * COMMISSION_RATE);
+    const sellerFeeRate = await getSellerFeeRate(supabase);
+    const commissionFee = calculateSellerListingFee(amount, sellerFeeRate);
 
     const { data: order, error: orderError } = await supabase
       .from("orders")

@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, type AppStateStatus } from "react-native";
-import { MARKET_TICKER_FALLBACK, type MarketTickerItem } from "@/constants/marketTicker";
-import { fetchMarketTicker, type MarketTickerResponse } from "@/services/marketTicker";
+import type { RecentSaleItem } from "@/constants/recentSales";
+import { fetchRecentSales } from "@/services/recentSales";
 
-export function useMarketTicker() {
-  const [items, setItems] = useState<MarketTickerItem[]>(MARKET_TICKER_FALLBACK);
-  const [sources, setSources] = useState<string[]>(["fallback"]);
+export function useRecentSales() {
+  const [items, setItems] = useState<RecentSaleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const requestIdRef = useRef(0);
 
@@ -13,11 +12,9 @@ export function useMarketTicker() {
     const requestId = ++requestIdRef.current;
 
     try {
-      const data: MarketTickerResponse = await fetchMarketTicker();
+      const data = await fetchRecentSales();
       if (requestId !== requestIdRef.current) return;
-
       setItems(data.items);
-      setSources(data.sources);
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
@@ -38,10 +35,5 @@ export function useMarketTicker() {
     return () => subscription.remove();
   }, [load]);
 
-  const isLive = sources.some(
-    (source) =>
-      source.startsWith("crownly") || source === "watchcharts" || source === "mixed"
-  );
-
-  return { items, sources, loading, isLive, refresh: load };
+  return { items, loading, refresh: load };
 }

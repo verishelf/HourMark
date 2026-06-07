@@ -1,6 +1,10 @@
 import { handleCors, jsonResponse } from "../_shared/cors.ts";
 import { getAuthenticatedUser, getServiceClient } from "../_shared/auth.ts";
-import { COMMISSION_RATE, getStripeClient } from "../_shared/stripe.ts";
+import { getStripeClient } from "../_shared/stripe.ts";
+import {
+  calculateSellerListingFee,
+  getSellerFeeRate,
+} from "../_shared/fees.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -70,7 +74,9 @@ Deno.serve(async (req) => {
       await stripe.paymentIntents.capture(order.stripe_payment_intent_id);
     }
 
-    const commissionFee = order.commission_fee ?? Math.round(order.amount * COMMISSION_RATE);
+    const sellerFeeRate = await getSellerFeeRate(supabase);
+    const commissionFee =
+      order.commission_fee ?? calculateSellerListingFee(order.amount, sellerFeeRate);
     const sellerAmount = order.amount - commissionFee;
 
     if (pi.status === "succeeded" || pi.status === "requires_capture") {

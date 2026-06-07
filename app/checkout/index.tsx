@@ -24,7 +24,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
 import { Colors } from "@/constants/colors";
-import { COMMISSION_RATE } from "@/constants/colors";
+import { SELLER_FEE_RATE } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { CARD_GAP, LISTING_CARD_RADIUS, RADIUS, SPACING } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
@@ -561,7 +561,7 @@ export default function CheckoutScreen() {
             </View>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryMuted}>
-                Platform fee ({(COMMISSION_RATE * 100).toFixed(1)}%)
+                Seller fee ({(SELLER_FEE_RATE * 100).toFixed(0)}%)
               </Text>
               <Text style={styles.summaryMuted}>{formatPrice(commission)}</Text>
             </View>

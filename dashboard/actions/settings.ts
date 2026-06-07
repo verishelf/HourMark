@@ -26,7 +26,7 @@ export async function updatePlatformSettings(
   } else {
     await supabase.from("platform_settings").insert({
       commission_percentage: 5,
-      seller_fee_percentage: 0,
+      seller_fee_percentage: 7,
       buyer_fee_percentage: 0,
       email_templates: {},
       authentication_rules: {},

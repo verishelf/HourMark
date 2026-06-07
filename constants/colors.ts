@@ -47,7 +47,10 @@ export function applyColorPalette(palette: ColorPalette) {
   Object.assign(Colors, palette);
 }
 
-export const COMMISSION_RATE = 0.03;
+export const SELLER_FEE_RATE = 0.07;
+
+/** Platform listing fee deducted from seller payout (Stripe application fee). */
+export const COMMISSION_RATE = SELLER_FEE_RATE;
 
 export type ColorScheme = "dark" | "light";
 

@@ -1,6 +1,10 @@
 import { handleCors, jsonResponse } from "../_shared/cors.ts";
 import { getAuthenticatedUser, getServiceClient } from "../_shared/auth.ts";
-import { COMMISSION_RATE, getStripeClient } from "../_shared/stripe.ts";
+import { getStripeClient } from "../_shared/stripe.ts";
+import {
+  calculateSellerListingFee,
+  getSellerFeeRate,
+} from "../_shared/fees.ts";
 
 type ShippingPayload = {
   buyerName?: string;
@@ -119,7 +123,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "Seller is not verified for payouts" }, 400);
     }
 
-    const commissionFee = Math.round(amount * COMMISSION_RATE);
+    const sellerFeeRate = await getSellerFeeRate(supabase);
+    const commissionFee = calculateSellerListingFee(amount, sellerFeeRate);
     const resolvedPaymentMethod =
       paymentMethod === "apple_pay" ? "apple_pay" : "card";
 

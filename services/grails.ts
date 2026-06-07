@@ -13,6 +13,8 @@ export type CreateGrailInput = {
   notes?: string;
 };
 
+export type UpdateGrailInput = CreateGrailInput;
+
 export async function getGrailRequests(status?: "active" | "fulfilled" | "cancelled"): Promise<GrailRequest[]> {
   if (!isSupabaseConfigured) {
     return status ? MOCK_GRAILS.filter((g) => g.status === status) : MOCK_GRAILS;
@@ -70,6 +72,53 @@ export async function createGrailRequest(
     .single();
   if (error) throw error;
   return data as GrailRequest;
+}
+
+export async function updateGrailRequest(
+  userId: string,
+  grailId: string,
+  input: UpdateGrailInput
+): Promise<GrailRequest> {
+  const payload = {
+    brand: input.brand?.trim() || null,
+    model: input.model?.trim() || null,
+    reference_number: input.reference_number?.trim() || null,
+    max_budget: input.max_budget ?? null,
+    min_condition: input.min_condition ?? null,
+    notes: input.notes?.trim() || null,
+  };
+
+  if (!isSupabaseConfigured) {
+    const g = MOCK_GRAILS.find((x) => x.id === grailId && x.user_id === userId);
+    if (!g) throw new Error("Grail hunt not found");
+    Object.assign(g, payload);
+    return g;
+  }
+
+  const { data, error } = await supabase
+    .from("grail_requests")
+    .update(payload)
+    .eq("id", grailId)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as GrailRequest;
+}
+
+export async function deleteGrailRequest(userId: string, grailId: string): Promise<void> {
+  if (!isSupabaseConfigured) {
+    const index = MOCK_GRAILS.findIndex((x) => x.id === grailId && x.user_id === userId);
+    if (index >= 0) MOCK_GRAILS.splice(index, 1);
+    return;
+  }
+
+  const { error } = await supabase
+    .from("grail_requests")
+    .delete()
+    .eq("id", grailId)
+    .eq("user_id", userId);
+  if (error) throw error;
 }
 
 export async function cancelGrailRequest(userId: string, grailId: string): Promise<void> {

@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LuxuryButton } from "@/components/LuxuryButton";
+import { SellerPayoutBreakdown } from "@/components/SellerPayoutBreakdown";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { LUXURY_BRANDS, CONDITIONS } from "@/constants/brands";
 import { Colors } from "@/constants/colors";
@@ -287,6 +288,7 @@ export default function EditListingScreen() {
             keyboardType="decimal-pad"
             style={inputStyle}
           />
+          <SellerPayoutBreakdown priceDollars={price} />
           <TextInput
             placeholder="Description"
             placeholderTextColor={Colors.textMuted}

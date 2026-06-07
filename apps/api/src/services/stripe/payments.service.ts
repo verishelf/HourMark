@@ -1,6 +1,6 @@
 import { stripe } from "../../lib/stripe.js";
 import { getSupabaseAdmin } from "../../lib/supabase.js";
-import { commissionService } from "./commission.service.js";
+import { feesService } from "./fees.service.js";
 
 export class PaymentError extends Error {
   constructor(
@@ -76,7 +76,8 @@ export const paymentsService = {
       }
     }
 
-    const commissionFee = commissionService.calculateCommission(amountCents);
+    const sellerFeeRate = await feesService.getSellerFeeRate();
+    const commissionFee = feesService.calculateSellerListingFee(amountCents, sellerFeeRate);
 
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -127,7 +128,7 @@ export const paymentsService = {
       paymentIntentId: paymentIntent.id,
       amount: amountCents,
       commissionFee,
-      sellerPayout: commissionService.calculateSellerPayout(amountCents),
+      sellerPayout: amountCents - commissionFee,
     };
   },
 
@@ -143,7 +144,7 @@ export const paymentsService = {
     if (!order) return null;
     if (order.status === "paid") return order;
 
-    const sellerPayout = commissionService.calculateSellerPayout(order.amount);
+    const sellerPayout = order.amount - (order.commission_fee ?? 0);
 
     await supabase
       .from("orders")

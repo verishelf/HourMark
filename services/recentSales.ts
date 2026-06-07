@@ -1,21 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  MARKET_TICKER_FALLBACK,
-  type MarketTickerItem,
-} from "@/constants/marketTicker";
+import type { RecentSaleItem } from "@/constants/recentSales";
 
-const CACHE_KEY = "crownly_market_ticker_v1";
-const CACHE_TTL_MS = 15 * 60 * 1000;
+const CACHE_KEY = "crownly_recent_sales_v1";
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
-export type MarketTickerResponse = {
-  items: MarketTickerItem[];
-  sources: string[];
+export type RecentSalesResponse = {
+  items: RecentSaleItem[];
   updatedAt: string;
   fromCache?: boolean;
-  isFallback?: boolean;
 };
 
-type CachedPayload = MarketTickerResponse & { cachedAt: number };
+type CachedPayload = RecentSalesResponse & { cachedAt: number };
 
 function getFunctionsBaseUrl(): string | null {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
@@ -27,7 +22,7 @@ function getFunctionsBaseUrl(): string | null {
   return `${supabaseUrl}/functions/v1`;
 }
 
-async function readCache(): Promise<MarketTickerResponse | null> {
+async function readCache(): Promise<RecentSalesResponse | null> {
   try {
     const raw = await AsyncStorage.getItem(CACHE_KEY);
     if (!raw) return null;
@@ -37,7 +32,6 @@ async function readCache(): Promise<MarketTickerResponse | null> {
 
     return {
       items: parsed.items,
-      sources: parsed.sources ?? [],
       updatedAt: parsed.updatedAt,
       fromCache: true,
     };
@@ -46,7 +40,7 @@ async function readCache(): Promise<MarketTickerResponse | null> {
   }
 }
 
-async function writeCache(payload: MarketTickerResponse): Promise<void> {
+async function writeCache(payload: RecentSalesResponse): Promise<void> {
   try {
     const cached: CachedPayload = { ...payload, cachedAt: Date.now() };
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(cached));
@@ -59,7 +53,7 @@ function isFreshCache(cachedAt: number): boolean {
   return Date.now() - cachedAt < CACHE_TTL_MS;
 }
 
-export async function fetchMarketTicker(): Promise<MarketTickerResponse> {
+export async function fetchRecentSales(): Promise<RecentSalesResponse> {
   const baseUrl = getFunctionsBaseUrl();
   const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
@@ -74,19 +68,13 @@ export async function fetchMarketTicker(): Promise<MarketTickerResponse> {
   if (cached && isFreshCache(cached.cachedAt)) {
     return {
       items: cached.items,
-      sources: cached.sources ?? [],
       updatedAt: cached.updatedAt,
       fromCache: true,
     };
   }
 
   if (!baseUrl || !anonKey) {
-    return {
-      items: MARKET_TICKER_FALLBACK,
-      sources: ["fallback"],
-      updatedAt: new Date().toISOString(),
-      isFallback: true,
-    };
+    return { items: [], updatedAt: new Date().toISOString() };
   }
 
   try {
@@ -98,34 +86,28 @@ export async function fetchMarketTicker(): Promise<MarketTickerResponse> {
     });
 
     if (!response.ok) {
-      throw new Error(`Market ticker HTTP ${response.status}`);
+      throw new Error(`Recent sales HTTP ${response.status}`);
     }
 
     const data = (await response.json()) as {
-      items?: MarketTickerItem[];
-      sources?: string[];
+      items?: RecentSaleItem[];
       updatedAt?: string;
     };
 
-    const items = (data.items ?? []).filter((item) => item.price > 0);
-
-    if (!items.length) {
-      throw new Error("Market ticker returned no items");
-    }
-
-    const payload: MarketTickerResponse = {
-      items,
-      sources: data.sources ?? [],
+    const payload: RecentSalesResponse = {
+      items: data.items ?? [],
       updatedAt: data.updatedAt ?? new Date().toISOString(),
     };
 
-    await writeCache(payload);
+    if (payload.items.length) {
+      await writeCache(payload);
+    }
+
     return payload;
   } catch {
     if (cached?.items?.length) {
       return {
         items: cached.items,
-        sources: cached.sources ?? [],
         updatedAt: cached.updatedAt,
         fromCache: true,
       };
@@ -136,11 +118,6 @@ export async function fetchMarketTicker(): Promise<MarketTickerResponse> {
       return stale;
     }
 
-    return {
-      items: MARKET_TICKER_FALLBACK,
-      sources: ["fallback"],
-      updatedAt: new Date().toISOString(),
-      isFallback: true,
-    };
+    return { items: [], updatedAt: new Date().toISOString() };
   }
 }

@@ -24,7 +24,7 @@ export const env = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
 
   platformCommissionRate: Number(
-    optionalEnv("PLATFORM_COMMISSION_RATE", "0.03")
+    optionalEnv("PLATFORM_COMMISSION_RATE", "0.07")
   ),
 
   stripeConnectRefreshUrl: optionalEnv(

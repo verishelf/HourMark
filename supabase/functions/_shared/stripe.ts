@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@17.7.0?target=deno";
 
-export const COMMISSION_RATE = 0.03;
+/** @deprecated Use DEFAULT_SELLER_FEE_RATE from fees.ts; kept for legacy imports. */
+export const COMMISSION_RATE = 0.07;
 
 export function getStripeClient() {
   const secretKey = Deno.env.get("STRIPE_SECRET_KEY")?.trim();
