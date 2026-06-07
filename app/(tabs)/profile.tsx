@@ -13,6 +13,7 @@ import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileTabs, useProfileTabStyles } from "@/components/ProfileTabs";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
+import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
@@ -29,6 +30,7 @@ import { subscribeContentRefresh, notifyContentRefresh } from "@/lib/contentRefr
 import { fetchWithRetry } from "@/lib/fetchWithRetry";
 import { deletePost, getUserPosts } from "@/services/posts";
 import { getOrders } from "@/services/payments";
+import { cancelOrder, canCancelOrder } from "@/services/escrow";
 import { deleteAccount, signOut } from "@/services/auth";
 import { getFollowCounts } from "@/services/follows";
 import {
@@ -120,13 +122,16 @@ function ListingRow({
 function OrderRow({
   order,
   styles,
+  onCancel,
 }: {
   order: Order;
   styles: ReturnType<typeof createProfileStyles>;
+  onCancel?: (order: Order) => void;
 }) {
   const router = useRouter();
   const listing = order.listing;
   const coverImage = getListingCoverImage(listing?.images);
+  const cancellable = canCancelOrder(order);
   const statusVariant =
     order.status === "completed" ||
     order.status === "delivered" ||
@@ -137,8 +142,11 @@ function OrderRow({
         ? "warning"
         : "muted";
 
-  return (
-    <Pressable onPress={() => router.push(`/order/${order.id}`)} style={styles.listCard}>
+  const card = (
+    <Pressable
+      onPress={() => router.push(`/order/${order.id}`)}
+      style={({ pressed }) => [styles.listCard, styles.orderListCard, pressed && styles.pressed]}
+    >
       <View style={styles.listRow}>
         {coverImage ? (
           <Image source={{ uri: coverImage }} style={styles.listThumb} contentFit="cover" />
@@ -156,6 +164,16 @@ function OrderRow({
       </View>
     </Pressable>
   );
+
+  if (cancellable && onCancel) {
+    return (
+      <SwipeToDeleteRow deleteLabel="Cancel" onDelete={() => onCancel(order)}>
+        {card}
+      </SwipeToDeleteRow>
+    );
+  }
+
+  return card;
 }
 
 export default function ProfileScreen() {
@@ -295,6 +313,35 @@ export default function ProfileScreen() {
         Alert.alert("Error", e instanceof Error ? e.message : "Failed to delete post");
       }
     })();
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    Alert.alert(
+      "Cancel order?",
+      order.payment_method === "wire_transfer"
+        ? "This will cancel your wire transfer request and return the listing to the marketplace."
+        : "This will cancel checkout before payment is processed.",
+      [
+        { text: "Keep order", style: "cancel" },
+        {
+          text: "Cancel order",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                const status = await cancelOrder(order.id);
+                setOrders((prev) =>
+                  prev.map((o) => (o.id === order.id ? { ...o, status } : o))
+                );
+                notifyContentRefresh();
+              } catch (e) {
+                Alert.alert("Error", e instanceof Error ? e.message : "Failed to cancel order");
+              }
+            })();
+          },
+        },
+      ]
+    );
   };
 
   const handleDeleteAccount = () => {
@@ -565,7 +612,16 @@ export default function ProfileScreen() {
 
           {(!dataLoading || hasLoadedOnce) && tab === "orders" &&
             (orders.length ? (
-              orders.map((order) => <OrderRow key={order.id} order={order} styles={styles} />)
+              <View style={styles.ordersList}>
+                {orders.map((order) => (
+                  <OrderRow
+                    key={order.id}
+                    order={order}
+                    styles={styles}
+                    onCancel={handleCancelOrder}
+                  />
+                ))}
+              </View>
             ) : (
               <View style={emptyStateSectionStyle}>
                 <EmptyState
@@ -596,12 +652,6 @@ export default function ProfileScreen() {
             icon="search-outline"
             subtitle="Post what you're hunting for."
             onPress={() => router.push("/grails")}
-          />
-          <SettingsRow
-            label="Watch Scanner"
-            icon="scan-outline"
-            subtitle="Identify watches and see Crownly comps."
-            onPress={() => router.push("/scanner")}
           />
           <SettingsRow
             label="Seller Verification"
@@ -697,6 +747,12 @@ function createProfileStyles() {
     backgroundColor: Colors.card,
     marginBottom: CARD_GAP,
     overflow: "hidden",
+  },
+  ordersList: {
+    gap: SPACING.lg,
+  },
+  orderListCard: {
+    marginBottom: 0,
   },
   listRow: {
     flexDirection: "row",

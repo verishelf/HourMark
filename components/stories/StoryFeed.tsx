@@ -31,6 +31,7 @@ export function StoryFeed({ showCategories = true, initialCategory = null }: Pro
 
   return (
     <FlashList
+      style={{ flex: 1 }}
       data={stories}
       keyExtractor={(item) => item.id}
       estimatedItemSize={320}

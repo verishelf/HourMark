@@ -116,8 +116,8 @@ export default function SettingsScreen() {
           <SettingsRow
             label="Notifications"
             icon="notifications-outline"
-            subtitle="Offers, alerts, and order updates."
-            onPress={() => router.push("/notifications")}
+            subtitle="Push and alert preferences."
+            onPress={() => router.push("/profile/notification-settings")}
           />
           <SettingsRow
             label="Serial lookup"

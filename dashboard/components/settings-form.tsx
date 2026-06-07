@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,29 @@ export function SettingsForm({
     JSON.stringify(settings?.authentication_rules ?? { min_trust_score: 70, require_serial: true }, null, 2)
   );
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("fees");
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!settings) return;
+    setCommission(settings.commission_percentage ?? 5);
+    setSellerFee(settings.seller_fee_percentage ?? 7);
+    setBuyerFee(settings.buyer_fee_percentage ?? 0);
+    setWelcomeTemplate(
+      settings.email_templates?.welcome ??
+        "Welcome to Crownly, the premier luxury watch marketplace."
+    );
+    setAuthRules(
+      JSON.stringify(settings.authentication_rules ?? { min_trust_score: 70, require_serial: true }, null, 2)
+    );
+  }, [settings]);
+
+  useEffect(() => {
+    const activeTrigger = tabScrollRef.current?.querySelector<HTMLElement>(
+      `[data-state="active"]`
+    );
+    activeTrigger?.scrollIntoView({ inline: "nearest", block: "nearest" });
+  }, [activeTab]);
 
   async function handleSave(section: string, data: Record<string, unknown>) {
     setSaving(true);
@@ -41,10 +64,13 @@ export function SettingsForm({
   }
 
   return (
-    <Tabs defaultValue="fees">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="-mx-4 sm:-mx-6 md:mx-0">
         <div className="w-full rounded-lg bg-muted p-1">
-          <div className="overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:overflow-visible">
+          <div
+            ref={tabScrollRef}
+            className="overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:overflow-visible"
+          >
             <TabsList className="inline-flex h-auto w-max flex-nowrap justify-start gap-1 bg-transparent p-0 shadow-none md:h-9 md:w-full md:justify-center">
               <TabsTrigger value="fees" className="shrink-0">
                 Fees & Commission
@@ -66,7 +92,8 @@ export function SettingsForm({
         </div>
       </div>
 
-      <TabsContent value="fees">
+      <div className="mt-4 w-full min-w-0">
+      <TabsContent value="fees" forceMount className="mt-0 data-[state=inactive]:hidden">
         <Card>
           <CardHeader>
             <CardTitle>Fees & Commission</CardTitle>
@@ -104,7 +131,7 @@ export function SettingsForm({
         </Card>
       </TabsContent>
 
-      <TabsContent value="email">
+      <TabsContent value="email" forceMount className="mt-0 data-[state=inactive]:hidden">
         <Card>
           <CardHeader>
             <CardTitle>Email Templates</CardTitle>
@@ -127,7 +154,7 @@ export function SettingsForm({
         </Card>
       </TabsContent>
 
-      <TabsContent value="auth">
+      <TabsContent value="auth" forceMount className="mt-0 data-[state=inactive]:hidden">
         <Card>
           <CardHeader>
             <CardTitle>Authentication Rules</CardTitle>
@@ -153,11 +180,11 @@ export function SettingsForm({
         </Card>
       </TabsContent>
 
-      <TabsContent value="social">
+      <TabsContent value="social" forceMount className="mt-0 data-[state=inactive]:hidden">
         <SocialCredentialsForm credentials={socialCredentials} adminId={adminId} />
       </TabsContent>
 
-      <TabsContent value="platform">
+      <TabsContent value="platform" forceMount className="mt-0 data-[state=inactive]:hidden">
         <Card>
           <CardHeader>
             <CardTitle>Platform Settings</CardTitle>
@@ -171,6 +198,7 @@ export function SettingsForm({
           </CardContent>
         </Card>
       </TabsContent>
+      </div>
     </Tabs>
   );
 }

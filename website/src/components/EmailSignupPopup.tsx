@@ -1,29 +1,48 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { EmailSignupForm } from "@/components/EmailSignupForm";
 
 const STORAGE_KEY = "crownly_email_popup_seen";
 const SHOW_DELAY_MS = 3000;
 
+function hasSeenPopup(): boolean {
+  try {
+    return Boolean(window.localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return false;
+  }
+}
+
+function markPopupSeen(value: "dismissed" | "subscribed") {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    // Storage may be blocked in private browsing — still allow the popup UX.
+  }
+}
+
 export function EmailSignupPopup() {
-  const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const dismiss = useCallback(() => {
-    window.localStorage.setItem(STORAGE_KEY, "dismissed");
+    markPopupSeen("dismissed");
     setOpen(false);
   }, []);
 
   useEffect(() => {
-    if (pathname !== "/") return;
-    if (window.localStorage.getItem(STORAGE_KEY)) return;
+    if (!mounted || hasSeenPopup()) return;
 
     const timer = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [pathname]);
+  }, [mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -41,16 +60,17 @@ export function EmailSignupPopup() {
   }, [open, dismiss]);
 
   function handleSuccess() {
-    window.localStorage.setItem(STORAGE_KEY, "subscribed");
+    markPopupSeen("subscribed");
     window.setTimeout(() => setOpen(false), 1800);
   }
 
-  if (pathname !== "/") return null;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.div
+          key="email-signup-popup"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -122,6 +142,7 @@ export function EmailSignupPopup() {
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
