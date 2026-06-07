@@ -35,7 +35,7 @@ import {
   updateCampaign,
 } from "@/actions/campaigns";
 import { formatDate } from "@/lib/utils";
-import type { CampaignAudience, EmailCampaign, EmailCampaignTemplate } from "@/types/database";
+import type { EmailCampaign, EmailCampaignTemplate } from "@/types/database";
 
 const EMPTY_FORM: CampaignFormState = {
   subject: "",

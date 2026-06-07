@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import type { StoryAnalytics } from "@/types/database";
 
+type TrendingStory = StoryAnalytics["trending"][number];
+
 export function StoryAnalyticsPanel({ analytics }: { analytics: StoryAnalytics }) {
   return (
     <div className="space-y-6">
@@ -21,7 +23,7 @@ export function StoryAnalyticsPanel({ analytics }: { analytics: StoryAnalytics }
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {analytics.trending.map((s) => (
+            {analytics.trending.map((s: TrendingStory) => (
               <div key={s.slug} className="flex items-center justify-between border-b border-border pb-2 text-sm">
                 <span className="font-medium">{s.title}</span>
                 <span className="text-muted-foreground">{s.view_count} views · score {s.engagement_score}</span>
