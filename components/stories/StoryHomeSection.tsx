@@ -1,18 +1,24 @@
-import { useEffect, useState } from "react";
-import { ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { FeatureScreenScaffold } from "@/components/FeatureScreenScaffold";
+import { useCallback, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import { StoryFeaturedCarousel } from "@/components/stories/StoryFeaturedCarousel";
-import { getFeaturedStories } from "@/services/stories";
+import { getHomeStories } from "@/services/stories";
 import type { StoryCard } from "@/types";
 
 export function StoryHomeSection() {
   const router = useRouter();
   const [stories, setStories] = useState<StoryCard[]>([]);
 
-  useEffect(() => {
-    getFeaturedStories(5).then(setStories).catch(() => setStories([]));
+  const loadStories = useCallback(() => {
+    getHomeStories(5)
+      .then(setStories)
+      .catch(() => setStories([]));
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadStories();
+    }, [loadStories])
+  );
 
   if (stories.length === 0) return null;
 
@@ -20,7 +26,6 @@ export function StoryHomeSection() {
     <StoryFeaturedCarousel
       stories={stories}
       onSeeAll={() => router.push("/stories")}
-      onStoryPress={(slug) => router.push(`/stories/${slug}`)}
     />
   );
 }

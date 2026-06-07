@@ -61,6 +61,21 @@ export async function getFeaturedStories(limit = 5): Promise<StoryCard[]> {
   return (data ?? []).map((row) => mapStoryCard(row as Record<string, unknown>));
 }
 
+/** Latest published stories for the home carousel (featured first). */
+export async function getHomeStories(limit = 5): Promise<StoryCard[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from("stories")
+    .select(STORY_SELECT)
+    .eq("status", "published")
+    .order("is_featured", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw toUserFacingError(error);
+  return (data ?? []).map((row) => mapStoryCard(row as Record<string, unknown>));
+}
+
 export async function getStoriesFeed(opts: {
   limit?: number;
   cursor?: { published_at: string; id: string } | null;
