@@ -42,24 +42,28 @@ export function SettingsForm({
 
   return (
     <Tabs defaultValue="fees">
-      <div className="-mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:overflow-visible md:px-0 md:pb-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        <TabsList className="inline-flex h-auto w-max flex-nowrap justify-start gap-1 md:h-9 md:w-full md:justify-center">
-          <TabsTrigger value="fees" className="shrink-0">
-            Fees & Commission
-          </TabsTrigger>
-          <TabsTrigger value="email" className="shrink-0">
-            Email Templates
-          </TabsTrigger>
-          <TabsTrigger value="auth" className="shrink-0">
-            Authentication Rules
-          </TabsTrigger>
-          <TabsTrigger value="social" className="shrink-0">
-            Social Media API Keys
-          </TabsTrigger>
-          <TabsTrigger value="platform" className="shrink-0">
-            Platform Settings
-          </TabsTrigger>
-        </TabsList>
+      <div className="-mx-4 sm:-mx-6 md:mx-0">
+        <div className="w-full rounded-lg bg-muted p-1">
+          <div className="overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:overflow-visible">
+            <TabsList className="inline-flex h-auto w-max flex-nowrap justify-start gap-1 bg-transparent p-0 shadow-none md:h-9 md:w-full md:justify-center">
+              <TabsTrigger value="fees" className="shrink-0">
+                Fees & Commission
+              </TabsTrigger>
+              <TabsTrigger value="email" className="shrink-0">
+                Email Templates
+              </TabsTrigger>
+              <TabsTrigger value="auth" className="shrink-0">
+                Authentication Rules
+              </TabsTrigger>
+              <TabsTrigger value="social" className="shrink-0">
+                Social Media API Keys
+              </TabsTrigger>
+              <TabsTrigger value="platform" className="shrink-0">
+                Platform Settings
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
       </div>
 
       <TabsContent value="fees">
