@@ -9,7 +9,7 @@ import { AuthorCard } from "@/components/stories/AuthorCard";
 import { RelatedStoriesRow } from "@/components/stories/RelatedStoriesRow";
 import { SuggestedWatchesRow } from "@/components/stories/SuggestedWatchesRow";
 import { Colors } from "@/constants/colors";
-import { SPACING } from "@/constants/layout";
+import { SPACING, STORY_GUTTER } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useAuth } from "@/hooks/useAuth";
 import { useStoryEngagement } from "@/hooks/useStoryEngagement";
@@ -105,8 +105,8 @@ export default function StoryDetailScreen() {
   }
 
   return (
-    <FeatureScreenScaffold scroll={false}>
-      <ScrollView onScroll={handleScroll} scrollEventThrottle={200}>
+    <FeatureScreenScaffold scroll={false} contentContainerStyle={{ flex: 1, paddingHorizontal: 0 }}>
+      <ScrollView onScroll={handleScroll} scrollEventThrottle={200} showsVerticalScrollIndicator={false}>
         <StoryHero
           imageUrl={story.hero_image_url}
           title={story.title}
@@ -129,7 +129,7 @@ export default function StoryDetailScreen() {
         <StoryArticleBody blocks={story.body} />
         {story.author ? <AuthorCard author={story.author} /> : null}
         {story.source_attribution ? (
-          <Text style={{ ...Typography.caption, color: Colors.textMuted, paddingHorizontal: SPACING.screen, marginTop: SPACING.md }}>
+          <Text style={{ ...Typography.caption, color: Colors.textMuted, paddingHorizontal: STORY_GUTTER, marginTop: SPACING.md }}>
             Source: {story.source_attribution}
           </Text>
         ) : null}

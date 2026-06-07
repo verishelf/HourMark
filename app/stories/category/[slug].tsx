@@ -9,7 +9,7 @@ export default function StoryCategoryScreen() {
   const category = STORY_CATEGORIES.find((c) => c.slug === slug);
 
   return (
-    <FeatureScreenScaffold title={category?.name ?? "Category"} scroll={false}>
+    <FeatureScreenScaffold title={category?.name ?? "Category"} scroll={false} contentContainerStyle={{ flex: 1, paddingHorizontal: 0 }}>
       <View style={{ flex: 1 }}>
         <StoryFeed showCategories={false} initialCategory={slug} />
       </View>

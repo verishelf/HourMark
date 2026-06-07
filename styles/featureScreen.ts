@@ -18,6 +18,9 @@ export function createFeatureScreenStyles() {
       minHeight: 44,
       gap: 8,
     },
+    topBarWithHeader: {
+      paddingBottom: 0,
+    },
     topBarLeft: {
       flex: 1,
       flexDirection: "row",

@@ -81,7 +81,7 @@ export function WebStoryArticle({ blocks }: { blocks: StoryBlock[] }) {
           );
         }
         return (
-          <p key={i} className="mb-4 text-base leading-relaxed text-[var(--muted)]">
+          <p key={i} className="mb-6 indent-6 leading-relaxed text-[var(--muted)] last:mb-0">
             {block.text}
           </p>
         );

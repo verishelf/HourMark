@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { StoryImageField } from "@/components/stories/story-image-field";
 import type { StoryBlock } from "@/types/database";
 
 type Props = {
@@ -26,7 +27,7 @@ export function StoryBlockEditor({ blocks, onChange }: Props) {
         : type === "pull_quote"
           ? { type: "pull_quote", text: "" }
           : type === "image"
-            ? { type: "image", url: "" }
+            ? { type: "image", url: "", caption: "" }
             : { type: "paragraph", text: "" };
     onChange([...blocks, block]);
   };
@@ -34,6 +35,9 @@ export function StoryBlockEditor({ blocks, onChange }: Props) {
   return (
     <div className="space-y-4 rounded-lg border border-border p-4">
       <p className="text-sm font-medium">Article body</p>
+      <p className="text-xs text-muted-foreground">
+        Add paragraphs, headings, pull quotes, and photos. Images can be uploaded or pasted as URLs.
+      </p>
       {blocks.map((block, i) => (
         <div key={i} className="space-y-2 rounded-md border border-border/60 p-3">
           <div className="flex items-center justify-between">
@@ -58,11 +62,16 @@ export function StoryBlockEditor({ blocks, onChange }: Props) {
           ) : null}
           {block.type === "image" ? (
             <>
-              <Input value={block.url} onChange={(e) => update(i, { ...block, url: e.target.value })} placeholder="Image URL" />
+              <StoryImageField
+                label="Photo"
+                value={block.url}
+                onChange={(url) => update(i, { ...block, url })}
+                placeholder="Image URL or upload"
+              />
               <Input
                 value={block.caption ?? ""}
                 onChange={(e) => update(i, { ...block, caption: e.target.value })}
-                placeholder="Caption"
+                placeholder="Caption (optional)"
               />
             </>
           ) : null}
@@ -72,7 +81,7 @@ export function StoryBlockEditor({ blocks, onChange }: Props) {
         <Button type="button" variant="outline" size="sm" onClick={() => add("paragraph")}>+ Paragraph</Button>
         <Button type="button" variant="outline" size="sm" onClick={() => add("heading")}>+ Heading</Button>
         <Button type="button" variant="outline" size="sm" onClick={() => add("pull_quote")}>+ Pull quote</Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => add("image")}>+ Image</Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => add("image")}>+ Photo</Button>
       </div>
     </div>
   );

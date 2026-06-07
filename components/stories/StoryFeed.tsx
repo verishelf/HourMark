@@ -34,7 +34,7 @@ export function StoryFeed({ showCategories = true, initialCategory = null }: Pro
       data={stories}
       keyExtractor={(item) => item.id}
       estimatedItemSize={320}
-      contentContainerStyle={{ paddingHorizontal: SPACING.screen, paddingBottom: 120 }}
+      contentContainerStyle={{ paddingHorizontal: SPACING.sm, paddingBottom: 120 }}
       ListHeaderComponent={
         showCategories ? <StoryCategoryBar selected={category} onSelect={setCategory} /> : null
       }

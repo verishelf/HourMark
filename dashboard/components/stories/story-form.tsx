@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StoryBlockEditor } from "@/components/stories/story-block-editor";
+import { StoryImageField } from "@/components/stories/story-image-field";
 import { createStory, updateStory, publishStory } from "@/actions/stories";
 import type { StoryBlock } from "@/types/database";
 
@@ -100,8 +101,12 @@ export function StoryForm({ adminId, categories, authors, story }: Props) {
         <Input id="subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="hero">Hero Image URL</Label>
-        <Input id="hero" value={heroUrl} onChange={(e) => setHeroUrl(e.target.value)} />
+        <StoryImageField
+          label="Hero Image"
+          value={heroUrl}
+          onChange={setHeroUrl}
+          placeholder="Hero image URL or upload"
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">

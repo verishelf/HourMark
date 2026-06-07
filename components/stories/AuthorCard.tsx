@@ -2,7 +2,7 @@ import { Text, View, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
-import { SPACING, RADIUS } from "@/constants/layout";
+import { SPACING, RADIUS, STORY_GUTTER } from "@/constants/layout";
 import type { Author } from "@/types";
 
 type Props = {
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     gap: SPACING.md,
-    marginHorizontal: SPACING.screen,
+    marginHorizontal: STORY_GUTTER,
     marginTop: SPACING.lg,
     padding: SPACING.md,
     borderRadius: RADIUS.md,

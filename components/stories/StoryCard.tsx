@@ -31,11 +31,12 @@ function createStyles() {
       borderWidth: 1,
       borderColor: Colors.border,
       overflow: "hidden",
-      marginBottom: SPACING.md,
+      marginBottom: SPACING.lg,
+      width: "100%",
     },
     featuredCard: {
       borderColor: Colors.gold,
-      width: 280,
+      width: 300,
       marginRight: SPACING.md,
     },
     hero: {
@@ -46,7 +47,8 @@ function createStyles() {
       aspectRatio: 16 / 9,
     },
     content: {
-      padding: SPACING.md,
+      padding: SPACING.lg,
+      paddingTop: SPACING.md,
     },
     categoryTag: {
       alignSelf: "flex-start",

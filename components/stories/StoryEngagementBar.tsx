@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { Colors } from "@/constants/colors";
 import { STORY_WEB_BASE } from "@/constants/storyCategories";
 import { Typography } from "@/constants/typography";
-import { SPACING } from "@/constants/layout";
+import { SPACING, STORY_GUTTER } from "@/constants/layout";
 import { recordStoryShare } from "@/services/storyEngagement";
 
 type Props = {
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: SPACING.screen,
+    paddingHorizontal: STORY_GUTTER,
     paddingVertical: SPACING.md,
     borderTopWidth: 1,
     borderBottomWidth: 1,

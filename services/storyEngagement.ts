@@ -1,7 +1,11 @@
-import { trackEvent } from "@/lib/analytics";
+import { logAnalyticsEvent } from "@/lib/analytics";
 import { toUserFacingError } from "@/lib/supabaseErrors";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { StoryComment } from "@/types";
+
+function trackStoryEvent(name: string, params?: Record<string, string | number>) {
+  void logAnalyticsEvent(name, params);
+}
 
 export async function toggleStoryLike(storyId: string, userId: string): Promise<boolean> {
   if (!isSupabaseConfigured) return false;
@@ -21,7 +25,7 @@ export async function toggleStoryLike(storyId: string, userId: string): Promise<
 
   const { error } = await supabase.from("story_likes").insert({ story_id: storyId, user_id: userId });
   if (error) throw toUserFacingError(error);
-  trackEvent("story_like", { story_id: storyId });
+  trackStoryEvent("story_like", { story_id: storyId });
   return true;
 }
 
@@ -43,7 +47,7 @@ export async function toggleStoryBookmark(storyId: string, userId: string): Prom
 
   const { error } = await supabase.from("story_bookmarks").insert({ story_id: storyId, user_id: userId });
   if (error) throw toUserFacingError(error);
-  trackEvent("story_save", { story_id: storyId });
+  trackStoryEvent("story_save", { story_id: storyId });
   return true;
 }
 
@@ -59,7 +63,7 @@ export async function recordStoryShare(
     channel,
   });
   if (error) throw toUserFacingError(error);
-  trackEvent("story_share", { story_id: storyId, channel });
+  trackStoryEvent("story_share", { story_id: storyId, channel });
 }
 
 export async function recordStoryView(
@@ -68,34 +72,38 @@ export async function recordStoryView(
   sessionId?: string
 ): Promise<string | null> {
   if (!isSupabaseConfigured) return null;
-  const { data, error } = await supabase
-    .from("story_views")
-    .insert({
-      story_id: storyId,
-      user_id: userId ?? null,
-      session_id: sessionId ?? null,
-    })
-    .select("id")
-    .single();
-  if (error) throw toUserFacingError(error);
-  trackEvent("story_view", { story_id: storyId });
-  return data?.id ?? null;
+  try {
+    const { data, error } = await supabase
+      .from("story_views")
+      .insert({
+        story_id: storyId,
+        user_id: userId ?? null,
+        session_id: sessionId ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) return null;
+    trackStoryEvent("story_view", { story_id: storyId });
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function updateStoryViewProgress(
   viewId: string,
   scrollDepthPct: number
 ): Promise<void> {
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured || !viewId) return;
   const updates: { scroll_depth_pct: number; completed_at?: string } = {
     scroll_depth_pct: Math.min(100, Math.max(0, scrollDepthPct)),
   };
   if (scrollDepthPct >= 90) {
     updates.completed_at = new Date().toISOString();
-    trackEvent("story_complete", { view_id: viewId });
+    trackStoryEvent("story_complete", { view_id: viewId });
   }
   const { error } = await supabase.from("story_views").update(updates).eq("id", viewId);
-  if (error) throw toUserFacingError(error);
+  if (error) return;
 }
 
 export async function getStoryComments(storyId: string): Promise<StoryComment[]> {

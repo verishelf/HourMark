@@ -2,12 +2,25 @@ import { StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
-import { SPACING, RADIUS } from "@/constants/layout";
+import { SPACING, RADIUS, STORY_GUTTER } from "@/constants/layout";
 import type { StoryBlock } from "@/types";
+
+const PARAGRAPH_INDENT = "\u2003\u2003";
 
 type Props = {
   blocks: StoryBlock[];
 };
+
+function StoryParagraph({ text }: { text: string }) {
+  return (
+    <View style={styles.paragraphWrap}>
+      <Text style={styles.paragraph}>
+        {PARAGRAPH_INDENT}
+        {text}
+      </Text>
+    </View>
+  );
+}
 
 export function StoryArticleBody({ blocks }: Props) {
   return (
@@ -43,11 +56,7 @@ export function StoryArticleBody({ blocks }: Props) {
               </View>
             );
           default:
-            return (
-              <Text key={i} style={styles.paragraph}>
-                {block.text}
-              </Text>
-            );
+            return <StoryParagraph key={i} text={block.text} />;
         }
       })}
     </View>
@@ -55,12 +64,18 @@ export function StoryArticleBody({ blocks }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: SPACING.screen, paddingVertical: SPACING.lg },
+  container: {
+    paddingHorizontal: STORY_GUTTER,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  paragraphWrap: {
+    marginBottom: SPACING.xl,
+  },
   paragraph: {
     ...Typography.body,
     color: Colors.textSecondary,
-    lineHeight: 26,
-    marginBottom: SPACING.md,
+    lineHeight: 28,
   },
   h2: {
     ...Typography.h2,
@@ -100,8 +115,11 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 8,
   },
-  imageWrap: { marginVertical: SPACING.lg },
-  image: { width: "100%", aspectRatio: 16 / 10, borderRadius: RADIUS.md },
+  imageWrap: {
+    marginVertical: SPACING.lg,
+    marginHorizontal: -STORY_GUTTER,
+  },
+  image: { width: "100%", aspectRatio: 16 / 10 },
   caption: {
     ...Typography.caption,
     color: Colors.textMuted,

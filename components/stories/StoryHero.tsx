@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
-import { SPACING } from "@/constants/layout";
+import { SPACING, STORY_GUTTER } from "@/constants/layout";
 
 type Props = {
   imageUrl: string;
@@ -45,7 +45,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: SPACING.lg,
+    paddingHorizontal: STORY_GUTTER,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.lg,
   },
   tag: {
     alignSelf: "flex-start",
