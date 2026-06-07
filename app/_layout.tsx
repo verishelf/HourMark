@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { AnalyticsNavigationTracker } from "@/components/AnalyticsNavigationTracker";
+import { PushNotificationRouter } from "@/components/PushNotificationRouter";
 import { AuthNavigationGuard } from "@/components/AuthNavigationGuard";
 import { setAnalyticsUserId } from "@/lib/analytics";
 import { ThemeProvider, useTheme } from "@/hooks/useTheme";
@@ -28,6 +29,7 @@ function RootNavigation() {
       >
         <StatusBar style={colorScheme === "light" ? "dark" : "light"} />
         <AnalyticsNavigationTracker />
+        <PushNotificationRouter />
         <AuthNavigationGuard />
         <Stack
           screenOptions={{

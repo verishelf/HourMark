@@ -54,7 +54,12 @@ export default function NotificationsScreen() {
 
     const offerId = n.data?.offer_id as string | undefined;
     const listingId = n.data?.listing_id as string | undefined;
+    const url = n.data?.url as string | undefined;
 
+    if (url) {
+      router.push((url.startsWith("/") ? url : `/${url}`) as Parameters<typeof router.push>[0]);
+      return;
+    }
     if (offerId && n.type.includes("offer")) {
       router.push(`/offer/${offerId}`);
       return;

@@ -32,6 +32,8 @@ type Permission =
   | "campaigns:write"
   | "stories:read"
   | "stories:write"
+  | "push:read"
+  | "push:write"
   | "analytics:read"
   | "settings:read"
   | "settings:write"
@@ -48,6 +50,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "support:read", "support:write",
     "campaigns:read", "campaigns:write",
     "stories:read", "stories:write",
+    "push:read", "push:write",
     "analytics:read",
     "settings:read", "settings:write",
     "audit:read",
@@ -59,6 +62,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "support:read", "support:write",
     "campaigns:read", "campaigns:write",
     "stories:read", "stories:write",
+    "push:read", "push:write",
     "analytics:read",
   ],
   auth_inspector: [
@@ -93,6 +97,7 @@ export function canAccessRoute(role: AdminRole | null | undefined, route: string
     "/leads": "leads:read",
     "/campaigns": "campaigns:read",
     "/stories": "stories:read",
+    "/push-notifications": "push:read",
     "/authentication": "auth:read",
     "/transactions": "transactions:read",
     "/revenue": "revenue:read",

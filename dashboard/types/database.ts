@@ -223,6 +223,38 @@ export type ChartDataPoint = {
   label?: string;
 };
 
+export type PushNotificationAudience =
+  | "sellers"
+  | "buyers"
+  | "dealers"
+  | "new_leads"
+  | "web_signups"
+  | "all";
+
+export type PushNotificationCampaignStatus =
+  | "draft"
+  | "scheduled"
+  | "sending"
+  | "sent"
+  | "cancelled";
+
+export type PushNotificationCampaign = {
+  id: string;
+  title: string;
+  body: string;
+  audience: PushNotificationAudience;
+  deep_link: string | null;
+  status: PushNotificationCampaignStatus;
+  scheduled_at: string | null;
+  sent_at: string | null;
+  recipient_count: number;
+  success_count: number;
+  failure_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type {
   Story,
   StoryStatus,

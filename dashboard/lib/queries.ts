@@ -409,3 +409,12 @@ export async function getCelebrityProfiles() {
   const { data } = await supabase.from("celebrity_profiles").select("*").order("name");
   return data ?? [];
 }
+
+export async function getPushNotificationCampaigns() {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("push_notification_campaigns")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}

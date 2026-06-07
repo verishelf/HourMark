@@ -19,6 +19,7 @@ import {
   Crown,
   X,
   BookOpen,
+  BellRing,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/leads", label: "Seller Leads", icon: UserPlus },
   { href: "/campaigns", label: "Email Campaigns", icon: Mail },
   { href: "/stories", label: "Stories", icon: BookOpen },
+  { href: "/push-notifications", label: "Push Notifications", icon: BellRing },
   { href: "/authentication", label: "Authentication", icon: ShieldCheck },
   { href: "/transactions", label: "Transactions", icon: CreditCard },
   { href: "/revenue", label: "Revenue", icon: DollarSign },
