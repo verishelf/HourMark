@@ -58,3 +58,21 @@ export async function featureListing(adminId: string, listingId: string, feature
   revalidatePath("/listings");
   return { success: true };
 }
+
+export async function deleteListing(adminId: string, listingId: string) {
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("listings").delete().eq("id", listingId);
+
+  if (error) return { error: error.message };
+
+  await logAdminAction({
+    adminId,
+    action: "delete_listing",
+    resourceType: "listing",
+    resourceId: listingId,
+  });
+
+  revalidatePath("/listings");
+  revalidatePath("/");
+  return { success: true };
+}
