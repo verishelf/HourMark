@@ -10,6 +10,8 @@ export type ColorPalette = {
   overlay: string;
   success: string;
   error: string;
+  gold: string;
+  goldMuted: string;
 };
 
 export const DarkColors: ColorPalette = {
@@ -24,6 +26,8 @@ export const DarkColors: ColorPalette = {
   overlay: "rgba(0, 0, 0, 0.7)",
   success: "#22C55E",
   error: "#EF4444",
+  gold: "#C9A962",
+  goldMuted: "rgba(201, 169, 98, 0.15)",
 };
 
 export const LightColors: ColorPalette = {
@@ -38,6 +42,8 @@ export const LightColors: ColorPalette = {
   overlay: "rgba(0, 0, 0, 0.45)",
   success: "#16A34A",
   error: "#DC2626",
+  gold: "#C9A962",
+  goldMuted: "rgba(201, 169, 98, 0.12)",
 };
 
 /** Active palette — updated when the user switches theme. */

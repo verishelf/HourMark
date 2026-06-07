@@ -42,6 +42,7 @@ export const SITE = {
 
 export const SITE_ROUTES = [
   { path: "/", changeFrequency: "weekly" as const, priority: 1 },
+  { path: "/stories", changeFrequency: "daily" as const, priority: 0.8 },
   { path: "/privacy", changeFrequency: "monthly" as const, priority: 0.3 },
   { path: "/terms", changeFrequency: "monthly" as const, priority: 0.3 },
 ];

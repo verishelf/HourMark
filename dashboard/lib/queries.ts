@@ -363,3 +363,49 @@ export async function getRevenueMetrics() {
     topBrands: revenueByBrand.slice(0, 5).map((b) => ({ date: b.brand, value: b.revenue })),
   };
 }
+
+export async function getAdminStories() {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("stories")
+    .select("*, category:story_categories(name, slug), author:authors(name)")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getAdminStory(id: string) {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("stories")
+    .select("*, category:story_categories(*), author:authors(*)")
+    .eq("id", id)
+    .single();
+  return data;
+}
+
+export async function getStoryCategories() {
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("story_categories").select("*").order("sort_order");
+  return data ?? [];
+}
+
+export async function getStorySubmissions() {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("story_submissions")
+    .select("*, user:users!user_id(username, full_name, avatar_url)")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getAdminAuthors() {
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("authors").select("*").order("name");
+  return data ?? [];
+}
+
+export async function getCelebrityProfiles() {
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("celebrity_profiles").select("*").order("name");
+  return data ?? [];
+}

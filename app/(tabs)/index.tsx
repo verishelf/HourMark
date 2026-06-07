@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import { HomeFixedHeader } from "@/components/HomeFixedHeader";
 import { HomeQuickActions } from "@/components/HomeQuickActions";
 import { TrustAssuranceCarousel } from "@/components/TrustAssuranceCarousel";
+import { StoryHomeSection } from "@/components/stories/StoryHomeSection";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { FilterChip } from "@/components/FilterChip";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
@@ -206,6 +207,8 @@ export default function HomeScreen() {
         )}
 
         <TrustAssuranceCarousel />
+
+        <StoryHomeSection />
 
         {followingListings.length > 0 ? (
           <View style={{ paddingHorizontal: SPACING.screen, marginTop: 24 }}>

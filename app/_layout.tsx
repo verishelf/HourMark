@@ -109,6 +109,13 @@ function RootNavigation() {
           <Stack.Screen name="collection/add" options={{ animation: "slide_from_bottom", presentation: "modal" }} />
           <Stack.Screen name="alerts/index" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="grails/index" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="stories/index" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="stories/[slug]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="stories/category/[slug]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="stories/submit" options={{ animation: "slide_from_bottom", presentation: "modal" }} />
+          <Stack.Screen name="stories/interests" options={{ animation: "slide_from_bottom", presentation: "modal" }} />
+          <Stack.Screen name="stories/profile/[slug]" options={{ animation: "slide_from_right" }} />
+          <Stack.Screen name="stories/saved" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="ref/[ref]" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="passport/[code]" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="passport/lookup" options={{ animation: "slide_from_right" }} />

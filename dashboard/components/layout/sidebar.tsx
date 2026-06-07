@@ -18,6 +18,7 @@ import {
   Settings,
   Crown,
   X,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/users", label: "Users", icon: Users },
   { href: "/leads", label: "Seller Leads", icon: UserPlus },
   { href: "/campaigns", label: "Email Campaigns", icon: Mail },
+  { href: "/stories", label: "Stories", icon: BookOpen },
   { href: "/authentication", label: "Authentication", icon: ShieldCheck },
   { href: "/transactions", label: "Transactions", icon: CreditCard },
   { href: "/revenue", label: "Revenue", icon: DollarSign },
