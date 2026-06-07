@@ -232,7 +232,7 @@ export function SocialPostsPanel({
           Publish due scheduled posts
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/settings">
+          <Link href="/settings?tab=social">
             <Settings className="mr-2 h-4 w-4" />
             API keys
           </Link>

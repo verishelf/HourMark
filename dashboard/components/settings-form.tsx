@@ -13,14 +13,26 @@ import { SocialCredentialsForm } from "@/components/settings/social-credentials-
 import type { PlatformSettings } from "@/types/database";
 import type { SocialChannelCredentials } from "@/types/social-media";
 
+const SETTINGS_TABS = ["fees", "email", "auth", "social", "platform"] as const;
+type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+function parseSettingsTab(tab: string | undefined): SettingsTab {
+  if (tab && SETTINGS_TABS.includes(tab as SettingsTab)) {
+    return tab as SettingsTab;
+  }
+  return "fees";
+}
+
 export function SettingsForm({
   settings,
   adminId,
   socialCredentials = [],
+  initialTab = "fees",
 }: {
   settings: PlatformSettings | null;
   adminId: string;
   socialCredentials?: SocialChannelCredentials[];
+  initialTab?: string;
 }) {
   const [commission, setCommission] = useState(settings?.commission_percentage ?? 5);
   const [sellerFee, setSellerFee] = useState(settings?.seller_fee_percentage ?? 7);
@@ -32,8 +44,12 @@ export function SettingsForm({
     JSON.stringify(settings?.authentication_rules ?? { min_trust_score: 70, require_serial: true }, null, 2)
   );
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("fees");
+  const [activeTab, setActiveTab] = useState(() => parseSettingsTab(initialTab));
   const tabScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setActiveTab(parseSettingsTab(initialTab));
+  }, [initialTab]);
 
   useEffect(() => {
     if (!settings) return;
