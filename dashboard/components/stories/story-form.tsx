@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { StoryBlockEditor } from "@/components/stories/story-block-editor";
 import { createStory, updateStory, publishStory } from "@/actions/stories";
 import type { StoryBlock } from "@/types/database";

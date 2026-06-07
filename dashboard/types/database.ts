@@ -267,4 +267,4 @@ export type {
   CollectorProfile,
   StoryAnalytics,
   UserInterest,
-} from "../../types/stories";
+} from "./stories";
