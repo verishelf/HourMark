@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { subscribeContentRefresh } from "@/lib/contentRefresh";
 import { getListings } from "@/services/listings";
 import type { Listing } from "@/types";
@@ -14,21 +14,37 @@ type ListingFilters = {
 export function useListings(filters?: ListingFilters) {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const requestIdRef = useRef(0);
+  const hasLoadedOnceRef = useRef(false);
 
   const fetch = useCallback(async () => {
-    setLoading(true);
+    const requestId = ++requestIdRef.current;
+    const isStale = () => requestId !== requestIdRef.current;
+
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
+
     try {
       const data = await getListings(filters);
+      if (isStale()) return;
       setListings(data);
+      hasLoadedOnceRef.current = true;
     } catch {
-      setListings([]);
+      if (isStale()) return;
+      if (!hasLoadedOnceRef.current) {
+        setListings([]);
+      }
     } finally {
-      setLoading(false);
+      if (!isStale()) {
+        setLoading(false);
+      }
     }
   }, [filters]);
 
   useEffect(() => {
-    fetch();
+    hasLoadedOnceRef.current = false;
+    void fetch();
   }, [fetch]);
 
   useEffect(() => subscribeContentRefresh(fetch), [fetch]);

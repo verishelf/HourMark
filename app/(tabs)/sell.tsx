@@ -44,6 +44,8 @@ type Step = (typeof STEPS)[number];
 
 const FOOTER_HEIGHT = 104;
 const PHOTO_GAP = 10;
+const GLASS_TEXT = "#FFFFFF";
+const GLASS_PLACEHOLDER = "rgba(255,255,255,0.55)";
 
 function StepProgress({
   current,
@@ -83,15 +85,17 @@ function FormSection({
   children,
   styles,
   surfaceStyle,
+  titleStyle,
 }: {
   title: string;
   children: ReactNode;
   styles: ReturnType<typeof createSellStyles>;
   surfaceStyle?: ViewStyle;
+  titleStyle?: object;
 }) {
   return (
     <View style={[styles.section, surfaceStyle]}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, titleStyle]}>{title}</Text>
       {children}
     </View>
   );
@@ -372,8 +376,13 @@ export default function SellScreen() {
 
         {step === "Details" && (
           <>
-            <FormSection title="Watch Details" styles={styles} surfaceStyle={glassSurface}>
-              <Text style={styles.fieldLabel}>Brand</Text>
+            <FormSection
+              title="Watch Details"
+              styles={styles}
+              surfaceStyle={glassSurface}
+              titleStyle={styles.textOnGlass}
+            >
+              <Text style={[styles.fieldLabel, styles.textOnGlass]}>Brand</Text>
               <ScrollView
                 horizontal
                 {...HIDE_SCROLL_INDICATORS}
@@ -394,36 +403,41 @@ export default function SellScreen() {
               </ScrollView>
               <TextInput
                 placeholder="Brand"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={brand}
                 onChangeText={setBrand}
-                style={styles.input}
+                style={[styles.input, styles.inputClear]}
               />
               <TextInput
                 placeholder="Model"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={model}
                 onChangeText={setModel}
-                style={styles.input}
+                style={[styles.input, styles.inputClear]}
               />
               <TextInput
                 placeholder="Reference Number"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={referenceNumber}
                 onChangeText={setReferenceNumber}
-                style={styles.input}
+                style={[styles.input, styles.inputClear]}
               />
               <TextInput
                 placeholder="Year"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={year}
                 onChangeText={setYear}
                 keyboardType="number-pad"
-                style={styles.input}
+                style={[styles.input, styles.inputClear]}
               />
             </FormSection>
 
-            <FormSection title="Condition" styles={styles} surfaceStyle={glassSurface}>
+            <FormSection
+              title="Condition"
+              styles={styles}
+              surfaceStyle={glassSurface}
+              titleStyle={styles.textOnGlass}
+            >
               <ScrollView
                 horizontal
                 {...HIDE_SCROLL_INDICATORS}
@@ -443,9 +457,21 @@ export default function SellScreen() {
               </ScrollView>
             </FormSection>
 
-            <FormSection title="What's included" styles={styles} surfaceStyle={glassSurface}>
-              <Text style={styles.fieldLabel}>Tap to toggle — faded items are not included</Text>
-              <View style={[styles.chipRow, { marginTop: 8, flexWrap: "wrap" }]}>
+            <FormSection
+              title="What's included"
+              styles={styles}
+              surfaceStyle={glassSurface}
+              titleStyle={styles.textOnGlass}
+            >
+              <Text style={[styles.fieldLabel, styles.textOnGlass]}>
+                Tap to toggle — faded items are not included
+              </Text>
+              <ScrollView
+                horizontal
+                {...HIDE_SCROLL_INDICATORS}
+                style={styles.chipScroll}
+                contentContainerStyle={styles.chipRow}
+              >
                 <Pressable
                   onPress={() => setIncludesBox((v) => !v)}
                   style={[styles.chip, styles.accessoryChip, includesBox && styles.chipActive]}
@@ -453,7 +479,7 @@ export default function SellScreen() {
                   <Ionicons
                     name="cube-outline"
                     size={16}
-                    color={includesBox ? Colors.textPrimary : Colors.textMuted}
+                    color={includesBox ? "#FFFFFF" : "rgba(255,255,255,0.5)"}
                     style={{ marginRight: 6 }}
                   />
                   <Text
@@ -473,7 +499,7 @@ export default function SellScreen() {
                   <Ionicons
                     name="document-text-outline"
                     size={16}
-                    color={includesPapers ? Colors.textPrimary : Colors.textMuted}
+                    color={includesPapers ? "#FFFFFF" : "rgba(255,255,255,0.5)"}
                     style={{ marginRight: 6 }}
                   />
                   <Text
@@ -497,7 +523,7 @@ export default function SellScreen() {
                   <Ionicons
                     name="ribbon-outline"
                     size={16}
-                    color={includesWarrantyCard ? Colors.textPrimary : Colors.textMuted}
+                    color={includesWarrantyCard ? "#FFFFFF" : "rgba(255,255,255,0.5)"}
                     style={{ marginRight: 6 }}
                   />
                   <Text
@@ -510,18 +536,23 @@ export default function SellScreen() {
                     Warranty card
                   </Text>
                 </Pressable>
-              </View>
+              </ScrollView>
             </FormSection>
 
-            <FormSection title="Description" styles={styles} surfaceStyle={glassSurface}>
+            <FormSection
+              title="Description"
+              styles={styles}
+              surfaceStyle={glassSurface}
+              titleStyle={styles.textOnGlass}
+            >
               <TextInput
                 placeholder="Describe your watch, box & papers, service history…"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={description}
                 onChangeText={setDescription}
                 multiline
                 numberOfLines={4}
-                style={[styles.input, styles.textArea]}
+                style={[styles.input, styles.inputClear, styles.textArea]}
               />
             </FormSection>
           </>
@@ -529,21 +560,26 @@ export default function SellScreen() {
 
         {step === "Review" && (
           <>
-            <FormSection title="Pricing" styles={styles} surfaceStyle={glassSurface}>
+            <FormSection
+              title="Pricing"
+              styles={styles}
+              surfaceStyle={glassSurface}
+              titleStyle={styles.textOnGlass}
+            >
               <TextInput
                 placeholder="Asking Price (USD)"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={price}
                 onChangeText={setPrice}
                 keyboardType="decimal-pad"
-                style={styles.input}
+                style={[styles.input, styles.inputClear]}
               />
               <TextInput
                 placeholder="Serial Number (optional)"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={GLASS_PLACEHOLDER}
                 value={serialNumber}
                 onChangeText={setSerialNumber}
-                style={[styles.input, { marginBottom: 0 }]}
+                style={[styles.input, styles.inputClear, { marginBottom: 0 }]}
               />
             </FormSection>
 
@@ -554,13 +590,16 @@ export default function SellScreen() {
                 contentFit="cover"
               />
             )}
-            <Text style={styles.previewBrand}>{brand}</Text>
-            <Text style={styles.previewModel}>{model}</Text>
-            <Text style={styles.previewPrice}>
+            <Text style={[styles.previewBrand, styles.textOnGlass]}>{brand}</Text>
+            <Text style={[styles.previewModel, styles.textOnGlass]}>{model}</Text>
+            <Text style={[styles.previewPrice, styles.textOnGlass]}>
               ${parseFloat(price || "0").toLocaleString()}
             </Text>
-            {description ? <Text style={styles.previewDesc}>{description}</Text> : null}
+            {description ? (
+              <Text style={[styles.previewDesc, styles.textOnGlassSecondary]}>{description}</Text>
+            ) : null}
             <ListingSetIcons
+              tone="glass"
               listing={{
                 includes_box: includesBox,
                 includes_papers: includesPapers,
@@ -746,6 +785,12 @@ function createSellStyles() {
     color: Colors.textMuted,
     marginBottom: 10,
   },
+  textOnGlass: {
+    color: GLASS_TEXT,
+  },
+  textOnGlassSecondary: {
+    color: "rgba(255,255,255,0.8)",
+  },
   chipScroll: {
     marginBottom: 14,
   },
@@ -764,17 +809,18 @@ function createSellStyles() {
     borderColor: Colors.border,
     borderRadius: RADIUS.pill,
     marginRight: 8,
+    flexShrink: 0,
   },
   chipActive: {
     borderColor: Colors.textPrimary,
     backgroundColor: Colors.cardElevated,
   },
   chipText: {
-    color: Colors.textMuted,
+    color: "#FFFFFF",
     fontSize: 12,
   },
   chipTextActive: {
-    color: Colors.textPrimary,
+    color: "#FFFFFF",
   },
   input: {
     ...Typography.body,
@@ -786,6 +832,10 @@ function createSellStyles() {
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 12,
+  },
+  inputClear: {
+    backgroundColor: "transparent",
+    color: GLASS_TEXT,
   },
   textArea: {
     minHeight: 100,

@@ -10,7 +10,8 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { MARKET_TICKER_ITEMS, type MarketTickerItem } from "@/constants/marketTicker";
+import type { MarketTickerItem } from "@/constants/marketTicker";
+import { useMarketTicker } from "@/hooks/useMarketTicker";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 
@@ -47,10 +48,10 @@ function TickerChip({ item }: { item: MarketTickerItem }) {
   );
 }
 
-function TickerSegment() {
+function TickerSegment({ items }: { items: MarketTickerItem[] }) {
   return (
     <View style={styles.segment}>
-      {MARKET_TICKER_ITEMS.map((item) => (
+      {items.map((item) => (
         <TickerChip key={item.id} item={item} />
       ))}
     </View>
@@ -59,6 +60,7 @@ function TickerSegment() {
 
 export function MarketTickerMarquee() {
   const insets = useSafeAreaInsets();
+  const { items, isLive } = useMarketTicker();
   const [segmentWidth, setSegmentWidth] = useState(0);
   const offset = useSharedValue(0);
 
@@ -76,7 +78,7 @@ export function MarketTickerMarquee() {
     );
 
     return () => cancelAnimation(offset);
-  }, [offset, segmentWidth]);
+  }, [offset, segmentWidth, items.length]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.value }],
@@ -85,8 +87,8 @@ export function MarketTickerMarquee() {
   return (
     <View style={[styles.wrap, { paddingTop: insets.top }]}>
       <View style={styles.labelRow}>
-        <View style={styles.liveDot} />
-        <Text style={styles.label}>Market</Text>
+        <View style={[styles.liveDot, isLive ? styles.liveDotActive : styles.liveDotIdle]} />
+        <Text style={styles.label}>{isLive ? "Live" : "Market"}</Text>
       </View>
       <View style={styles.track}>
         <Animated.View style={[styles.scroller, animatedStyle]}>
@@ -96,9 +98,9 @@ export function MarketTickerMarquee() {
               if (width > 0) setSegmentWidth(width);
             }}
           >
-            <TickerSegment />
+            <TickerSegment items={items} />
           </View>
-          <TickerSegment />
+          <TickerSegment items={items} />
         </Animated.View>
       </View>
     </View>
@@ -128,7 +130,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  liveDotActive: {
     backgroundColor: Colors.success,
+  },
+  liveDotIdle: {
+    backgroundColor: Colors.textMuted,
   },
   label: {
     ...Typography.caption,

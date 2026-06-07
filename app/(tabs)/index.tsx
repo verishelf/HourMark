@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, useWindowDimensions, View } from "react-native";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -41,6 +41,9 @@ export default function HomeScreen() {
   const [marqueeHeight, setMarqueeHeight] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const gridColumnWidth = (screenWidth - SPACING.screen * 2 - CARD_GAP) / 2;
+  const loadRequestId = useRef(0);
+  const hasLoadedOnceRef = useRef(false);
+  const isFirstFocusRef = useRef(true);
 
   const applyHomeData = useCallback((feat: Listing[], all: Listing[]) => {
     const displayable = all.filter(isDisplayableListing);
@@ -61,33 +64,54 @@ export default function HomeScreen() {
     setGridListings(displayable.slice(0, 12));
   }, []);
 
-  const loadHome = useCallback(async () => {
-    setLoading(true);
+  const loadHome = useCallback(async (options?: { showLoading?: boolean }) => {
+    const requestId = ++loadRequestId.current;
+    const isStale = () => requestId !== loadRequestId.current;
+    const showLoading = options?.showLoading ?? !hasLoadedOnceRef.current;
+
+    if (showLoading) {
+      setLoading(true);
+    }
+
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
         const [feat, all] = await Promise.all([getFeaturedListings(), getListings()]);
+        if (isStale()) return;
+
         applyHomeData(feat, all);
+        hasLoadedOnceRef.current = true;
+
         if (user) {
-          getListingsFromFollowing(user.id).then(setFollowingListings);
-          getUnreadCount(user.id).then(setUnreadNotifs);
+          getListingsFromFollowing(user.id).then((data) => {
+            if (!isStale()) setFollowingListings(data);
+          });
+          getUnreadCount(user.id).then((count) => {
+            if (!isStale()) setUnreadNotifs(count);
+          });
         }
+
         setLoading(false);
         return;
       } catch {
         if (attempt < maxAttempts - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+          await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
         }
       }
     }
 
-    setMarketplaceEmpty(true);
-    setFeatured([]);
-    setNewArrivals([]);
-    setVerified([]);
-    setRareCollections([]);
-    setGridListings([]);
+    if (isStale()) return;
+
+    if (!hasLoadedOnceRef.current) {
+      setMarketplaceEmpty(true);
+      setFeatured([]);
+      setNewArrivals([]);
+      setVerified([]);
+      setRareCollections([]);
+      setGridListings([]);
+    }
+
     setLoading(false);
   }, [applyHomeData, user]);
 
@@ -99,9 +123,14 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadHome();
+      if (isFirstFocusRef.current) {
+        isFirstFocusRef.current = false;
+      } else {
+        void loadHome({ showLoading: false });
+      }
+
       return subscribeContentRefresh(() => {
-        void loadHome();
+        void loadHome({ showLoading: false });
       });
     }, [loadHome])
   );

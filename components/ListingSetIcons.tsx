@@ -28,9 +28,16 @@ type Props = {
   compact?: boolean;
   /** Sits beside title on cards — no block margins */
   inline?: boolean;
+  /** White icons/labels for glass or photo backgrounds */
+  tone?: "default" | "glass";
 };
 
-export function ListingSetIcons({ listing, compact = false, inline = false }: Props) {
+export function ListingSetIcons({
+  listing,
+  compact = false,
+  inline = false,
+  tone = "default",
+}: Props) {
   const accessories = resolveListingAccessories(listing as Listing);
 
   return (
@@ -46,6 +53,22 @@ export function ListingSetIcons({ listing, compact = false, inline = false }: Pr
     >
       {SET_ITEMS.map((item) => {
         const included = accessories[item.key];
+        const iconColor =
+          tone === "glass"
+            ? included
+              ? "#FFFFFF"
+              : "rgba(255,255,255,0.5)"
+            : included
+              ? Colors.textPrimary
+              : Colors.textMuted;
+        const labelColor =
+          tone === "glass"
+            ? included
+              ? "#FFFFFF"
+              : "rgba(255,255,255,0.5)"
+            : included
+              ? Colors.textSecondary
+              : Colors.textMuted;
         return (
           <View
             key={item.key}
@@ -53,20 +76,20 @@ export function ListingSetIcons({ listing, compact = false, inline = false }: Pr
               flexDirection: "row",
               alignItems: "center",
               gap: compact ? 4 : 6,
-              opacity: included ? 1 : 0.28,
+              opacity: included ? 1 : tone === "glass" ? 0.5 : 0.28,
             }}
           >
             <Ionicons
               name={item.icon}
               size={compact ? 14 : 18}
-              color={included ? Colors.textPrimary : Colors.textMuted}
+              color={iconColor}
             />
             {!compact && (
               <Text
                 style={{
                   ...Typography.caption,
                   fontSize: 11,
-                  color: included ? Colors.textSecondary : Colors.textMuted,
+                  color: labelColor,
                   letterSpacing: 0.3,
                 }}
               >
