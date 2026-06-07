@@ -9,14 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updatePlatformSettings } from "@/actions/settings";
+import { SocialCredentialsForm } from "@/components/settings/social-credentials-form";
 import type { PlatformSettings } from "@/types/database";
+import type { SocialChannelCredentials } from "@/types/social-media";
 
 export function SettingsForm({
   settings,
   adminId,
+  socialCredentials = [],
 }: {
   settings: PlatformSettings | null;
   adminId: string;
+  socialCredentials?: SocialChannelCredentials[];
 }) {
   const [commission, setCommission] = useState(settings?.commission_percentage ?? 5);
   const [sellerFee, setSellerFee] = useState(settings?.seller_fee_percentage ?? 7);
@@ -48,6 +52,9 @@ export function SettingsForm({
           </TabsTrigger>
           <TabsTrigger value="auth" className="shrink-0">
             Authentication Rules
+          </TabsTrigger>
+          <TabsTrigger value="social" className="shrink-0">
+            Social Media API Keys
           </TabsTrigger>
           <TabsTrigger value="platform" className="shrink-0">
             Platform Settings
@@ -140,6 +147,10 @@ export function SettingsForm({
             </Button>
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="social">
+        <SocialCredentialsForm credentials={socialCredentials} adminId={adminId} />
       </TabsContent>
 
       <TabsContent value="platform">

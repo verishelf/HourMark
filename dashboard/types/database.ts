@@ -268,3 +268,11 @@ export type {
   StoryAnalytics,
   UserInterest,
 } from "./stories";
+
+export type {
+  SocialPlatform,
+  SocialPostStatus,
+  SocialPost,
+  SocialChannelCredentials,
+  SocialPlatformResult,
+} from "./social-media";
