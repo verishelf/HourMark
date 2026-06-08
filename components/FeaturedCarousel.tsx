@@ -15,6 +15,7 @@ import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors, OverlayTextColors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
+import { FEATURED_CAROUSEL_HEIGHT } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { FirstListingPlaceholderCard } from "@/components/FirstListingPlaceholderCard";
 import { useInfiniteCarousel } from "@/lib/infiniteCarousel";
@@ -22,7 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import type { Listing } from "@/types";
 
 const { width } = Dimensions.get("window");
-const SLIDE_HEIGHT = 520;
+const SLIDE_HEIGHT = FEATURED_CAROUSEL_HEIGHT;
 const AUTO_ADVANCE_MS = 5500;
 const SLIDER_TOP_RADIUS = 20;
 

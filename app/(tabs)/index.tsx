@@ -197,7 +197,7 @@ export default function HomeScreen() {
 
         {loading ? (
           <View style={{ paddingHorizontal: SPACING.screen }}>
-            <WatchCardSkeleton />
+            <WatchCardSkeleton variant="featured" />
           </View>
         ) : (
           <FeaturedCarousel

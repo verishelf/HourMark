@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { getMinCharLimit, SOCIAL_PLATFORMS } from "@/lib/social-platforms";
+import { SETTINGS_SOCIAL_KEYS_URL } from "@/lib/settings-tabs";
 import { uploadSocialMediaImage } from "@/actions/social-media";
 import type { SocialPlatform } from "@/types/social-media";
 import { toast } from "sonner";
@@ -90,7 +92,11 @@ export function SocialPostFormFields({ form, onChange, enabledPlatforms }: Props
         </div>
         {enabledPlatforms.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Connect platforms in Settings → Social Media API Keys first.
+            Connect platforms in{" "}
+            <Link href={SETTINGS_SOCIAL_KEYS_URL} className="text-foreground underline underline-offset-2">
+              Settings → Social Media API Keys
+            </Link>{" "}
+            first.
           </p>
         ) : null}
       </div>

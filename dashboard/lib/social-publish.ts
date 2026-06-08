@@ -225,11 +225,13 @@ async function publishToPinterest({ content, mediaUrls, credentials }: PublishIn
   return ok(id);
 }
 
-async function publishToTikTok(_input: PublishInput): Promise<SocialPlatformResult> {
+async function publishToTikTok(input: PublishInput): Promise<SocialPlatformResult> {
+  void input;
   return fail("TikTok posting requires video upload via TikTok Content Posting API — configure token and use native upload flow");
 }
 
-async function publishToYouTube(_input: PublishInput): Promise<SocialPlatformResult> {
+async function publishToYouTube(input: PublishInput): Promise<SocialPlatformResult> {
+  void input;
   return fail("YouTube community posts require channel OAuth — use YouTube Data API v3 with authorized channel");
 }
 

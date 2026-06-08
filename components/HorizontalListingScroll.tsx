@@ -2,13 +2,12 @@ import { FlatList, View } from "react-native";
 import { FirstListingPlaceholderCard } from "@/components/FirstListingPlaceholderCard";
 import { WatchCard } from "@/components/WatchCard";
 import { WatchCardSkeleton } from "@/components/SkeletonLoader";
-import { HORIZONTAL_CARD_GAP, SPACING } from "@/constants/layout";
+import { HORIZONTAL_CARD_GAP, HORIZONTAL_LISTING_ROW_HEIGHT, SPACING } from "@/constants/layout";
 import { smoothHorizontalScrollProps } from "@/constants/scroll";
 import type { Listing } from "@/types";
 
 export const HORIZONTAL_LISTING_CARD_WIDTH = 260;
-/** Image (160) + card body — keeps nested horizontal rows from collapsing inside ScrollView */
-export const HORIZONTAL_LISTING_ROW_HEIGHT = 300;
+export { HORIZONTAL_LISTING_ROW_HEIGHT };
 
 const SNAP_INTERVAL = HORIZONTAL_LISTING_CARD_WIDTH + HORIZONTAL_CARD_GAP;
 
@@ -66,7 +65,7 @@ export function HorizontalListingScroll({
         style={listStyle}
         keyExtractor={(item) => item.id}
         renderItem={() => (
-          <View style={itemStyle}>
+          <View style={[itemStyle, { height: HORIZONTAL_LISTING_ROW_HEIGHT }]}>
             <WatchCardSkeleton variant="compact" />
           </View>
         )}
@@ -89,7 +88,7 @@ export function HorizontalListingScroll({
         style={listStyle}
         keyExtractor={(item) => item.id}
         renderItem={() => (
-          <View style={itemStyle}>
+          <View style={[itemStyle, { height: HORIZONTAL_LISTING_ROW_HEIGHT }]}>
             <FirstListingPlaceholderCard variant="compact" />
           </View>
         )}
@@ -113,7 +112,7 @@ export function HorizontalListingScroll({
       maxToRenderPerBatch={6}
       windowSize={5}
       renderItem={({ item, index }) => (
-        <View style={itemStyle}>
+        <View style={[itemStyle, { height: HORIZONTAL_LISTING_ROW_HEIGHT }]}>
           <WatchCard listing={item} variant="compact" index={index} showBuy={showBuy} />
         </View>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,30 +11,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updatePlatformSettings } from "@/actions/settings";
 import { SocialCredentialsForm } from "@/components/settings/social-credentials-form";
+import { parseSettingsTab, type SettingsTab } from "@/lib/settings-tabs";
 import type { PlatformSettings } from "@/types/database";
 import type { SocialChannelCredentials } from "@/types/social-media";
 
-const SETTINGS_TABS = ["fees", "email", "auth", "social", "platform"] as const;
-type SettingsTab = (typeof SETTINGS_TABS)[number];
-
-function parseSettingsTab(tab: string | undefined): SettingsTab {
-  if (tab && SETTINGS_TABS.includes(tab as SettingsTab)) {
-    return tab as SettingsTab;
-  }
-  return "fees";
-}
-
-export function SettingsForm({
+function SettingsFormInner({
   settings,
   adminId,
   socialCredentials = [],
-  initialTab = "fees",
 }: {
   settings: PlatformSettings | null;
   adminId: string;
   socialCredentials?: SocialChannelCredentials[];
-  initialTab?: string;
 }) {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
   const [commission, setCommission] = useState(settings?.commission_percentage ?? 5);
   const [sellerFee, setSellerFee] = useState(settings?.seller_fee_percentage ?? 7);
   const [buyerFee, setBuyerFee] = useState(settings?.buyer_fee_percentage ?? 0);
@@ -44,12 +36,12 @@ export function SettingsForm({
     JSON.stringify(settings?.authentication_rules ?? { min_trust_score: 70, require_serial: true }, null, 2)
   );
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => parseSettingsTab(initialTab));
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => parseSettingsTab(tabParam));
   const tabScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setActiveTab(parseSettingsTab(initialTab));
-  }, [initialTab]);
+    setActiveTab(parseSettingsTab(tabParam));
+  }, [tabParam]);
 
   useEffect(() => {
     if (!settings) return;
@@ -80,7 +72,11 @@ export function SettingsForm({
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => setActiveTab(parseSettingsTab(value))}
+      className="w-full"
+    >
       <div className="-mx-4 sm:-mx-6 md:mx-0">
         <div className="w-full rounded-lg bg-muted p-1">
           <div
@@ -216,5 +212,17 @@ export function SettingsForm({
       </TabsContent>
       </div>
     </Tabs>
+  );
+}
+
+export function SettingsForm(props: {
+  settings: PlatformSettings | null;
+  adminId: string;
+  socialCredentials?: SocialChannelCredentials[];
+}) {
+  return (
+    <Suspense fallback={null}>
+      <SettingsFormInner {...props} />
+    </Suspense>
   );
 }

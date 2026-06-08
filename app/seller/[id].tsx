@@ -17,6 +17,7 @@ import { CollectionItemCard } from "@/components/CollectionItemCard";
 import { PostGrid } from "@/components/PostGrid";
 import { ProfileTabs, useProfileTabStyles } from "@/components/ProfileTabs";
 import { WatchCard } from "@/components/WatchCard";
+import { ListingGridSkeleton } from "@/components/SkeletonLoader";
 import { Colors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { SPACING } from "@/constants/layout";
@@ -285,7 +286,9 @@ export default function SellerProfileScreen() {
             ]}
           >
             {tab === "listings" &&
-              (listings.length ? (
+              (loading ? (
+                <ListingGridSkeleton rows={2} />
+              ) : listings.length ? (
                 <View style={styles.grid}>
                   {chunkListings(listings).map((row, rowIndex) => (
                     <View key={row.map((l) => l.id).join("-")} style={styles.gridRow}>

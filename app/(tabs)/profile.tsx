@@ -14,6 +14,7 @@ import { ProfileTabs, useProfileTabStyles } from "@/components/ProfileTabs";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SettingsRow } from "@/components/SettingsRow";
 import { SwipeToDeleteRow } from "@/components/SwipeToDeleteRow";
+import { ListingGridSkeleton } from "@/components/SkeletonLoader";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
@@ -504,9 +505,13 @@ export default function ProfileScreen() {
           ]}
         >
           {dataLoading && !hasLoadedOnce ? (
-            <View style={styles.tabLoader}>
-              <ActivityIndicator color={Colors.textPrimary} />
-            </View>
+            tab === "listings" ? (
+              <ListingGridSkeleton rows={2} />
+            ) : (
+              <View style={styles.tabLoader}>
+                <ActivityIndicator color={Colors.textPrimary} />
+              </View>
+            )
           ) : null}
 
           {(!dataLoading || hasLoadedOnce) && tab === "listings" &&

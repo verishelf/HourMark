@@ -26,3 +26,9 @@ export const RADIUS = {
 
 /** Shared corner radius for listing cards across the app */
 export const LISTING_CARD_RADIUS = RADIUS.lg;
+
+/** Featured home carousel slide height */
+export const FEATURED_CAROUSEL_HEIGHT = 520;
+
+/** Horizontal compact listing card row height (image + body) */
+export const HORIZONTAL_LISTING_ROW_HEIGHT = 300;

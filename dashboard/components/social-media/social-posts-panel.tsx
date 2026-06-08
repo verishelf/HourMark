@@ -35,6 +35,7 @@ import {
   publishSocialPost,
 } from "@/actions/social-media";
 import { SOCIAL_PLATFORM_LABELS } from "@/lib/social-platforms";
+import { SETTINGS_SOCIAL_KEYS_URL } from "@/lib/settings-tabs";
 import { formatDate } from "@/lib/utils";
 import type { SocialPlatform, SocialPost } from "@/types/social-media";
 
@@ -219,7 +220,10 @@ export function SocialPostsPanel({
           title="API keys configured"
           value={String(stats.configured)}
           icon={Settings}
-          subtitle={stats.connected === 0 ? "Add keys in Settings" : undefined}
+          href={SETTINGS_SOCIAL_KEYS_URL}
+          subtitle={
+            stats.connected === 0 ? "Add keys in Social Media API Keys" : "Manage in Settings"
+          }
         />
       </div>
 
@@ -232,9 +236,9 @@ export function SocialPostsPanel({
           Publish due scheduled posts
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/settings?tab=social">
+          <Link href={SETTINGS_SOCIAL_KEYS_URL}>
             <Settings className="mr-2 h-4 w-4" />
-            API keys
+            Social Media API Keys
           </Link>
         </Button>
       </div>
