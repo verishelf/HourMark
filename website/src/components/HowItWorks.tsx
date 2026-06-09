@@ -14,9 +14,10 @@ const FOR_BUYERS = [
 const FOR_SELLERS = [
   { title: "List with proof", detail: "Serial, movement, papers, and rotating video for automated review." },
   { title: "Stripe Connect", detail: "Bank-grade verification and payouts after buyer inspection." },
+  { title: "Shopify sync", detail: "Connect your store in Settings — auto-import watches and keep inventory in sync." },
   { title: "Offers & messaging", detail: "Accept, counter, or decline offers from chat or listing detail." },
   { title: "Grail Board", detail: "See what collectors are hunting and get notified on matches." },
-  { title: "Low 3% fee", detail: "Transparent platform pricing on every escrow-protected sale." },
+  { title: "7% seller fee", detail: "Transparent escrow-protected pricing. Launch partners may qualify for promotional rates." },
   { title: "Trusted Seller", detail: "Earn ratings, review counts, and badges as you complete sales." },
 ];
 

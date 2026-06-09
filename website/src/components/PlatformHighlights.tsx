@@ -33,6 +33,11 @@ const HIGHLIGHTS = [
     description:
       "Saved-search alerts for AI-verified listings, favorite price drops, offer updates, and shipping milestones — in-app and push.",
   },
+  {
+    title: "Market ticker",
+    description:
+      "Live market context on the home feed — stay oriented on brands and references while you browse authenticated inventory.",
+  },
 ];
 
 export function PlatformHighlights() {

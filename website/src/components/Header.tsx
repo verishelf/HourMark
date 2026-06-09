@@ -10,6 +10,8 @@ const NAV = [
   { href: "#platform", label: "Platform" },
   { href: "#trust", label: "Trust" },
   { href: "#showcase", label: "App" },
+  { href: "/stories", label: "Stories" },
+  { href: "#dealers", label: "Dealers" },
   { href: "#community", label: "Community" },
   { href: "#how-it-works", label: "Buy & Sell" },
   { href: "#download", label: "Download" },

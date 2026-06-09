@@ -2,11 +2,12 @@
 
 > Crownly is a premium iOS marketplace for buying and selling authenticated luxury watches.
 
-Crownly connects collectors and verified sellers for high-value timepieces. The app includes curated discovery, search and filters, in-app offers and messaging, Stripe Connect escrow checkout (Apple Pay, card, and wire), AI-assisted trust verification, Authenticity Passports, a personal watch collection, Grail Board want-list matching, and a watch scanner for identification.
+Crownly connects collectors and verified sellers for high-value timepieces. The app includes curated discovery, search and filters, in-app offers and messaging, Stripe Connect escrow checkout (Apple Pay, card, and wire), AI-assisted trust verification, Authenticity Passports, a personal watch collection, Grail Board want-list matching, a watch scanner, Crownly Stories editorial, and Shopify inventory sync for dealers.
 
 ## Official links
 
 - Website: https://crownly.art
+- Stories: https://crownly.art/stories
 - Privacy Policy: https://crownly.art/privacy
 - Terms of Service: https://crownly.art/terms
 - Support: hello@crownly.art
@@ -18,8 +19,11 @@ Crownly connects collectors and verified sellers for high-value timepieces. The 
 - Categories: Luxury watches, pre-owned and new, authenticated listings
 - Brands: Rolex, Patek Philippe, Audemars Piguet, Richard Mille, Cartier, Omega, Tudor, IWC, and more
 - Payments: Stripe Connect escrow; Apple Pay, card, bank wire for high-value sales
+- Seller fee: 7% on escrow-protected sales (launch partners may qualify for promotional rates)
 - Trust: Seller KYC, AI listing review, trust scores, verification badges, Authenticity Passports
-- Key features: Discover feed, search, sell flow, offers, messages, collection tracking, Grail Board, watch scanner
+- Key features: Discover feed, search, sell flow, offers, messages, collection tracking, Grail Board, watch scanner, push alerts
+- Dealers: Shopify OAuth integration, automatic product import, inventory webhooks, seller settings hub
+- Content: Crownly Stories — editorial feed with engagement in-app and on the web
 
 ## Company
 

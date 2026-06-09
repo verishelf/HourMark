@@ -10,6 +10,8 @@ import { TrustPlatform } from "@/components/TrustPlatform";
 import { AppShowcase } from "@/components/AppShowcase";
 import { Community } from "@/components/Community";
 import { HowItWorks } from "@/components/HowItWorks";
+import { ForDealers } from "@/components/ForDealers";
+import { StoriesSpotlight } from "@/components/StoriesSpotlight";
 import { Download } from "@/components/Download";
 import { Footer } from "@/components/Footer";
 import { EmailSignupPopup } from "@/components/EmailSignupPopup";
@@ -40,6 +42,8 @@ export default function Home() {
         <PlatformHighlights />
         <TrustPlatform />
         <AppShowcase />
+        <StoriesSpotlight />
+        <ForDealers />
         <Community />
         <HowItWorks />
         <Download />

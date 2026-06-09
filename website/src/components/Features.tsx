@@ -48,6 +48,11 @@ const FEATURES = [
     description:
       "Post what you are hunting with brand, reference, and budget. Get matched when a verified listing appears.",
   },
+  {
+    title: "Crownly Stories",
+    description:
+      "Editorial success stories, collector spotlights, and market insights — with likes, comments, and links to verified listings.",
+  },
 ];
 
 export function Features() {

@@ -7,6 +7,6 @@ export const LEGAL = {
   privacyEmail: "privacy@crownly.art",
   supportEmail: "hello@crownly.art",
   websiteUrl: "https://crownly.art",
-  platformFeePercent: "3",
+  platformFeePercent: "7",
   inspectionDays: "3",
 } as const;

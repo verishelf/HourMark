@@ -9,9 +9,9 @@ export const SITE = {
   defaultTitle: "Crownly — Buy & Sell Authenticated Luxury Watches",
   titleTemplate: "%s | Crownly",
   description:
-    "Crownly is the premium iOS marketplace to buy and sell authenticated luxury watches — Rolex, Patek Philippe, Audemars Piguet, and more. Escrow checkout, offers, Authenticity Passports, AI verification, and verified sellers.",
+    "Crownly is the premium iOS marketplace to buy and sell authenticated luxury watches — Rolex, Patek Philippe, Audemars Piguet, and more. Escrow checkout, Shopify inventory sync for dealers, offers, Authenticity Passports, Crownly Stories, AI verification, and verified sellers.",
   shortDescription:
-    "Premium iOS marketplace for authenticated luxury watches with escrow, offers, and provenance passports.",
+    "Premium iOS marketplace for authenticated luxury watches with escrow, Shopify sync, offers, and provenance passports.",
   keywords: [
     "luxury watch marketplace",
     "buy luxury watches",
@@ -26,6 +26,9 @@ export const SITE = {
     "Audemars Piguet for sale",
     "Richard Mille marketplace",
     "watch provenance",
+    "Shopify watch inventory sync",
+    "dealer watch marketplace",
+    "Crownly Stories",
     "Crownly",
   ],
   supportEmail: LEGAL.supportEmail,

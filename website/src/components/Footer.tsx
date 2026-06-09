@@ -38,6 +38,18 @@ export function Footer() {
             Trust
           </Link>
           <Link
+            href="/stories"
+            className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
+          >
+            Stories
+          </Link>
+          <Link
+            href="/#dealers"
+            className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
+          >
+            Dealers
+          </Link>
+          <Link
             href="/#how-it-works"
             className="text-[10px] font-medium uppercase tracking-[0.15em] text-[#71717a] transition-colors hover:text-white"
           >

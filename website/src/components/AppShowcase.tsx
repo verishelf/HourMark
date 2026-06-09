@@ -20,7 +20,7 @@ const SCREENS = [
     title: "Sell",
     subtitle: "List in minutes",
     image: "/screenshots/sell.png",
-    accent: "Multi-step listing & seller verification",
+    accent: "Multi-step listing, verification & Shopify sync",
   },
   {
     title: "Collection",

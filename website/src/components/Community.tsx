@@ -23,6 +23,11 @@ const ITEMS = [
     description:
       "Carrier tracking, a 3-day inspection window, in-app disputes, and wire transfer checkout for high-value pieces.",
   },
+  {
+    title: "Crownly Stories",
+    description:
+      "Read editorial spotlights and market insights on the web or in-app — with engagement, saved stories, and links to live listings.",
+  },
 ];
 
 export function Community() {

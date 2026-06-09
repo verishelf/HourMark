@@ -217,4 +217,14 @@ const FAQ_ITEMS = [
     answer:
       "Crownly is launching first on iOS via the App Store. Join the waitlist at crownly.art to get notified when downloads are available.",
   },
+  {
+    question: "Can dealers sync Shopify inventory to Crownly?",
+    answer:
+      "Yes. Verified sellers connect Shopify from Settings in the Crownly app. Products import automatically with photos, prices, and SKUs. Inventory updates sync via webhooks, and sales checkout through Crownly escrow with a 7% seller fee.",
+  },
+  {
+    question: "What is Crownly Stories?",
+    answer:
+      "Crownly Stories is editorial content about luxury watch collecting — success stories, spotlights, and market insights — available at crownly.art/stories and inside the app with likes, comments, and links to verified listings.",
+  },
 ] as const;

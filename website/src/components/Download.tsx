@@ -46,7 +46,7 @@ export function Download() {
             </div>
 
             <p className="mt-10 text-xs text-[#71717a]">
-              Available for iPhone · Free to browse · 3% platform fee on sales
+              Available for iPhone · Free to browse · 7% seller fee on escrow sales
             </p>
           </div>
         </motion.div>
