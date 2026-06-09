@@ -15,7 +15,16 @@ import type {
   WebsiteSignup,
   AuditLog,
   PlatformSettings,
+  Dealer,
+  DealerActivity,
+  DealerTask,
+  DealerChangelog,
+  DealerFilters,
+  DealerAnalytics,
+  DealerWithStats,
+  DealerPipelineStatus,
 } from "@/types/database";
+import { DEALER_PIPELINE_STATUSES } from "@/lib/dealer-scoring";
 import { format, subDays, startOfMonth } from "date-fns";
 
 export async function getAdminProfile(userId: string) {
@@ -417,4 +426,269 @@ export async function getPushNotificationCampaigns() {
     .select("*")
     .order("created_at", { ascending: false });
   return data ?? [];
+}
+
+// ─── Dealer CRM ───────────────────────────────────────────────────────────────
+
+const DEALER_PAGE_SIZE = 50;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyDealerFilters(query: any, filters: DealerFilters) {
+  let q = query;
+  if (filters.country) q = q.eq("country", filters.country);
+  if (filters.city) q = q.eq("city", filters.city);
+  if (filters.pipeline_status) q = q.eq("pipeline_status", filters.pipeline_status);
+  if (filters.lead_grade) q = q.eq("lead_grade", filters.lead_grade);
+  if (filters.is_launch_partner !== undefined) q = q.eq("is_launch_partner", filters.is_launch_partner);
+  if (filters.inventory_min) q = q.gte("inventory_value", filters.inventory_min);
+  if (filters.date_from) q = q.gte("created_at", filters.date_from);
+  if (filters.date_to) q = q.lte("created_at", filters.date_to);
+  if (filters.search) {
+    const term = `%${filters.search.trim()}%`;
+    q = q.or(
+      `company_name.ilike.${term},contact_name.ilike.${term},email.ilike.${term},city.ilike.${term},country.ilike.${term}`
+    );
+  }
+  return q;
+}
+
+export async function getDealers(options: {
+  cursor?: string;
+  limit?: number;
+  filters?: DealerFilters;
+} = {}): Promise<{ dealers: Dealer[]; nextCursor: string | null }> {
+  const supabase = createServiceClient();
+  const limit = options.limit ?? DEALER_PAGE_SIZE;
+  const filters = options.filters ?? {};
+
+  let query = supabase
+    .from("dealers")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+
+  query = applyDealerFilters(query, filters);
+
+  if (options.cursor) {
+    query = query.lt("created_at", options.cursor);
+  }
+
+  const { data } = await query;
+  const rows = (data ?? []) as Dealer[];
+  const hasMore = rows.length > limit;
+  const dealers = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore ? dealers[dealers.length - 1]?.created_at ?? null : null;
+
+  return { dealers, nextCursor };
+}
+
+export async function getDealersByPipelineStatus(
+  status: DealerPipelineStatus,
+  limit = 20,
+  offset = 0
+): Promise<Dealer[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("dealers")
+    .select("*")
+    .eq("pipeline_status", status)
+    .order("updated_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+  return (data ?? []) as Dealer[];
+}
+
+export async function getDealerById(id: string): Promise<DealerWithStats | null> {
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("dealers").select("*").eq("id", id).single();
+  if (!data) return null;
+
+  const dealer = data as Dealer;
+  let listings_count = 0;
+  let actual_monthly_gmv = 0;
+
+  if (dealer.user_id) {
+    const monthStart = startOfMonth(new Date()).toISOString();
+    const [{ count }, { data: orders }] = await Promise.all([
+      supabase.from("listings").select("id", { count: "exact", head: true }).eq("seller_id", dealer.user_id).eq("status", "active"),
+      supabase.from("orders").select("amount").eq("seller_id", dealer.user_id).eq("status", "completed").gte("created_at", monthStart),
+    ]);
+    listings_count = count ?? 0;
+    actual_monthly_gmv = orders?.reduce((s, o) => s + (o.amount ?? 0), 0) ?? 0;
+  }
+
+  return { ...dealer, listings_count, actual_monthly_gmv };
+}
+
+export async function getDealerActivities(dealerId: string, limit = 50): Promise<DealerActivity[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("dealer_activities")
+    .select("*, creator:users!created_by(id, full_name, username)")
+    .eq("dealer_id", dealerId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as DealerActivity[];
+}
+
+export async function getDealerTasks(dealerId: string): Promise<DealerTask[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("dealer_tasks")
+    .select("*, assignee:users!assigned_to(id, full_name, username)")
+    .eq("dealer_id", dealerId)
+    .order("due_at", { ascending: true, nullsFirst: false });
+  return (data ?? []) as DealerTask[];
+}
+
+export async function getDealerChangelog(dealerId: string, limit = 100): Promise<DealerChangelog[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("dealer_changelog")
+    .select("*, admin:users!admin_id(id, full_name, username)")
+    .eq("dealer_id", dealerId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as DealerChangelog[];
+}
+
+export async function getAdminUsers(): Promise<UserProfile[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("users")
+    .select("id, full_name, username, avatar_url, admin_role")
+    .not("admin_role", "is", null)
+    .eq("suspended", false);
+  return (data ?? []) as UserProfile[];
+}
+
+export async function getDealerFilterOptions() {
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("dealers").select("country, city");
+  const countries = [...new Set((data ?? []).map((d) => d.country).filter(Boolean))].sort();
+  const cities = [...new Set((data ?? []).map((d) => d.city).filter(Boolean))].sort();
+  return { countries: countries as string[], cities: cities as string[] };
+}
+
+export async function getDealerAnalytics(): Promise<DealerAnalytics> {
+  const supabase = createServiceClient();
+  const monthStart = startOfMonth(new Date()).toISOString();
+
+  const { data: allDealers } = await supabase.from("dealers").select("*");
+  const dealers = (allDealers ?? []) as Dealer[];
+
+  const totalLeads = dealers.length;
+  const newLeadsThisMonth = dealers.filter((d) => d.created_at >= monthStart).length;
+  const activeConversations = dealers.filter((d) =>
+    ["contacted", "interested", "demo_scheduled"].includes(d.pipeline_status)
+  ).length;
+  const meetingsScheduled = dealers.filter((d) => d.pipeline_status === "demo_scheduled").length;
+  const signedDealers = dealers.filter((d) =>
+    ["account_created", "inventory_imported", "active_seller", "top_seller"].includes(d.pipeline_status)
+  ).length;
+  const launchPartners = dealers.filter((d) => d.is_launch_partner).length;
+  const activeSellers = dealers.filter((d) =>
+    ["active_seller", "top_seller"].includes(d.pipeline_status)
+  ).length;
+  const topSellers = dealers.filter((d) => d.pipeline_status === "top_seller").length;
+
+  const totalInventoryValue = dealers.reduce((s, d) => s + (d.inventory_value ?? 0), 0);
+  const totalWatches = dealers.reduce((s, d) => s + (d.watch_count ?? 0), 0);
+  const estimatedMonthlyGmv = dealers.reduce((s, d) => s + (d.estimated_monthly_sales ?? 0), 0);
+  const estimatedAnnualGmv = estimatedMonthlyGmv * 12;
+  const estimatedAnnualRevenue = dealers.reduce((s, d) => {
+    const monthly = Math.round((d.estimated_monthly_sales ?? 0) * (d.commission_rate / 100));
+    return s + monthly * 12;
+  }, 0);
+
+  const dealerGrowth = groupDealersByMonth(dealers);
+  const conversionFunnel = DEALER_PIPELINE_STATUSES.map((status) => ({
+    date: status,
+    value: dealers.filter((d) => d.pipeline_status === status).length,
+    label: status.replace(/_/g, " "),
+  }));
+  const inventoryGrowth = groupDealersInventoryByMonth(dealers);
+  const revenueForecast = groupDealersRevenueByMonth(dealers);
+  const locationMap = new Map<string, number>();
+  for (const d of dealers) {
+    const key = d.country ?? "Unknown";
+    locationMap.set(key, (locationMap.get(key) ?? 0) + 1);
+  }
+  const dealerLocations = Array.from(locationMap.entries())
+    .map(([date, value]) => ({ date, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 15);
+
+  return {
+    totalLeads,
+    newLeadsThisMonth,
+    activeConversations,
+    meetingsScheduled,
+    signedDealers,
+    launchPartners,
+    activeSellers,
+    topSellers,
+    totalInventoryValue,
+    totalWatches,
+    estimatedMonthlyGmv,
+    estimatedAnnualGmv,
+    estimatedAnnualRevenue,
+    dealerGrowth,
+    conversionFunnel,
+    inventoryGrowth,
+    revenueForecast,
+    dealerLocations,
+  };
+}
+
+function groupDealersByMonth(dealers: Dealer[]): ChartDataPoint[] {
+  const map = new Map<string, number>();
+  for (const d of dealers) {
+    const key = format(new Date(d.created_at), "yyyy-MM");
+    map.set(key, (map.get(key) ?? 0) + 1);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, value]) => ({ date, value }));
+}
+
+function groupDealersInventoryByMonth(dealers: Dealer[]): ChartDataPoint[] {
+  const map = new Map<string, number>();
+  for (const d of dealers) {
+    const key = format(new Date(d.created_at), "yyyy-MM");
+    map.set(key, (map.get(key) ?? 0) + (d.inventory_value ?? 0));
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, value]) => ({ date, value }));
+}
+
+function groupDealersRevenueByMonth(dealers: Dealer[]): ChartDataPoint[] {
+  const map = new Map<string, number>();
+  for (const d of dealers) {
+    const key = format(new Date(d.created_at), "yyyy-MM");
+    const annual = Math.round((d.estimated_monthly_sales ?? 0) * (d.commission_rate / 100)) * 12;
+    map.set(key, (map.get(key) ?? 0) + annual);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, value]) => ({ date, value }));
+}
+
+export async function getDealerCrmNotifications(): Promise<AdminNotification[]> {
+  const supabase = createServiceClient();
+  const crmTypes = [
+    "follow_up_due_today",
+    "follow_up_overdue",
+    "meeting_tomorrow",
+    "proposal_waiting",
+    "launch_partner_expiring_30",
+    "launch_partner_expiring_7",
+  ];
+  const { data } = await supabase
+    .from("admin_notifications")
+    .select("*")
+    .in("type", crmTypes)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return (data ?? []) as AdminNotification[];
 }

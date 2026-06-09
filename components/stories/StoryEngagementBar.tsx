@@ -18,6 +18,7 @@ type Props = {
   userId?: string;
   onLike: () => void;
   onBookmark: () => void;
+  onCommentPress?: () => void;
 };
 
 function formatCount(n: number) {
@@ -36,6 +37,7 @@ export function StoryEngagementBar({
   userId,
   onLike,
   onBookmark,
+  onCommentPress,
 }: Props) {
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -55,10 +57,10 @@ export function StoryEngagementBar({
       <Pressable style={styles.action} onPress={onBookmark}>
         <Ionicons name={bookmarked ? "bookmark" : "bookmark-outline"} size={22} color={bookmarked ? Colors.gold : Colors.textMuted} />
       </Pressable>
-      <View style={styles.action}>
+      <Pressable style={styles.action} onPress={onCommentPress}>
         <Ionicons name="chatbubble-outline" size={22} color={Colors.textMuted} />
         <Text style={styles.count}>{formatCount(commentCount)}</Text>
-      </View>
+      </Pressable>
       <Pressable style={styles.action} onPress={handleShare}>
         <Ionicons name="share-outline" size={22} color={Colors.textMuted} />
       </Pressable>

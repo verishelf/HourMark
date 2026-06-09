@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       await stripe.paymentIntents.capture(order.stripe_payment_intent_id);
     }
 
-    const sellerFeeRate = await getSellerFeeRate(supabase);
+    const sellerFeeRate = await getSellerFeeRate(supabase, order.seller_id);
     const commissionFee =
       order.commission_fee ?? calculateSellerListingFee(order.amount, sellerFeeRate);
     const sellerAmount = order.amount - commissionFee;

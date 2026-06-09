@@ -102,19 +102,36 @@ export function WatchCardSkeleton({
   );
 }
 
-export function ListingGridSkeleton({ rows = 2 }: { rows?: number }) {
+export function ListingGridSkeleton({
+  rows = 2,
+  count,
+}: {
+  rows?: number;
+  count?: number;
+}) {
+  const total = count ?? rows * 2;
+  const rowCount = Math.ceil(total / 2);
+
   return (
-    <View style={{ gap: GRID_GAP }}>
-      {Array.from({ length: rows }, (_, row) => (
-        <View key={row} style={{ flexDirection: "row", gap: GRID_GAP }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <WatchCardSkeleton variant="grid" />
+    <View style={{ width: "100%", gap: GRID_GAP }}>
+      {Array.from({ length: rowCount }, (_, rowIndex) => {
+        const leftIndex = rowIndex * 2;
+        const rightIndex = leftIndex + 1;
+
+        return (
+          <View
+            key={rowIndex}
+            style={{ flexDirection: "row", gap: GRID_GAP, width: "100%" }}
+          >
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <WatchCardSkeleton variant="grid" />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              {rightIndex < total ? <WatchCardSkeleton variant="grid" /> : null}
+            </View>
           </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <WatchCardSkeleton variant="grid" />
-          </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }

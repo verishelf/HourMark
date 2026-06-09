@@ -76,7 +76,7 @@ export const paymentsService = {
       }
     }
 
-    const sellerFeeRate = await feesService.getSellerFeeRate();
+    const sellerFeeRate = await feesService.getSellerFeeRate(listing.seller_id);
     const commissionFee = feesService.calculateSellerListingFee(amountCents, sellerFeeRate);
 
     const { data: order, error: orderError } = await supabase

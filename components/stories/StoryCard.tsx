@@ -6,7 +6,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/colors";
 import { STORY_WEB_BASE } from "@/constants/storyCategories";
-import { RADIUS, SPACING } from "@/constants/layout";
+import { RADIUS, SPACING, STORY_FEATURED_CARD_WIDTH } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { useThemedStyles } from "@/hooks/useThemedStyles";
 import type { StoryCard as StoryCardType } from "@/types";
@@ -36,7 +36,7 @@ function createStyles() {
     },
     featuredCard: {
       borderColor: Colors.gold,
-      width: 300,
+      width: STORY_FEATURED_CARD_WIDTH,
       marginRight: SPACING.md,
     },
     hero: {
@@ -156,7 +156,14 @@ export function StoryCard({ story, variant = "feed", onBookmark, onShare }: Prop
             </Text>
           </View>
           <View style={styles.actions}>
-            <Pressable style={styles.actionBtn} onPress={onBookmark} hitSlop={8}>
+            <Pressable
+              style={styles.actionBtn}
+              onPress={(e) => {
+                e.stopPropagation();
+                onBookmark?.();
+              }}
+              hitSlop={8}
+            >
               <Ionicons
                 name={story.bookmarked_by_me ? "bookmark" : "bookmark-outline"}
                 size={20}

@@ -18,31 +18,56 @@ import { resolveListingImageUrl } from "@/lib/listingImages";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 
+const AVATAR_SIZE = 28;
+const AVATAR_SIZE_COMPACT = 18;
+
 function formatSalePrice(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
   if (value >= 1_000) return `$${value.toLocaleString("en-US")}`;
   return `$${value.toFixed(0)}`;
 }
 
-function SaleChip({ item, onPress }: { item: RecentSaleItem; onPress: () => void }) {
+function SaleChip({
+  item,
+  onPress,
+  compact = false,
+}: {
+  item: RecentSaleItem;
+  onPress: () => void;
+  compact?: boolean;
+}) {
   const imageUri = item.imageUrl ? resolveListingImageUrl(item.imageUrl) : null;
+  const avatarSize = compact ? AVATAR_SIZE_COMPACT : AVATAR_SIZE;
 
   return (
-    <Pressable onPress={onPress} style={styles.chip}>
+    <Pressable onPress={onPress} style={[styles.chip, compact && styles.chipCompact]}>
       <View style={styles.avatarWrap}>
         {imageUri ? (
-          <ListingImage uri={imageUri} style={styles.avatar} recyclingKey={item.listingId} />
+          <ListingImage
+            uri={imageUri}
+            style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }}
+            recyclingKey={item.listingId}
+          />
         ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Ionicons name="watch-outline" size={14} color={Colors.textMuted} />
+          <View
+            style={[
+              styles.avatar,
+              compact && styles.avatarCompact,
+              styles.avatarPlaceholder,
+              { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 },
+            ]}
+          >
+            <Ionicons name="watch-outline" size={compact ? 11 : 14} color={Colors.textMuted} />
           </View>
         )}
       </View>
       <View style={styles.chipTextWrap}>
-        <Text style={styles.chipName} numberOfLines={1}>
+        <Text style={[styles.chipName, compact && styles.chipNameCompact]} numberOfLines={1}>
           {item.brand} {item.model}
         </Text>
-        <Text style={styles.chipPrice}>{formatSalePrice(item.price)}</Text>
+        <Text style={[styles.chipPrice, compact && styles.chipPriceCompact]}>
+          {formatSalePrice(item.price)}
+        </Text>
       </View>
     </Pressable>
   );
@@ -51,20 +76,28 @@ function SaleChip({ item, onPress }: { item: RecentSaleItem; onPress: () => void
 function SalesSegment({
   items,
   onPressItem,
+  compact = false,
 }: {
   items: RecentSaleItem[];
   onPressItem: (item: RecentSaleItem) => void;
+  compact?: boolean;
 }) {
   return (
     <View style={styles.segment}>
       {items.map((item) => (
-        <SaleChip key={item.id} item={item} onPress={() => onPressItem(item)} />
+        <SaleChip key={item.id} item={item} onPress={() => onPressItem(item)} compact={compact} />
       ))}
     </View>
   );
 }
 
-export function MarketTickerMarquee() {
+export function MarketTickerMarquee({
+  omitSafeArea = false,
+  compact = false,
+}: {
+  omitSafeArea?: boolean;
+  compact?: boolean;
+}) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { items, loading } = useRecentSales();
@@ -96,14 +129,14 @@ export function MarketTickerMarquee() {
   }
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top }]}>
-      <View style={styles.labelRow}>
-        <View style={styles.liveDot} />
-        <Text style={styles.label}>Sold</Text>
+    <View style={[styles.wrap, compact && styles.wrapCompact, !omitSafeArea ? { paddingTop: insets.top } : null]}>
+      <View style={[styles.labelRow, compact && styles.labelRowCompact]}>
+        <View style={[styles.liveDot, compact && styles.liveDotCompact]} />
+        <Text style={[styles.label, compact && styles.labelCompact]}>Sold</Text>
       </View>
       <View style={styles.track}>
         {!loading && items.length === 0 ? (
-          <Text style={styles.emptyText}>No recent sales yet</Text>
+          <Text style={[styles.emptyText, compact && styles.emptyTextCompact]}>No recent sales yet</Text>
         ) : (
           <Animated.View style={[styles.scroller, animatedStyle]}>
             <View
@@ -112,9 +145,11 @@ export function MarketTickerMarquee() {
                 if (width > 0) setSegmentWidth(width);
               }}
             >
-              <SalesSegment items={items} onPressItem={openListing} />
+              <SalesSegment items={items} onPressItem={openListing} compact={compact} />
             </View>
-            {items.length > 1 ? <SalesSegment items={items} onPressItem={openListing} /> : null}
+            {items.length > 1 ? (
+              <SalesSegment items={items} onPressItem={openListing} compact={compact} />
+            ) : null}
           </Animated.View>
         )}
       </View>
@@ -122,12 +157,11 @@ export function MarketTickerMarquee() {
   );
 }
 
-const AVATAR_SIZE = 28;
-
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "stretch",
+    minHeight: 44,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
     backgroundColor: Colors.card,
@@ -216,5 +250,43 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 2,
     fontVariant: ["tabular-nums"],
+  },
+  wrapCompact: {
+    minHeight: 0,
+    borderBottomWidth: 1,
+  },
+  labelRowCompact: {
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 1,
+  },
+  liveDotCompact: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  labelCompact: {
+    fontSize: 9,
+    letterSpacing: 0.6,
+  },
+  emptyTextCompact: {
+    fontSize: 10,
+    paddingVertical: 1,
+    paddingHorizontal: 12,
+  },
+  chipCompact: {
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 1,
+  },
+  avatarCompact: {},
+  chipNameCompact: {
+    fontSize: 10,
+    lineHeight: 12,
+  },
+  chipPriceCompact: {
+    fontSize: 9,
+    marginTop: 0,
+    lineHeight: 11,
   },
 });

@@ -42,9 +42,12 @@ import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { tabContentPadding, GRID_GAP } from "@/styles/layout";
 import { getCollection } from "@/services/collection";
 import { CollectionItemCard } from "@/components/CollectionItemCard";
-import type { Listing, Order, UserPost, VerificationStatus, WatchCollectionItem } from "@/types";
+import { StoryCard } from "@/components/stories/StoryCard";
+import { getBookmarkedStories } from "@/services/stories";
+import { toggleStoryBookmark } from "@/services/storyEngagement";
+import type { Listing, Order, StoryCard as StoryCardType, UserPost, VerificationStatus, WatchCollectionItem } from "@/types";
 
-type TabKey = "listings" | "posts" | "favorites" | "orders" | "collection";
+type TabKey = "listings" | "posts" | "favorites" | "bookmarks" | "orders" | "collection";
 
 function chunkListings<T>(items: T[]): T[][] {
   const rows: T[][] = [];
@@ -186,6 +189,7 @@ export default function ProfileScreen() {
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [collection, setCollection] = useState<WatchCollectionItem[]>([]);
+  const [savedStories, setSavedStories] = useState<StoryCardType[]>([]);
   const [tab, setTab] = useState<TabKey>("listings");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
     status: "not_started",
@@ -236,6 +240,7 @@ export default function ProfileScreen() {
         collectionData,
         counts,
         ordersData,
+        storiesData,
       ] = await fetchWithRetry(() =>
         Promise.all([
           getUserPosts(userId),
@@ -244,6 +249,7 @@ export default function ProfileScreen() {
           getCollection(userId),
           getFollowCounts(userId),
           getOrders(userId),
+          getBookmarkedStories(userId),
         ])
       );
 
@@ -255,6 +261,7 @@ export default function ProfileScreen() {
       setCollection(collectionData);
       setFollowCounts(counts);
       setOrders(ordersData);
+      setSavedStories(storiesData);
       hasLoadedOnceRef.current = true;
       setHasLoadedOnce(true);
       void getSellerVerificationStatus()
@@ -278,6 +285,7 @@ export default function ProfileScreen() {
       setFavorites([]);
       setCollection([]);
       setOrders([]);
+      setSavedStories([]);
       setFollowCounts({ followers: 0, following: 0 });
       setDataLoading(false);
       setLoadFailed(false);
@@ -423,11 +431,25 @@ export default function ProfileScreen() {
     );
   }
 
+  const handleUnbookmarkStory = (story: StoryCardType) => {
+    if (!user) return;
+    void (async () => {
+      try {
+        await toggleStoryBookmark(story.id, user.id);
+        setSavedStories((prev) => prev.filter((s) => s.id !== story.id));
+        notifyContentRefresh();
+      } catch (e) {
+        Alert.alert("Error", e instanceof Error ? e.message : "Could not remove bookmark");
+      }
+    })();
+  };
+
   const tabs: { key: TabKey; label: string }[] = [
     { key: "listings", label: "Listings" },
     { key: "collection", label: "Collection" },
     { key: "posts", label: "Posts" },
     { key: "favorites", label: "Saved" },
+    { key: "bookmarks", label: "Bookmarks" },
     { key: "orders", label: "Orders" },
   ];
 
@@ -499,7 +521,8 @@ export default function ProfileScreen() {
             tab !== "listings" &&
               tab !== "orders" &&
               ((tab === "posts" && posts.length) ||
-              (tab === "favorites" && favorites.length)
+              (tab === "favorites" && favorites.length) ||
+              (tab === "bookmarks" && savedStories.length)
                 ? null
                 : profileTabStyles.tabContentPadded),
           ]}
@@ -611,6 +634,31 @@ export default function ProfileScreen() {
                   icon="heart-outline"
                   title="Nothing saved yet"
                   body="Tap the heart on any watch to save it here."
+                />
+              </View>
+            ))}
+
+          {(!dataLoading || hasLoadedOnce) && tab === "bookmarks" &&
+            (savedStories.length ? (
+              <View style={{ marginTop: SPACING.lg }}>
+                {savedStories.map((story) => (
+                  <StoryCard
+                    key={story.id}
+                    story={{ ...story, bookmarked_by_me: true }}
+                    variant="compact"
+                    onBookmark={() => handleUnbookmarkStory(story)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View style={emptyStateSectionStyle}>
+                <EmptyState
+                  compact
+                  icon="bookmark-outline"
+                  title="No bookmarks yet"
+                  body="Bookmark Crownly Stories to read them later."
+                  actionLabel="Browse Stories"
+                  onAction={() => router.push("/stories")}
                 />
               </View>
             ))}

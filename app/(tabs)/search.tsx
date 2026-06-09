@@ -19,7 +19,7 @@ import { FilterDropdown } from "@/components/FilterDropdown";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { WatchCard } from "@/components/WatchCard";
-import { WatchCardSkeleton } from "@/components/SkeletonLoader";
+import { ListingGridSkeleton } from "@/components/SkeletonLoader";
 import { FILTER_CHIPS, CONDITIONS } from "@/constants/brands";
 import { useListings } from "@/hooks/useListings";
 import { Colors } from "@/constants/colors";
@@ -254,13 +254,7 @@ export default function SearchScreen() {
             contentContainerStyle={tabContentPadding(insets.bottom)}
           >
             {listHeader}
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: CARD_GAP }}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <View key={i} style={{ width: columnWidth }}>
-                  <WatchCardSkeleton variant="grid" />
-                </View>
-              ))}
-            </View>
+            <ListingGridSkeleton count={4} />
           </ScrollView>
         ) : (
           <FlashList

@@ -21,6 +21,8 @@ type Permission =
   | "listings:write"
   | "leads:read"
   | "leads:write"
+  | "dealers:read"
+  | "dealers:write"
   | "auth:read"
   | "auth:write"
   | "transactions:read"
@@ -46,6 +48,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "users:read", "users:write",
     "listings:read", "listings:write",
     "leads:read", "leads:write",
+    "dealers:read", "dealers:write",
     "auth:read", "auth:write",
     "transactions:read", "transactions:write",
     "revenue:read",
@@ -62,6 +65,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "users:read", "users:write",
     "listings:read",
     "leads:read", "leads:write",
+    "dealers:read", "dealers:write",
     "support:read", "support:write",
     "campaigns:read", "campaigns:write",
     "stories:read", "stories:write",
@@ -99,6 +103,7 @@ export function canAccessRoute(role: AdminRole | null | undefined, route: string
     "/users": "users:read",
     "/listings": "listings:read",
     "/leads": "leads:read",
+    "/dealers": "dealers:read",
     "/campaigns": "campaigns:read",
     "/stories": "stories:read",
     "/push-notifications": "push:read",

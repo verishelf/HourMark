@@ -14,6 +14,135 @@ export type LeadStatus =
   | "seller_onboarded"
   | "closed";
 
+export type DealerPipelineStatus =
+  | "new_lead"
+  | "contacted"
+  | "interested"
+  | "demo_scheduled"
+  | "proposal_sent"
+  | "account_created"
+  | "inventory_imported"
+  | "active_seller"
+  | "top_seller";
+
+export type DealerGrade = "A+" | "A" | "B" | "C";
+
+export type DealerActivityType =
+  | "email"
+  | "instagram_dm"
+  | "whatsapp"
+  | "phone_call"
+  | "meeting"
+  | "proposal_sent"
+  | "account_created"
+  | "inventory_imported";
+
+export type DealerTaskStatus = "open" | "in_progress" | "done";
+export type DealerTaskPriority = "low" | "medium" | "high" | "urgent";
+
+export type Dealer = {
+  id: string;
+  company_name: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+  instagram: string | null;
+  city: string | null;
+  country: string | null;
+  inventory_value: number;
+  estimated_monthly_sales: number;
+  watch_count: number;
+  instagram_followers: number;
+  lead_score: number;
+  lead_grade: DealerGrade;
+  commission_rate: number;
+  default_commission_rate: number;
+  is_launch_partner: boolean;
+  launch_partner_start: string | null;
+  launch_partner_expires: string | null;
+  pipeline_status: DealerPipelineStatus;
+  notes: string | null;
+  user_id: string | null;
+  assigned_to: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DealerActivity = {
+  id: string;
+  dealer_id: string;
+  activity_type: DealerActivityType;
+  notes: string | null;
+  outcome: string | null;
+  next_follow_up_at: string | null;
+  created_by: string;
+  created_at: string;
+  creator?: UserProfile;
+};
+
+export type DealerTask = {
+  id: string;
+  dealer_id: string;
+  title: string;
+  assigned_to: string | null;
+  due_at: string | null;
+  status: DealerTaskStatus;
+  priority: DealerTaskPriority;
+  created_at: string;
+  updated_at: string;
+  assignee?: UserProfile;
+};
+
+export type DealerChangelog = {
+  id: string;
+  dealer_id: string;
+  admin_id: string;
+  field_name: string;
+  old_value: string | null;
+  new_value: string | null;
+  created_at: string;
+  admin?: UserProfile;
+};
+
+export type DealerFilters = {
+  country?: string;
+  city?: string;
+  pipeline_status?: DealerPipelineStatus;
+  lead_grade?: DealerGrade;
+  is_launch_partner?: boolean;
+  inventory_min?: number;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+};
+
+export type DealerAnalytics = {
+  totalLeads: number;
+  newLeadsThisMonth: number;
+  activeConversations: number;
+  meetingsScheduled: number;
+  signedDealers: number;
+  launchPartners: number;
+  activeSellers: number;
+  topSellers: number;
+  totalInventoryValue: number;
+  totalWatches: number;
+  estimatedMonthlyGmv: number;
+  estimatedAnnualGmv: number;
+  estimatedAnnualRevenue: number;
+  dealerGrowth: ChartDataPoint[];
+  conversionFunnel: ChartDataPoint[];
+  inventoryGrowth: ChartDataPoint[];
+  revenueForecast: ChartDataPoint[];
+  dealerLocations: ChartDataPoint[];
+};
+
+export type DealerWithStats = Dealer & {
+  listings_count?: number;
+  actual_monthly_gmv?: number;
+};
+
 export type AuthRequestStatus =
   | "awaiting_shipment"
   | "received"

@@ -1,3 +1,4 @@
+import { Orbitron_500Medium, useFonts } from "@expo-google-fonts/orbitron";
 import { useEffect, useRef, type ReactNode } from "react";
 import {
   Dimensions,
@@ -15,6 +16,7 @@ import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
 import { Colors, OverlayTextColors } from "@/constants/colors";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
+import { Fonts } from "@/constants/fonts";
 import { FEATURED_CAROUSEL_HEIGHT } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { FirstListingPlaceholderCard } from "@/components/FirstListingPlaceholderCard";
@@ -65,12 +67,15 @@ function FeaturedSlide({
   item,
   isActive,
   onPress,
+  headerFontFamily,
 }: {
   item: Listing;
   isActive: boolean;
   onPress: () => void;
+  headerFontFamily?: string;
 }) {
   const coverImage = getListingCoverImage(item.images);
+  const headerFont = headerFontFamily ? { fontFamily: headerFontFamily } : null;
 
   return (
     <Pressable
@@ -109,6 +114,7 @@ function FeaturedSlide({
           delay={0}
           style={{
             ...Typography.label,
+            ...headerFont,
             color: OverlayTextColors.muted,
             marginBottom: 8,
           }}
@@ -120,6 +126,7 @@ function FeaturedSlide({
           delay={100}
           style={{
             ...Typography.hero,
+            ...headerFont,
             color: OverlayTextColors.primary,
             fontSize: 36,
           }}
@@ -131,6 +138,7 @@ function FeaturedSlide({
           delay={200}
           style={{
             ...Typography.h2,
+            ...headerFont,
             color: OverlayTextColors.secondary,
             marginBottom: 16,
           }}
@@ -155,6 +163,8 @@ export function FeaturedCarousel({
 }: Props) {
   const router = useRouter();
   const { colorScheme } = useTheme();
+  const [fontsLoaded] = useFonts({ Orbitron_500Medium });
+  const headerFontFamily = fontsLoaded ? Fonts.orbitronMedium : undefined;
   const {
     listRef,
     loopData,
@@ -237,6 +247,7 @@ export function FeaturedCarousel({
             item={item}
             isActive={item.id === activeListingId}
             onPress={() => router.push(`/listing/${item.id}`)}
+            headerFontFamily={headerFontFamily}
           />
         )}
       />

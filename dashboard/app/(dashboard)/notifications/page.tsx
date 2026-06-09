@@ -10,6 +10,12 @@ const typeLabels: Record<string, string> = {
   auth_update: "Authentication",
   support_ticket: "Support",
   new_lead: "Seller Lead",
+  follow_up_due_today: "Follow-Up Due",
+  follow_up_overdue: "Overdue Follow-Up",
+  meeting_tomorrow: "Meeting Tomorrow",
+  proposal_waiting: "Proposal Waiting",
+  launch_partner_expiring_30: "LP Expiring (30d)",
+  launch_partner_expiring_7: "LP Expiring (7d)",
 };
 
 export default async function NotificationsPage() {

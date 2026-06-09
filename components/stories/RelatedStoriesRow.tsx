@@ -1,8 +1,8 @@
-import { ScrollView, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { ScrollView, View } from "react-native";
 import { StoryCard } from "@/components/stories/StoryCard";
 import { SectionHeader } from "@/components/SectionHeader";
-import { SPACING } from "@/constants/layout";
+import { SPACING, STORY_FEATURED_CARD_SNAP_INTERVAL } from "@/constants/layout";
+import { smoothHorizontalScrollProps } from "@/constants/scroll";
 import type { StoryCard as StoryCardType } from "@/types";
 
 type Props = {
@@ -11,7 +11,6 @@ type Props = {
 };
 
 export function RelatedStoriesRow({ stories, title = "Related Stories" }: Props) {
-  const router = useRouter();
   if (stories.length === 0) return null;
 
   return (
@@ -23,7 +22,11 @@ export function RelatedStoriesRow({ stories, title = "Related Stories" }: Props)
       />
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        {...smoothHorizontalScrollProps(STORY_FEATURED_CARD_SNAP_INTERVAL, {
+          itemCount: stories.length,
+          leadingInset: SPACING.screen,
+        })}
         contentContainerStyle={{ paddingHorizontal: SPACING.screen }}
       >
         {stories.map((story) => (

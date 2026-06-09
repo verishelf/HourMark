@@ -1,7 +1,8 @@
 import { ScrollView, View } from "react-native";
 import { StoryCard } from "@/components/stories/StoryCard";
 import { SectionHeader } from "@/components/SectionHeader";
-import { SPACING } from "@/constants/layout";
+import { SPACING, STORY_FEATURED_CARD_SNAP_INTERVAL } from "@/constants/layout";
+import { smoothHorizontalScrollProps } from "@/constants/scroll";
 import type { StoryCard as StoryCardType } from "@/types";
 
 type Props = {
@@ -22,7 +23,11 @@ export function StoryFeaturedCarousel({ stories, onSeeAll, onStoryPress }: Props
       />
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        {...smoothHorizontalScrollProps(STORY_FEATURED_CARD_SNAP_INTERVAL, {
+          itemCount: stories.length,
+          leadingInset: SPACING.screen,
+        })}
         contentContainerStyle={{ paddingHorizontal: SPACING.screen, paddingBottom: SPACING.sm }}
       >
         {stories.map((story) => (

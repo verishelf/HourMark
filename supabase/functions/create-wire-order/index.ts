@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "You cannot buy your own listing" }, 400);
     }
 
-    const sellerFeeRate = await getSellerFeeRate(supabase);
+    const sellerFeeRate = await getSellerFeeRate(supabase, listing.seller_id);
     const commissionFee = calculateSellerListingFee(amount, sellerFeeRate);
 
     const { data: order, error: orderError } = await supabase

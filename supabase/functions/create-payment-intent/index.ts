@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ message: "Seller is not verified for payouts" }, 400);
     }
 
-    const sellerFeeRate = await getSellerFeeRate(supabase);
+    const sellerFeeRate = await getSellerFeeRate(supabase, listing.seller_id);
     const commissionFee = calculateSellerListingFee(amount, sellerFeeRate);
     const resolvedPaymentMethod =
       paymentMethod === "apple_pay" ? "apple_pay" : "card";

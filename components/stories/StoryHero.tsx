@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
-import { SPACING, STORY_GUTTER } from "@/constants/layout";
+import { RADIUS, SPACING, STORY_GUTTER } from "@/constants/layout";
 
 type Props = {
   imageUrl: string;
@@ -38,6 +38,9 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 5,
     maxHeight: 480,
     backgroundColor: Colors.card,
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+    overflow: "hidden",
   },
   image: { width: "100%", height: "100%" },
   overlay: {

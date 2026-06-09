@@ -4,7 +4,8 @@ import { useRouter } from "expo-router";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
-import { SPACING, RADIUS } from "@/constants/layout";
+import { SPACING, RADIUS, SUGGESTED_WATCH_CARD_SNAP_INTERVAL, SUGGESTED_WATCH_CARD_WIDTH } from "@/constants/layout";
+import { smoothHorizontalScrollProps } from "@/constants/scroll";
 
 type Listing = {
   id: string;
@@ -31,7 +32,11 @@ export function SuggestedWatchesRow({ listings }: Props) {
       <SectionHeader title="Suggested Watches" compact style={{ paddingHorizontal: SPACING.screen }} />
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        {...smoothHorizontalScrollProps(SUGGESTED_WATCH_CARD_SNAP_INTERVAL, {
+          itemCount: listings.length,
+          leadingInset: SPACING.screen,
+        })}
         contentContainerStyle={{ paddingHorizontal: SPACING.screen, gap: SPACING.md }}
       >
         {listings.map((listing) => (
@@ -39,7 +44,7 @@ export function SuggestedWatchesRow({ listings }: Props) {
             key={listing.id}
             onPress={() => router.push(`/listing/${listing.id}`)}
             style={{
-              width: 160,
+              width: SUGGESTED_WATCH_CARD_WIDTH,
               borderRadius: RADIUS.md,
               borderWidth: 1,
               borderColor: Colors.border,

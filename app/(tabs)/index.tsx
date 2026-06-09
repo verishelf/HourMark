@@ -1,33 +1,47 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, useWindowDimensions, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import Animated from "react-native-reanimated";
 import { HIDE_SCROLL_INDICATORS } from "@/constants/scroll";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { EmptyState } from "@/components/EmptyState";
+import { HomeChartsPanel } from "@/components/HomeChartsPanel";
 import { HomeFixedHeader } from "@/components/HomeFixedHeader";
-import { HomeQuickActions } from "@/components/HomeQuickActions";
 import { TrustAssuranceCarousel } from "@/components/TrustAssuranceCarousel";
 import { StoryHomeSection } from "@/components/stories/StoryHomeSection";
 import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { FilterChip } from "@/components/FilterChip";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { ListingGrid } from "@/components/ListingGrid";
-import { ScreenHeader } from "@/components/ScreenHeader";
+import { CrownlyHomeWordmark } from "@/components/CrownlyHomeWordmark";
 import { SectionHeader } from "@/components/SectionHeader";
-import { WatchCardSkeleton } from "@/components/SkeletonLoader";
+import { WatchCardSkeleton, ListingGridSkeleton } from "@/components/SkeletonLoader";
 import { LUXURY_BRANDS } from "@/constants/brands";
+import { HOME_MARKET_TABS, type HomeMarketTab } from "@/constants/homeMarketTabs";
 import { subscribeContentRefresh } from "@/lib/contentRefresh";
 import { getFeaturedListings, getListings, getListingsFromFollowing } from "@/services/listings";
 import { useAuth } from "@/hooks/useAuth";
+import { useHomeScroll, HomeScrollProvider } from "@/hooks/useCollapsingMarqueeScroll";
 import { getUnreadCount } from "@/services/notifications";
 import { Colors } from "@/constants/colors";
-import { CARD_GAP, SPACING } from "@/constants/layout";
+import { SPACING } from "@/constants/layout";
 import { isDisplayableListing } from "@/lib/listingImages";
 import { tabContentPadding } from "@/styles/layout";
 import type { Listing } from "@/types";
 
-export default function HomeScreen() {
+const HomeScrollView = Animated.createAnimatedComponent(ScrollView);
+
+function HomeScreenContent() {
   const insets = useSafeAreaInsets();
+  const [pagerWidth, setPagerWidth] = useState(() => Dimensions.get("window").width);
   const router = useRouter();
   const { user } = useAuth();
   const [featured, setFeatured] = useState<Listing[]>([]);
@@ -39,12 +53,18 @@ export default function HomeScreen() {
   const [gridListings, setGridListings] = useState<Listing[]>([]);
   const [marketplaceEmpty, setMarketplaceEmpty] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [marqueeHeight, setMarqueeHeight] = useState(0);
-  const { width: screenWidth } = useWindowDimensions();
-  const gridColumnWidth = (screenWidth - SPACING.screen * 2 - CARD_GAP) / 2;
+  const [activeTab, setActiveTab] = useState<HomeMarketTab>("marketplace");
+  const activeTabRef = useRef<HomeMarketTab>("marketplace");
   const loadRequestId = useRef(0);
   const hasLoadedOnceRef = useRef(false);
   const isFirstFocusRef = useRef(true);
+  const pagerRef = useRef<ScrollView>(null);
+  const verticalScrollRefs = useRef<(ScrollView | null)[]>([]);
+  const { scrollHandler, resetMarquee, headerInsetStyle } = useHomeScroll();
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
 
   const applyHomeData = useCallback((feat: Listing[], all: Listing[]) => {
     const displayable = all.filter(isDisplayableListing);
@@ -74,53 +94,81 @@ export default function HomeScreen() {
       setLoading(true);
     }
 
-    const maxAttempts = 3;
+    try {
+      const maxAttempts = 3;
 
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      try {
-        const [feat, all] = await Promise.all([getFeaturedListings(), getListings()]);
-        if (isStale()) return;
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        try {
+          const [feat, all] = await Promise.all([getFeaturedListings(), getListings()]);
+          if (isStale()) return;
 
-        applyHomeData(feat, all);
-        hasLoadedOnceRef.current = true;
-
-        if (user) {
-          getListingsFromFollowing(user.id).then((data) => {
-            if (!isStale()) setFollowingListings(data);
-          });
-          getUnreadCount(user.id).then((count) => {
-            if (!isStale()) setUnreadNotifs(count);
-          });
-        }
-
-        setLoading(false);
-        return;
-      } catch {
-        if (attempt < maxAttempts - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
+          applyHomeData(feat, all);
+          hasLoadedOnceRef.current = true;
+          return;
+        } catch {
+          if (attempt < maxAttempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
+          }
         }
       }
+
+      if (isStale()) return;
+
+      if (!hasLoadedOnceRef.current) {
+        setMarketplaceEmpty(true);
+        setFeatured([]);
+        setNewArrivals([]);
+        setVerified([]);
+        setRareCollections([]);
+        setGridListings([]);
+      }
+    } finally {
+      if (!isStale()) {
+        setLoading(false);
+      }
     }
-
-    if (isStale()) return;
-
-    if (!hasLoadedOnceRef.current) {
-      setMarketplaceEmpty(true);
-      setFeatured([]);
-      setNewArrivals([]);
-      setVerified([]);
-      setRareCollections([]);
-      setGridListings([]);
-    }
-
-    setLoading(false);
-  }, [applyHomeData, user]);
-
-  const gridSkeletonRows = useMemo(() => [0, 1, 2], []);
+  }, [applyHomeData]);
 
   useEffect(() => {
     void loadHome();
   }, [loadHome]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setFollowingListings([]);
+      setUnreadNotifs(0);
+      return;
+    }
+
+    let cancelled = false;
+    const userId = user.id;
+
+    Promise.all([getListingsFromFollowing(userId), getUnreadCount(userId)]).then(
+      ([following, unread]) => {
+        if (!cancelled) {
+          setFollowingListings(following);
+          setUnreadNotifs(unread);
+        }
+      }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const scrollPagerToIndex = useCallback((index: number, animated: boolean) => {
+    if (pagerWidth <= 0 || index < 0) return;
+    pagerRef.current?.scrollTo({ x: index * pagerWidth, animated });
+  }, [pagerWidth]);
+
+  useEffect(() => {
+    if (pagerWidth <= 0) return;
+    const index = HOME_MARKET_TABS.findIndex((tab) => tab.key === activeTabRef.current);
+    if (index >= 0) {
+      scrollPagerToIndex(index, false);
+    }
+  }, [pagerWidth, scrollPagerToIndex]);
 
   useFocusEffect(
     useCallback(() => {
@@ -145,6 +193,180 @@ export default function HomeScreen() {
     router.push("/post/create");
   };
 
+  const handleTabPress = useCallback(
+    (tab: HomeMarketTab) => {
+      const index = HOME_MARKET_TABS.findIndex((t) => t.key === tab);
+      if (index < 0) return;
+
+      setActiveTab(tab);
+      resetMarquee();
+      scrollPagerToIndex(index, true);
+      verticalScrollRefs.current[index]?.scrollTo({ y: 0, animated: false });
+    },
+    [resetMarquee, scrollPagerToIndex]
+  );
+
+  const syncTabFromPagerOffset = useCallback(
+    (offsetX: number) => {
+      if (pagerWidth <= 0) return;
+      const index = Math.round(offsetX / pagerWidth);
+      const tab = HOME_MARKET_TABS[index]?.key;
+      if (tab && tab !== activeTabRef.current) {
+        setActiveTab(tab);
+        resetMarquee();
+        verticalScrollRefs.current[index]?.scrollTo({ y: 0, animated: false });
+      }
+    },
+    [pagerWidth, resetMarquee]
+  );
+
+  const handlePagerScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      syncTabFromPagerOffset(event.nativeEvent.contentOffset.x);
+    },
+    [syncTabFromPagerOffset]
+  );
+
+  const renderMarketplacePanel = () => (
+    <>
+      <View style={styles.marketplaceHero}>
+        <CrownlyHomeWordmark />
+
+        <View style={styles.sliderLayer}>
+          {loading ? (
+            <View style={{ paddingHorizontal: SPACING.screen }}>
+              <WatchCardSkeleton variant="featured" />
+            </View>
+          ) : (
+            <FeaturedCarousel listings={featured} showEmptyPlaceholder={marketplaceEmpty} />
+          )}
+        </View>
+      </View>
+
+      <TrustAssuranceCarousel />
+      <StoryHomeSection />
+
+      {followingListings.length > 0 ? (
+        <View style={{ paddingHorizontal: SPACING.screen, marginTop: 24 }}>
+          <SectionHeader title="From Collectors You Follow" subtitle="Personalized for you" />
+          <HorizontalListingScroll listings={followingListings} />
+        </View>
+      ) : null}
+
+      <View style={{ paddingHorizontal: SPACING.screen, marginTop: 24 }}>
+        <SectionHeader title="Shop by Brand" subtitle="Explore top maisons" />
+        <ScrollView
+          horizontal
+          {...HIDE_SCROLL_INDICATORS}
+          contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
+          style={{ marginBottom: 24 }}
+        >
+          {LUXURY_BRANDS.slice(0, 8).map((brand) => (
+            <FilterChip
+              key={brand}
+              label={brand}
+              active={false}
+              onPress={() => goToSearchWithBrand(brand)}
+            />
+          ))}
+        </ScrollView>
+
+        <SectionHeader
+          title="New Arrivals"
+          subtitle="Fresh listings from verified sellers"
+          actionLabel="View all"
+          onAction={() => router.push("/search")}
+        />
+        <HorizontalListingScroll
+          listings={newArrivals}
+          loading={loading}
+          showEmptyPlaceholder={marketplaceEmpty}
+        />
+
+        <SectionHeader
+          title="Verified Sellers"
+          subtitle="Trusted collectors & dealers"
+          topSpacing={32}
+        />
+        <HorizontalListingScroll
+          listings={verified}
+          loading={loading}
+          showEmptyPlaceholder={marketplaceEmpty}
+        />
+
+        <SectionHeader
+          title="Rare Collections"
+          subtitle="Exceptional pieces, limited availability"
+          topSpacing={32}
+        />
+        <HorizontalListingScroll
+          listings={rareCollections}
+          loading={loading}
+          showEmptyPlaceholder={marketplaceEmpty}
+        />
+
+        <SectionHeader
+          title="Explore Watches"
+          subtitle="Browse the marketplace"
+          actionLabel="View all"
+          onAction={() => router.push("/search")}
+          topSpacing={32}
+        />
+        {loading ? (
+          <ListingGridSkeleton rows={3} />
+        ) : (
+          <ListingGrid listings={gridListings} showEmptyPlaceholder={marketplaceEmpty} />
+        )}
+      </View>
+    </>
+  );
+
+  const renderTabPanel = (tab: HomeMarketTab) => {
+    switch (tab) {
+      case "marketplace":
+        return renderMarketplacePanel();
+      case "auctions":
+        return (
+          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
+            <EmptyState
+              icon="hammer-outline"
+              title="Auctions"
+              body="Live watch auctions are coming soon to Crownly."
+              fill
+            />
+          </View>
+        );
+      case "arbitrage":
+        return (
+          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
+            <EmptyState
+              icon="swap-horizontal-outline"
+              title="Arbitrage"
+              body="Price spreads and cross-market opportunities will appear here."
+              fill
+            />
+          </View>
+        );
+      case "charts":
+        return <HomeChartsPanel />;
+      case "grails":
+        return (
+          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
+            <EmptyState
+              icon="diamond-outline"
+              title="Grail Hunts"
+              body="Post what you're looking for and let sellers come to you."
+              actionLabel="Browse grail hunts"
+              onAction={() => router.push("/grails")}
+              fill
+            />
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <View
@@ -156,23 +378,9 @@ export default function HomeScreen() {
           zIndex: 10,
         }}
       >
-        <HomeFixedHeader onLayoutHeight={setMarqueeHeight} />
-      </View>
-
-      <View
-        pointerEvents="box-none"
-        style={{
-          position: "absolute",
-          top: marqueeHeight + 4,
-          left: 0,
-          right: 0,
-          zIndex: 10,
-          paddingHorizontal: SPACING.screen,
-          flexDirection: "row",
-          justifyContent: "flex-end",
-        }}
-      >
-        <HomeQuickActions
+        <HomeFixedHeader
+          activeTab={activeTab}
+          onTabChange={handleTabPress}
           unreadNotifs={unreadNotifs}
           onNotifications={() => router.push("/notifications")}
           onScanner={() => router.push("/scanner/camera")}
@@ -181,125 +389,62 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        nestedScrollEnabled
+        decelerationRate="fast"
         {...HIDE_SCROLL_INDICATORS}
-        contentContainerStyle={{
-          ...tabContentPadding(insets.bottom),
-          paddingTop: marqueeHeight,
+        onLayout={(event) => {
+          const width = event.nativeEvent.layout.width;
+          if (width > 0 && width !== pagerWidth) {
+            setPagerWidth(width);
+          }
         }}
+        onMomentumScrollEnd={handlePagerScrollEnd}
+        onScrollEndDrag={handlePagerScrollEnd}
+        scrollEventThrottle={16}
+        style={{ flex: 1 }}
       >
-        <ScreenHeader
-          embedded
-          style={{ paddingTop: 4 }}
-          label="Crownly"
-          title="Curated Timepieces"
-          subtitle="Authenticated luxury watches from verified sellers"
-        />
-
-        {loading ? (
-          <View style={{ paddingHorizontal: SPACING.screen }}>
-            <WatchCardSkeleton variant="featured" />
+        {HOME_MARKET_TABS.map((tab, index) => (
+          <View key={tab.key} style={{ width: pagerWidth, flex: 1 }}>
+            <HomeScrollView
+              ref={(ref) => {
+                verticalScrollRefs.current[index] = ref;
+              }}
+              {...HIDE_SCROLL_INDICATORS}
+              directionalLockEnabled
+              onScroll={activeTab === tab.key ? scrollHandler : undefined}
+              scrollEventThrottle={16}
+              contentContainerStyle={tabContentPadding(insets.bottom)}
+            >
+              <Animated.View style={headerInsetStyle}>{renderTabPanel(tab.key)}</Animated.View>
+            </HomeScrollView>
           </View>
-        ) : (
-          <FeaturedCarousel
-            listings={featured}
-            showEmptyPlaceholder={marketplaceEmpty}
-          />
-        )}
-
-        <TrustAssuranceCarousel />
-
-        <StoryHomeSection />
-
-        {followingListings.length > 0 ? (
-          <View style={{ paddingHorizontal: SPACING.screen, marginTop: 24 }}>
-            <SectionHeader
-              title="From Collectors You Follow"
-              subtitle="Personalized for you"
-            />
-            <HorizontalListingScroll listings={followingListings} />
-          </View>
-        ) : null}
-
-        <View style={{ paddingHorizontal: SPACING.screen, marginTop: 24 }}>
-          <SectionHeader title="Shop by Brand" subtitle="Explore top maisons" />
-          <ScrollView
-            horizontal
-            {...HIDE_SCROLL_INDICATORS}
-            contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
-            style={{ marginBottom: 24 }}
-          >
-            {LUXURY_BRANDS.slice(0, 8).map((brand) => (
-              <FilterChip
-                key={brand}
-                label={brand}
-                active={false}
-                onPress={() => goToSearchWithBrand(brand)}
-              />
-            ))}
-          </ScrollView>
-
-          <SectionHeader
-            title="New Arrivals"
-            subtitle="Fresh listings from verified sellers"
-            actionLabel="View all"
-            onAction={() => router.push("/search")}
-          />
-          <HorizontalListingScroll
-            listings={newArrivals}
-            loading={loading}
-            showEmptyPlaceholder={marketplaceEmpty}
-          />
-
-          <SectionHeader
-            title="Verified Sellers"
-            subtitle="Trusted collectors & dealers"
-            topSpacing={32}
-          />
-          <HorizontalListingScroll
-            listings={verified}
-            loading={loading}
-            showEmptyPlaceholder={marketplaceEmpty}
-          />
-
-          <SectionHeader
-            title="Rare Collections"
-            subtitle="Exceptional pieces, limited availability"
-            topSpacing={32}
-          />
-          <HorizontalListingScroll
-            listings={rareCollections}
-            loading={loading}
-            showEmptyPlaceholder={marketplaceEmpty}
-          />
-
-          <SectionHeader
-            title="Explore Watches"
-            subtitle="Browse the marketplace"
-            actionLabel="View all"
-            onAction={() => router.push("/search")}
-            topSpacing={32}
-          />
-          {loading ? (
-            <View style={{ gap: CARD_GAP }}>
-              {gridSkeletonRows.map((row) => (
-                <View key={row} style={{ flexDirection: "row", gap: CARD_GAP }}>
-                  <View style={{ width: gridColumnWidth }}>
-                    <WatchCardSkeleton variant="grid" />
-                  </View>
-                  <View style={{ width: gridColumnWidth }}>
-                    <WatchCardSkeleton variant="grid" />
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <ListingGrid
-              listings={gridListings}
-              showEmptyPlaceholder={marketplaceEmpty}
-            />
-          )}
-        </View>
+        ))}
       </ScrollView>
     </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  marketplaceHero: {
+    position: "relative",
+    zIndex: 0,
+  },
+  sliderLayer: {
+    position: "relative",
+    zIndex: 1,
+    elevation: 2,
+  },
+});
+
+export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <HomeScrollProvider topInset={insets.top}>
+      <HomeScreenContent />
+    </HomeScrollProvider>
   );
 }
