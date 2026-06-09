@@ -716,7 +716,7 @@ export default function ProfileScreen() {
           <SettingsRow
             label="Settings"
             icon="settings-outline"
-            subtitle="Theme and app preferences."
+            subtitle="Seller account, Shopify, and app preferences."
             onPress={() => router.push("/profile/settings")}
           />
           <SettingsRow

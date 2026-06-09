@@ -405,3 +405,54 @@ export type {
   SocialChannelCredentials,
   SocialPlatformResult,
 } from "./social-media";
+
+export type ShopifySyncStatus = "idle" | "syncing" | "success" | "error" | "disabled";
+
+export type ShopifySyncType =
+  | "initial_import"
+  | "manual"
+  | "webhook"
+  | "scheduled"
+  | "admin_force";
+
+export type ShopifySyncLogStatus = "started" | "success" | "partial" | "failed";
+
+export type DealerShopifyStore = {
+  id: string;
+  dealer_id: string;
+  user_id: string;
+  shop_domain: string;
+  shop_name: string | null;
+  connected_at: string;
+  last_sync: string | null;
+  sync_status: ShopifySyncStatus;
+  products_imported: number;
+  integration_enabled: boolean;
+  seller_fee_rate: number;
+  created_at: string;
+  updated_at: string;
+  dealer?: Pick<Dealer, "company_name" | "contact_name" | "email">;
+};
+
+export type ShopifySyncLog = {
+  id: string;
+  dealer_id: string;
+  store_id: string | null;
+  sync_type: ShopifySyncType;
+  status: ShopifySyncLogStatus;
+  products_created: number;
+  products_updated: number;
+  products_deleted: number;
+  error_message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  dealer?: Pick<Dealer, "company_name" | "email">;
+};
+
+export type ShopifyIntegrationStats = {
+  connectedStores: number;
+  connectedDealers: number;
+  totalImportedListings: number;
+  failedSyncs24h: number;
+  lastSyncAt: string | null;
+};

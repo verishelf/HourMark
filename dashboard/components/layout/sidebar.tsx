@@ -22,6 +22,7 @@ import {
   BookOpen,
   BellRing,
   Share2,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/stories", label: "Stories", icon: BookOpen },
   { href: "/push-notifications", label: "Push Notifications", icon: BellRing },
   { href: "/social-media", label: "Social Media", icon: Share2 },
+  { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/authentication", label: "Authentication", icon: ShieldCheck },
   { href: "/transactions", label: "Transactions", icon: CreditCard },
   { href: "/revenue", label: "Revenue", icon: DollarSign },

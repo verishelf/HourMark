@@ -65,6 +65,14 @@ function RootNavigation() {
             options={{ animation: "slide_from_right" }}
           />
           <Stack.Screen
+            name="profile/app-preferences"
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="profile/shopify"
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
             name="profile/notification-settings"
             options={{ animation: "slide_from_right" }}
           />

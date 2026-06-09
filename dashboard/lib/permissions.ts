@@ -41,6 +41,8 @@ type Permission =
   | "analytics:read"
   | "settings:read"
   | "settings:write"
+  | "integrations:read"
+  | "integrations:write"
   | "audit:read";
 
 const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
@@ -59,6 +61,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "social:read", "social:write",
     "analytics:read",
     "settings:read", "settings:write",
+    "integrations:read", "integrations:write",
     "audit:read",
   ],
   support_admin: [
@@ -71,6 +74,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "stories:read", "stories:write",
     "push:read", "push:write",
     "social:read", "social:write",
+    "integrations:read",
     "analytics:read",
   ],
   auth_inspector: [
@@ -116,6 +120,7 @@ export function canAccessRoute(role: AdminRole | null | undefined, route: string
     "/analytics": "analytics:read",
     "/audit-logs": "audit:read",
     "/settings": "settings:read",
+    "/integrations": "integrations:read",
   };
 
   const permission = routePermissions[route];

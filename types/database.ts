@@ -64,6 +64,12 @@ export type Listing = {
   includes_warranty_card?: boolean;
   min_offer_price?: number | null;
   accepts_offers?: boolean;
+  external_source?: "manual" | "shopify";
+  shopify_product_id?: string | null;
+  shopify_variant_id?: string | null;
+  shopify_sku?: string | null;
+  inventory_quantity?: number;
+  import_seller_fee_rate?: number | null;
   created_at: string;
   seller?: UserProfile;
 };

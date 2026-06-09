@@ -692,3 +692,61 @@ export async function getDealerCrmNotifications(): Promise<AdminNotification[]> 
     .limit(50);
   return (data ?? []) as AdminNotification[];
 }
+
+// ─── Shopify Integrations ───
+
+export async function getShopifyIntegrationStats(): Promise<import("@/types/database").ShopifyIntegrationStats> {
+  const supabase = createServiceClient();
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const [{ count: storeCount }, { count: listingCount }, { data: failedLogs }, { data: lastStore }] =
+    await Promise.all([
+      supabase.from("dealer_shopify_stores").select("id", { count: "exact", head: true }).eq("integration_enabled", true),
+      supabase.from("listings").select("id", { count: "exact", head: true }).eq("external_source", "shopify"),
+      supabase.from("shopify_sync_logs").select("id").eq("status", "failed").gte("created_at", since),
+      supabase
+        .from("dealer_shopify_stores")
+        .select("last_sync")
+        .order("last_sync", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+  return {
+    connectedStores: storeCount ?? 0,
+    connectedDealers: storeCount ?? 0,
+    totalImportedListings: listingCount ?? 0,
+    failedSyncs24h: failedLogs?.length ?? 0,
+    lastSyncAt: lastStore?.last_sync ?? null,
+  };
+}
+
+export async function getShopifyStores(limit = 50): Promise<import("@/types/database").DealerShopifyStore[]> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("dealer_shopify_stores_public")
+    .select(`
+      *,
+      dealer:dealers(company_name, contact_name, email)
+    `)
+    .order("connected_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as import("@/types/database").DealerShopifyStore[];
+}
+
+export async function getShopifySyncLogs(limit = 100): Promise<import("@/types/database").ShopifySyncLog[]> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("shopify_sync_logs")
+    .select(`
+      *,
+      dealer:dealers(company_name, email)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as import("@/types/database").ShopifySyncLog[];
+}
