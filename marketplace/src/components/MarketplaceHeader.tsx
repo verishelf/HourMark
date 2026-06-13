@@ -44,7 +44,7 @@ function HeaderContent({ compact }: Props) {
 
       <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 md:gap-8 md:py-4">
         <Link href="/" className="shrink-0">
-          <Image src="/crownly-logo.png" alt="Crownly" width={110} height={28} priority />
+          <Image src="/crownly-logo.png" alt="Crownly" width={46} height={28} priority />
         </Link>
 
         {!compact && (
