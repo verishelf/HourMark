@@ -39,6 +39,8 @@ export type AuthenticationStatus =
   | "manual_review"
   | "rejected";
 
+export type SaleMode = "fixed" | "auction";
+
 export type Listing = {
   id: string;
   seller_id: string;
@@ -64,6 +66,13 @@ export type Listing = {
   includes_warranty_card?: boolean;
   min_offer_price?: number | null;
   accepts_offers?: boolean;
+  sale_mode?: SaleMode;
+  auction_duration_days?: number | null;
+  auction_ends_at?: string | null;
+  auction_starting_bid?: number | null;
+  auction_reserve_price?: number | null;
+  auction_current_bid?: number | null;
+  auction_bid_count?: number;
   external_source?: "manual" | "shopify";
   shopify_product_id?: string | null;
   shopify_variant_id?: string | null;
@@ -72,6 +81,14 @@ export type Listing = {
   import_seller_fee_rate?: number | null;
   created_at: string;
   seller?: UserProfile;
+};
+
+export type ListingBid = {
+  id: string;
+  listing_id: string;
+  bidder_id: string;
+  amount: number;
+  created_at: string;
 };
 
 export type Favorite = {
@@ -368,6 +385,10 @@ export type CreateListingInput = {
   includes_box?: boolean;
   includes_papers?: boolean;
   includes_warranty_card?: boolean;
+  sale_mode?: SaleMode;
+  auction_duration_days?: number;
+  auction_starting_bid?: number;
+  auction_reserve_price?: number;
 };
 
 export type UserPost = {

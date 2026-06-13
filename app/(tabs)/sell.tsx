@@ -37,7 +37,8 @@ import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { SellerPayoutBreakdown } from "@/components/SellerPayoutBreakdown";
 import { createListing, uploadListingImage } from "@/services/listings";
 import { isSellerKycApproved } from "@/services/kyc";
-import { dollarsToCents } from "@/lib/stripe";
+import { dollarsToCents, formatPrice } from "@/lib/stripe";
+import { AUCTION_DURATIONS, type SaleMode } from "@/lib/auction";
 import { ensurePhotoLibraryPermission, pickManyFromPhotoLibrary } from "@/lib/imagePicker";
 
 const STEPS = ["Photos", "Details", "Review"] as const;
@@ -132,6 +133,9 @@ export default function SellScreen() {
   const [condition, setCondition] = useState("Excellent");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [saleMode, setSaleMode] = useState<SaleMode>("fixed");
+  const [auctionDurationDays, setAuctionDurationDays] = useState(7);
+  const [reservePrice, setReservePrice] = useState("");
   const [serialNumber, setSerialNumber] = useState("");
   const [includesBox, setIncludesBox] = useState(true);
   const [includesPapers, setIncludesPapers] = useState(true);
@@ -217,8 +221,22 @@ export default function SellScreen() {
       return;
     }
     if (!images.length || !brand || !model || !price) {
-      Alert.alert("Missing fields", "Please add photos, brand, model, and price.");
+      Alert.alert(
+        "Missing fields",
+        saleMode === "auction"
+          ? "Please add photos, brand, model, and starting bid."
+          : "Please add photos, brand, model, and price."
+      );
       return;
+    }
+
+    const priceCents = dollarsToCents(parseFloat(price));
+    if (saleMode === "auction") {
+      const reserveCents = reservePrice ? dollarsToCents(parseFloat(reservePrice)) : null;
+      if (reserveCents != null && reserveCents < priceCents) {
+        Alert.alert("Invalid reserve", "Reserve price must be at or above the starting bid.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -234,12 +252,22 @@ export default function SellScreen() {
         year: year ? parseInt(year, 10) : undefined,
         condition,
         description,
-        price: dollarsToCents(parseFloat(price)),
+        price: priceCents,
         images: uploaded,
         serial_number: serialNumber || undefined,
         includes_box: includesBox,
         includes_papers: includesPapers,
         includes_warranty_card: includesWarrantyCard,
+        sale_mode: saleMode,
+        ...(saleMode === "auction"
+          ? {
+              auction_starting_bid: priceCents,
+              auction_duration_days: auctionDurationDays,
+              auction_reserve_price: reservePrice
+                ? dollarsToCents(parseFloat(reservePrice))
+                : undefined,
+            }
+          : {}),
       });
 
       notifyContentRefresh();
@@ -253,6 +281,9 @@ export default function SellScreen() {
       setBrand("");
       setModel("");
       setPrice("");
+      setSaleMode("fixed");
+      setAuctionDurationDays(7);
+      setReservePrice("");
       setDescription("");
       setIncludesBox(true);
       setIncludesPapers(true);
@@ -569,14 +600,109 @@ export default function SellScreen() {
               surfaceStyle={glassSurface}
               titleStyle={styles.textOnGlass}
             >
-              <TextInput
-                placeholder="Asking Price (USD)"
-                placeholderTextColor={GLASS_PLACEHOLDER}
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="decimal-pad"
-                style={[styles.input, styles.inputClear]}
-              />
+              <Text style={[styles.fieldLabel, styles.textOnGlass]}>Listing type</Text>
+              <View style={[styles.chipRow, styles.saleModeChipRow]}>
+                <Pressable
+                  onPress={() => setSaleMode("fixed")}
+                  style={[
+                    styles.chip,
+                    styles.accessoryChip,
+                    saleMode === "fixed" && styles.chipActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="pricetag-outline"
+                    size={14}
+                    color="#FFFFFF"
+                    style={styles.saleModeChipIcon}
+                  />
+                  <Text style={[styles.chipText, saleMode === "fixed" && styles.chipTextActive]}>
+                    Fixed price
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setSaleMode("auction")}
+                  style={[
+                    styles.chip,
+                    styles.accessoryChip,
+                    saleMode === "auction" && styles.chipActive,
+                  ]}
+                >
+                  <Ionicons
+                    name="hammer-outline"
+                    size={14}
+                    color="#FFFFFF"
+                    style={styles.saleModeChipIcon}
+                  />
+                  <Text style={[styles.chipText, saleMode === "auction" && styles.chipTextActive]}>
+                    Auction
+                  </Text>
+                </Pressable>
+              </View>
+
+              {saleMode === "fixed" ? (
+                <TextInput
+                  placeholder="Asking Price (USD)"
+                  placeholderTextColor={GLASS_PLACEHOLDER}
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="decimal-pad"
+                  style={[styles.input, styles.inputClear]}
+                />
+              ) : (
+                <>
+                  <TextInput
+                    placeholder="Starting Bid (USD)"
+                    placeholderTextColor={GLASS_PLACEHOLDER}
+                    value={price}
+                    onChangeText={setPrice}
+                    keyboardType="decimal-pad"
+                    style={[styles.input, styles.inputClear]}
+                  />
+                  <TextInput
+                    placeholder="Reserve Price (optional, USD)"
+                    placeholderTextColor={GLASS_PLACEHOLDER}
+                    value={reservePrice}
+                    onChangeText={setReservePrice}
+                    keyboardType="decimal-pad"
+                    style={[styles.input, styles.inputClear]}
+                  />
+                  <Text style={[styles.fieldLabel, styles.textOnGlass, { marginTop: 4 }]}>
+                    Auction duration
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    {...HIDE_SCROLL_INDICATORS}
+                    style={styles.chipScroll}
+                    contentContainerStyle={styles.chipRow}
+                  >
+                    {AUCTION_DURATIONS.map(({ days, label }) => (
+                      <Pressable
+                        key={days}
+                        onPress={() => setAuctionDurationDays(days)}
+                        style={[
+                          styles.chip,
+                          auctionDurationDays === days && styles.chipActive,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            auctionDurationDays === days && styles.chipTextActive,
+                          ]}
+                        >
+                          {label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                  <Text style={[styles.auctionHint, styles.textOnGlassSecondary]}>
+                    Timer starts when your listing goes live after verification. Bids increase by
+                    $100 minimum.
+                  </Text>
+                </>
+              )}
+
               <TextInput
                 placeholder="Serial Number (optional)"
                 placeholderTextColor={GLASS_PLACEHOLDER}
@@ -584,7 +710,9 @@ export default function SellScreen() {
                 onChangeText={setSerialNumber}
                 style={[styles.input, styles.inputClear, { marginBottom: 0 }]}
               />
-              <SellerPayoutBreakdown priceDollars={price} tone="glass" />
+              {saleMode === "fixed" ? (
+                <SellerPayoutBreakdown priceDollars={price} tone="glass" />
+              ) : null}
             </FormSection>
 
             {images[0] && (
@@ -596,9 +724,34 @@ export default function SellScreen() {
             )}
             <Text style={[styles.previewBrand, styles.textOnGlass]}>{brand}</Text>
             <Text style={[styles.previewModel, styles.textOnGlass]}>{model}</Text>
-            <Text style={[styles.previewPrice, styles.textOnGlass]}>
-              ${parseFloat(price || "0").toLocaleString()}
-            </Text>
+            {saleMode === "auction" ? (
+              <>
+                <View style={styles.previewAuctionRow}>
+                  <View style={styles.auctionBadge}>
+                    <Ionicons name="hammer" size={12} color="#FFFFFF" />
+                    <Text style={styles.auctionBadgeText}>Auction</Text>
+                  </View>
+                  <Text style={[styles.previewAuctionDuration, styles.textOnGlassSecondary]}>
+                    {AUCTION_DURATIONS.find((d) => d.days === auctionDurationDays)?.label} once live
+                  </Text>
+                </View>
+                <Text style={[styles.previewPriceLabel, styles.textOnGlassSecondary]}>
+                  Starting bid
+                </Text>
+                <Text style={[styles.previewPrice, styles.textOnGlass]}>
+                  {formatPrice(dollarsToCents(parseFloat(price || "0")))}
+                </Text>
+                {reservePrice ? (
+                  <Text style={[styles.previewDesc, styles.textOnGlassSecondary]}>
+                    Reserve {formatPrice(dollarsToCents(parseFloat(reservePrice)))}
+                  </Text>
+                ) : null}
+              </>
+            ) : (
+              <Text style={[styles.previewPrice, styles.textOnGlass]}>
+                ${parseFloat(price || "0").toLocaleString()}
+              </Text>
+            )}
             {description ? (
               <Text style={[styles.previewDesc, styles.textOnGlassSecondary]}>{description}</Text>
             ) : null}
@@ -806,6 +959,12 @@ function createSellStyles() {
     flexDirection: "row",
     alignItems: "center",
   },
+  saleModeChipRow: {
+    marginBottom: 16,
+  },
+  saleModeChipIcon: {
+    marginRight: 6,
+  },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -868,6 +1027,44 @@ function createSellStyles() {
     color: Colors.textPrimary,
     fontSize: 24,
     marginBottom: 16,
+  },
+  previewPriceLabel: {
+    ...Typography.caption,
+    marginBottom: 4,
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  previewAuctionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  auctionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(220, 38, 38, 0.85)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
+  },
+  auctionBadgeText: {
+    ...Typography.caption,
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  previewAuctionDuration: {
+    ...Typography.caption,
+    fontSize: 12,
+  },
+  auctionHint: {
+    ...Typography.caption,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 12,
   },
   previewDesc: {
     ...Typography.body,

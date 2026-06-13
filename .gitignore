@@ -30,6 +30,8 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+*.swp
+*~
 
 # local env files
 .env
@@ -48,3 +50,7 @@ supabase/.temp/
 # Next.js website (website/)
 website/.next/
 website/out/
+
+# Next.js marketplace (marketplace/)
+marketplace/.next/
+marketplace/out/

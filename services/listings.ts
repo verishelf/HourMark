@@ -118,6 +118,31 @@ export async function getFeaturedListings(): Promise<Listing[]> {
   return all.slice(0, 3);
 }
 
+export async function getAuctionListings(limit = 24): Promise<Listing[]> {
+  if (!isSupabaseConfigured) {
+    return getMockListings().filter((l) => l.sale_mode === "auction").slice(0, limit);
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*, seller:users(*)")
+    .eq("status", "active")
+    .eq("authentication_status", "auto_verified")
+    .eq("sale_mode", "auction")
+    .gt("auction_ends_at", now)
+    .order("auction_ends_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    if (shouldFallbackToMock(error)) {
+      return getMockListings().filter((l) => l.sale_mode === "auction").slice(0, limit);
+    }
+    throw error;
+  }
+  return normalizeListings((data ?? []) as Listing[]);
+}
+
 export async function getRelatedListings(
   listing: Listing,
   limit = 4
@@ -152,6 +177,7 @@ export async function createListing(
     .insert({
       seller_id: sellerId,
       ...input,
+      accepts_offers: input.sale_mode === "auction" ? false : true,
       status: "draft",
       authentication_status: "pending",
       ai_trust_score: 0,

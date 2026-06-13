@@ -13,7 +13,6 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { EmptyState } from "@/components/EmptyState";
-import { HomeChartsPanel } from "@/components/HomeChartsPanel";
 import { HomeFixedHeader } from "@/components/HomeFixedHeader";
 import { TrustAssuranceCarousel } from "@/components/TrustAssuranceCarousel";
 import { StoryHomeSection } from "@/components/stories/StoryHomeSection";
@@ -27,7 +26,7 @@ import { WatchCardSkeleton, ListingGridSkeleton } from "@/components/SkeletonLoa
 import { LUXURY_BRANDS } from "@/constants/brands";
 import { HOME_MARKET_TABS, type HomeMarketTab } from "@/constants/homeMarketTabs";
 import { subscribeContentRefresh } from "@/lib/contentRefresh";
-import { getFeaturedListings, getListings, getListingsFromFollowing } from "@/services/listings";
+import { getFeaturedListings, getListings, getListingsFromFollowing, getAuctionListings } from "@/services/listings";
 import { useAuth } from "@/hooks/useAuth";
 import { useHomeScroll, HomeScrollProvider } from "@/hooks/useCollapsingMarqueeScroll";
 import { getUnreadCount } from "@/services/notifications";
@@ -51,6 +50,11 @@ function HomeScreenContent() {
   const [verified, setVerified] = useState<Listing[]>([]);
   const [rareCollections, setRareCollections] = useState<Listing[]>([]);
   const [gridListings, setGridListings] = useState<Listing[]>([]);
+  const [auctionListings, setAuctionListings] = useState<Listing[]>([]);
+  const [bestSellerListings, setBestSellerListings] = useState<Listing[]>([]);
+  const [lowPriceListings, setLowPriceListings] = useState<Listing[]>([]);
+  const [newArrivalFeed, setNewArrivalFeed] = useState<Listing[]>([]);
+  const [rareFindListings, setRareFindListings] = useState<Listing[]>([]);
   const [marketplaceEmpty, setMarketplaceEmpty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<HomeMarketTab>("marketplace");
@@ -77,12 +81,42 @@ function HomeScreenContent() {
       .filter((l) => l.authenticated || (l.price ?? 0) > 5_000_000)
       .slice(0, 6);
 
+    const bestSellers = [...displayable]
+      .sort((a, b) => {
+        const salesDiff = (b.seller?.total_sales ?? 0) - (a.seller?.total_sales ?? 0);
+        if (salesDiff !== 0) return salesDiff;
+        return (b.seller?.seller_rating ?? 0) - (a.seller?.seller_rating ?? 0);
+      })
+      .slice(0, 24);
+
+    const lowPrice = [...displayable].sort((a, b) => a.price - b.price).slice(0, 24);
+
+    const newest = [...displayable]
+      .sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+      .slice(0, 24);
+
+    const rareFinds = [...displayable]
+      .filter(
+        (l) =>
+          l.authenticated ||
+          (l.ai_trust_score ?? 0) >= 80 ||
+          (l.price ?? 0) > 5_000_000
+      )
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 24);
+
     setMarketplaceEmpty(displayable.length === 0);
     setFeatured(feat.filter(isDisplayableListing));
     setNewArrivals(newArr);
     setVerified(verifiedList);
     setRareCollections(rare);
     setGridListings(displayable.slice(0, 12));
+    setBestSellerListings(bestSellers);
+    setLowPriceListings(lowPrice);
+    setNewArrivalFeed(newest);
+    setRareFindListings(rareFinds);
   }, []);
 
   const loadHome = useCallback(async (options?: { showLoading?: boolean }) => {
@@ -99,10 +133,15 @@ function HomeScreenContent() {
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
-          const [feat, all] = await Promise.all([getFeaturedListings(), getListings()]);
+          const [feat, all, auctions] = await Promise.all([
+            getFeaturedListings(),
+            getListings(),
+            getAuctionListings(),
+          ]);
           if (isStale()) return;
 
           applyHomeData(feat, all);
+          setAuctionListings(auctions.filter(isDisplayableListing));
           hasLoadedOnceRef.current = true;
           return;
         } catch {
@@ -121,6 +160,11 @@ function HomeScreenContent() {
         setVerified([]);
         setRareCollections([]);
         setGridListings([]);
+        setAuctionListings([]);
+        setBestSellerListings([]);
+        setLowPriceListings([]);
+        setNewArrivalFeed([]);
+        setRareFindListings([]);
       }
     } finally {
       if (!isStale()) {
@@ -328,38 +372,121 @@ function HomeScreenContent() {
       case "auctions":
         return (
           <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
-            <EmptyState
-              icon="hammer-outline"
-              title="Auctions"
-              body="Live watch auctions are coming soon to Crownly."
-              fill
-            />
+            {loading ? (
+              <ListingGridSkeleton rows={3} />
+            ) : auctionListings.length ? (
+              <>
+                <SectionHeader
+                  title="Live Auctions"
+                  subtitle="Bid on verified timepieces before time runs out"
+                  topSpacing={0}
+                />
+                <ListingGrid listings={auctionListings} showBuy />
+              </>
+            ) : (
+              <EmptyState
+                icon="hammer-outline"
+                title="No live auctions"
+                body="Check back soon — sellers can list watches as timed auctions from the Sell tab."
+                fill
+              />
+            )}
           </View>
         );
-      case "arbitrage":
+      case "best_sellers":
         return (
           <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
-            <EmptyState
-              icon="swap-horizontal-outline"
-              title="Arbitrage"
-              body="Price spreads and cross-market opportunities will appear here."
-              fill
-            />
+            {loading ? (
+              <ListingGridSkeleton rows={3} />
+            ) : bestSellerListings.length ? (
+              <>
+                <SectionHeader
+                  title="Best Sellers"
+                  subtitle="Top pieces from our most trusted sellers"
+                  topSpacing={0}
+                />
+                <ListingGrid listings={bestSellerListings} showBuy />
+              </>
+            ) : (
+              <EmptyState
+                icon="trophy-outline"
+                title="No best sellers yet"
+                body="Listings from top-rated sellers with the most sales will appear here."
+                fill
+              />
+            )}
           </View>
         );
-      case "charts":
-        return <HomeChartsPanel />;
-      case "grails":
+      case "low_price":
         return (
           <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
-            <EmptyState
-              icon="diamond-outline"
-              title="Grail Hunts"
-              body="Post what you're looking for and let sellers come to you."
-              actionLabel="Browse grail hunts"
-              onAction={() => router.push("/grails")}
-              fill
-            />
+            {loading ? (
+              <ListingGridSkeleton rows={3} />
+            ) : lowPriceListings.length ? (
+              <>
+                <SectionHeader
+                  title="Low Price"
+                  subtitle="Verified watches at the most accessible price points"
+                  topSpacing={0}
+                />
+                <ListingGrid listings={lowPriceListings} showBuy />
+              </>
+            ) : (
+              <EmptyState
+                icon="pricetag-outline"
+                title="No listings yet"
+                body="Affordable verified listings will show up here as sellers join Crownly."
+                fill
+              />
+            )}
+          </View>
+        );
+      case "new_arrivals":
+        return (
+          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
+            {loading ? (
+              <ListingGridSkeleton rows={3} />
+            ) : newArrivalFeed.length ? (
+              <>
+                <SectionHeader
+                  title="New Arrivals"
+                  subtitle="The latest verified listings from Crownly sellers"
+                  topSpacing={0}
+                />
+                <ListingGrid listings={newArrivalFeed} showBuy />
+              </>
+            ) : (
+              <EmptyState
+                icon="sparkles-outline"
+                title="No new arrivals"
+                body="Fresh listings will appear here as sellers publish on Crownly."
+                fill
+              />
+            )}
+          </View>
+        );
+      case "rare_finds":
+        return (
+          <View style={{ paddingHorizontal: SPACING.screen, paddingTop: 0 }}>
+            {loading ? (
+              <ListingGridSkeleton rows={3} />
+            ) : rareFindListings.length ? (
+              <>
+                <SectionHeader
+                  title="Rare Finds"
+                  subtitle="Authenticated grails and exceptional collector pieces"
+                  topSpacing={0}
+                />
+                <ListingGrid listings={rareFindListings} showBuy />
+              </>
+            ) : (
+              <EmptyState
+                icon="diamond-outline"
+                title="No rare finds yet"
+                body="High-trust and premium listings will surface here as the marketplace grows."
+                fill
+              />
+            )}
           </View>
         );
       default:

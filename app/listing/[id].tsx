@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +9,8 @@ import { ListingGallery } from "@/components/ListingGallery";
 import { HorizontalListingScroll } from "@/components/HorizontalListingScroll";
 import { LuxuryButton } from "@/components/LuxuryButton";
 import { MakeOfferModal } from "@/components/OfferModal";
+import { PlaceBidModal } from "@/components/PlaceBidModal";
+import { AuctionTimer } from "@/components/AuctionTimer";
 import { SellerCard } from "@/components/SellerCard";
 import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { TrustBadgeRow } from "@/components/TrustBadgeRow";
@@ -27,6 +29,12 @@ import { getListingById, getRelatedListings } from "@/services/listings";
 import { getOrCreateConversation } from "@/services/messaging";
 import { getPassportForListing } from "@/services/passport";
 import { getAcceptedOfferForListing } from "@/services/offers";
+import {
+  getAuctionDisplayBid,
+  isAuctionEnded,
+  isAuctionListing,
+  isAuctionLive,
+} from "@/lib/auction";
 import type { AuthenticityPassport, Listing, ListingOffer } from "@/types";
 
 export default function ListingDetailScreen() {
@@ -42,7 +50,13 @@ export default function ListingDetailScreen() {
   const [passport, setPassport] = useState<AuthenticityPassport | null>(null);
   const [acceptedOffer, setAcceptedOffer] = useState<ListingOffer | null>(null);
   const [offerModalVisible, setOfferModalVisible] = useState(false);
+  const [bidModalVisible, setBidModalVisible] = useState(false);
   const { favorited, toggle } = useFavorite(user?.id, id ?? "", listing?.price);
+
+  const refreshListing = useCallback(() => {
+    if (!id) return;
+    getListingById(id).then(setListing);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -69,6 +83,15 @@ export default function ListingDetailScreen() {
       </View>
     );
   }
+
+  const auction = isAuctionListing(listing);
+  const auctionLive = auction && isAuctionLive(listing);
+  const auctionEnded = auction && isAuctionEnded(listing);
+  const displayPriceCents = auction
+    ? getAuctionDisplayBid(listing)
+    : acceptedOffer
+      ? acceptedOffer.amount
+      : listing.price;
 
   const handleBuyNow = () => {
     if (authLoading) return;
@@ -106,6 +129,22 @@ export default function ListingDetailScreen() {
       return;
     }
     setOfferModalVisible(true);
+  };
+
+  const handlePlaceBid = () => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.push({
+        pathname: "/auth/welcome",
+        params: { redirect: `/listing/${listing.id}` },
+      });
+      return;
+    }
+    if (user?.id === listing.seller_id) {
+      Alert.alert("Your listing", "You cannot bid on your own listing.");
+      return;
+    }
+    setBidModalVisible(true);
   };
 
   const handleMessageSeller = async () => {
@@ -195,9 +234,21 @@ export default function ListingDetailScreen() {
           </View>
 
           <Text style={{ ...Typography.price, color: Colors.textPrimary, marginBottom: 8 }}>
-            {acceptedOffer ? formatPrice(acceptedOffer.amount) : formatPrice(listing.price)}
+            {formatPrice(displayPriceCents)}
           </Text>
-          {acceptedOffer ? (
+          {auction ? (
+            <View style={{ marginBottom: 16, gap: 8 }}>
+              <AuctionTimer listing={listing} />
+              <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
+                {listing.auction_current_bid != null
+                  ? `Current bid · ${listing.auction_bid_count ?? 0} bid${(listing.auction_bid_count ?? 0) === 1 ? "" : "s"}`
+                  : `Starting bid · ${formatPrice(listing.auction_starting_bid ?? listing.price)}`}
+                {listing.auction_reserve_price
+                  ? ` · Reserve ${formatPrice(listing.auction_reserve_price)}`
+                  : ""}
+              </Text>
+            </View>
+          ) : acceptedOffer ? (
             <Text style={{ ...Typography.caption, color: Colors.textSecondary, marginBottom: 24 }}>
               Accepted offer · was {formatPrice(listing.price)}
             </Text>
@@ -294,27 +345,41 @@ export default function ListingDetailScreen() {
           gap: 12,
         }}
       >
-        {listing.accepts_offers !== false && user?.id !== listing.seller_id ? (
+        {auction && user?.id !== listing.seller_id ? (
           <View style={{ flex: 1 }}>
             <LuxuryButton
-              label="Make Offer"
-              variant="ghost"
+              label={auctionEnded ? "Auction ended" : "Place Bid"}
               size="large"
-              onPress={handleMakeOffer}
+              variant="outline"
+              onPress={handlePlaceBid}
+              disabled={!auctionLive}
             />
           </View>
-        ) : null}
-        <View style={{ flex: 1 }}>
-          <LuxuryButton
-            label={acceptedOffer ? "Checkout" : "Buy Now"}
-            size="large"
-            variant="outline"
-            onPress={handleBuyNow}
-          />
-        </View>
+        ) : (
+          <>
+            {listing.accepts_offers !== false && user?.id !== listing.seller_id ? (
+              <View style={{ flex: 1 }}>
+                <LuxuryButton
+                  label="Make Offer"
+                  variant="ghost"
+                  size="large"
+                  onPress={handleMakeOffer}
+                />
+              </View>
+            ) : null}
+            <View style={{ flex: 1 }}>
+              <LuxuryButton
+                label={acceptedOffer ? "Checkout" : "Buy Now"}
+                size="large"
+                variant="outline"
+                onPress={handleBuyNow}
+              />
+            </View>
+          </>
+        )}
       </View>
 
-      {user && user.id !== listing.seller_id ? (
+      {user && user.id !== listing.seller_id && !auction ? (
         <MakeOfferModal
           visible={offerModalVisible}
           onClose={() => setOfferModalVisible(false)}
@@ -324,6 +389,15 @@ export default function ListingDetailScreen() {
           buyerId={user.id}
           sellerId={listing.seller_id}
           onOfferCreated={() => setOfferModalVisible(false)}
+        />
+      ) : null}
+
+      {auction && user && user.id !== listing.seller_id ? (
+        <PlaceBidModal
+          visible={bidModalVisible}
+          onClose={() => setBidModalVisible(false)}
+          listing={listing}
+          onBidPlaced={refreshListing}
         />
       ) : null}
     </View>

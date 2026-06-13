@@ -157,7 +157,7 @@ Required if you offer other social logins; Crownly uses Apple Sign In — ensure
 
 | Field | Location |
 |-------|----------|
-| Marketing version `1.0.0` | `app.json` → `expo.version` |
+| Marketing version `1.1.0` | `app.json` → `expo.version` |
 | Build number | EAS `autoIncrement` + `ios.buildNumber` seed |
 
 Bump `expo.version` for each App Store release; EAS increments build number automatically on production builds.

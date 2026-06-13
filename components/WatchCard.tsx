@@ -8,6 +8,8 @@ import { ListingSetIcons } from "@/components/ListingSetIcons";
 import { TrustBadgeRow } from "@/components/TrustBadgeRow";
 import { formatPrice } from "@/lib/stripe";
 import { getListingCoverImage } from "@/lib/listingImages";
+import { getAuctionDisplayBid, isAuctionListing, isAuctionLive } from "@/lib/auction";
+import { AuctionTimer } from "@/components/AuctionTimer";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { CARD_GAP, LISTING_CARD_RADIUS, RADIUS } from "@/constants/layout";
@@ -59,6 +61,9 @@ export function WatchCard({
   const showHeart = showFavorite ?? isGrid;
   const showOwnerActions = Boolean(onEdit || onDelete);
   const coverImage = getListingCoverImage(listing.images);
+  const auction = isAuctionListing(listing);
+  const auctionLive = auction && isAuctionLive(listing);
+  const displayPrice = auction ? getAuctionDisplayBid(listing) : listing.price;
 
   const openListing = () => {
     if (onCardPress) {
@@ -131,6 +136,15 @@ export function WatchCard({
           {statusBadge ? (
             <View style={{ position: "absolute", top: 8, left: 8 }}>
               <Badge label={statusBadge.label} variant={statusBadge.variant} />
+            </View>
+          ) : auction ? (
+            <View style={{ position: "absolute", top: 8, left: 8 }}>
+              <Badge label="Auction" variant="error" />
+            </View>
+          ) : null}
+          {auction && listing.auction_ends_at ? (
+            <View style={{ position: "absolute", bottom: 8, left: 8, right: 8 }}>
+              <AuctionTimer listing={listing} variant="compact" />
             </View>
           ) : null}
           {showOwnerActions && (
@@ -248,18 +262,22 @@ export function WatchCard({
                   fontSize: isGrid ? 16 : isCompact ? 20 : 28,
                 }}
               >
-                {formatPrice(listing.price)}
+                {formatPrice(displayPrice)}
               </Text>
-              {listing.authenticated && !isGrid && (
+              {auction && !isGrid ? (
+                <Text style={{ ...Typography.caption, color: Colors.textMuted, fontSize: 11 }}>
+                  {listing.auction_current_bid != null ? "Current bid" : "Starting bid"}
+                </Text>
+              ) : listing.authenticated && !isGrid ? (
                 <Text style={{ ...Typography.caption, color: Colors.textSecondary }}>
                   Verified
                 </Text>
-              )}
+              ) : null}
             </View>
           </View>
         </Pressable>
 
-        {canBuy ? (
+        {canBuy && !auction ? (
           <View
             style={{
               paddingHorizontal: isCompact ? 12 : 16,
@@ -288,6 +306,39 @@ export function WatchCard({
                 }}
               >
                 Buy Now
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {canBuy && auctionLive ? (
+          <View
+            style={{
+              paddingHorizontal: isCompact ? 12 : 16,
+              paddingBottom: isCompact ? 12 : 16,
+            }}
+          >
+            <Pressable
+              onPress={openListing}
+              style={({ pressed }) => ({
+                borderWidth: 1,
+                borderColor: Colors.textPrimary,
+                borderRadius: RADIUS.pill,
+                paddingVertical: isCompact ? 10 : 12,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.75 : 1,
+              })}
+            >
+              <Text
+                style={{
+                  color: Colors.textPrimary,
+                  fontSize: isCompact ? 14 : 15,
+                  fontWeight: "600",
+                  textAlign: "center",
+                  width: "100%",
+                }}
+              >
+                Place Bid
               </Text>
             </Pressable>
           </View>
