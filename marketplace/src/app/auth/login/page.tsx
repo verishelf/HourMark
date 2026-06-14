@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useSupabase } from "@/hooks/useSupabase";
+import { isSupabaseConfigured } from "@/lib/site";
 
 function LoginForm() {
   const supabase = useSupabase();
@@ -16,9 +17,20 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    if (err) setError(err.message);
-    else router.push(redirect);
+    setError(null);
+    if (!isSupabaseConfigured) {
+      setError(
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (local dev uses the root .env EXPO_PUBLIC_* values)."
+      );
+      return;
+    }
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) setError(err.message);
+      else router.push(redirect);
+    } catch {
+      setError("Cannot reach Supabase. Check your network connection and environment variables.");
+    }
   };
 
   return (

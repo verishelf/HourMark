@@ -23,8 +23,13 @@ If build still fails, open **Settings → General → Build & Development Settin
 
 ## Local dev
 
+The marketplace loads env vars from the **repo root** `.env` (same `EXPO_PUBLIC_SUPABASE_*` keys as the iOS app). Restart the dev server after changing env.
+
+Optional: create `marketplace/.env.local` to override:
+
 ```bash
 cp .env.example .env.local
+# fill in NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
 npm install
 npm run dev
 ```
