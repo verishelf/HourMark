@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { ListingGrid } from "@/components/ListingGrid";
 
-async function getProfile(supabase: Awaited<ReturnType<typeof createClient>>, id: string) {
+async function getProfile(supabase: ReturnType<typeof createPublicClient>, id: string) {
   if (!supabase) return null;
   const { data } = await supabase.from("users").select("*").eq("id", id).maybeSingle();
   return data;
@@ -10,7 +10,7 @@ async function getProfile(supabase: Awaited<ReturnType<typeof createClient>>, id
 
 export default async function SellerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const profile = await getProfile(supabase, id);
   if (!profile || !supabase) notFound();
 

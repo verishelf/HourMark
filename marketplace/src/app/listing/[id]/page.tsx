@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ListingDetail } from "@/components/ListingDetail";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { getCoverImage, SITE_URL } from "@/lib/site";
 import { formatPrice } from "@/lib/types";
 import { getListingById, getRelatedListings } from "@/services/listings";
@@ -10,7 +10,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const listing = await getListingById(supabase, id);
   if (!listing) return { title: "Not found" };
   const cover = getCoverImage(listing.images);
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ListingPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const listing = await getListingById(supabase, id);
   if (!listing) notFound();
   const related = await getRelatedListings(supabase, listing);

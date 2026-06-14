@@ -42,7 +42,10 @@ export async function getListings(
   }
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    console.error("[getListings]", error.message);
+    return [];
+  }
   return (data ?? []).map((l) => normalize(l as Listing)).filter((l) => l.images.length > 0);
 }
 

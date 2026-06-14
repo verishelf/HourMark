@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { WatchCard } from "@/components/WatchCard";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { getListings } from "@/services/listings";
 import { LUXURY_BRANDS } from "@/lib/types";
 
 export default async function HomePage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const listings = await getListings(supabase);
   const featured = listings.slice(0, 8);
 
