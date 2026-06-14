@@ -41,14 +41,19 @@ function HeaderContent({ compact, user }: Props) {
             Sell a watch
           </Link>
           {!user && (
-            <Link href="/auth/login" className="hover:text-foreground">
-              Sign in
-            </Link>
+            <>
+              <Link href="/auth/signup" className="hover:text-foreground">
+                Sign up
+              </Link>
+              <Link href="/auth/login" className="hover:text-foreground">
+                Sign in
+              </Link>
+            </>
           )}
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-2 md:gap-8 md:py-2.5">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-2 md:gap-6 md:py-1">
         <Link href="/" className="shrink-0">
           <Image src="/crownly-logo.png" alt="Crownly" width={46} height={28} priority />
         </Link>
@@ -61,11 +66,11 @@ function HeaderContent({ compact, user }: Props) {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search brand, model, or reference…"
-                className="flex-1 bg-transparent px-4 py-2 text-sm outline-none placeholder:text-muted-dim"
+                className="flex-1 bg-transparent px-4 py-1.5 text-sm outline-none placeholder:text-muted-dim"
               />
               <button
                 type="submit"
-                className="bg-gold px-5 text-xs font-semibold uppercase tracking-wider text-black transition hover:opacity-90"
+                className="bg-gold px-5 py-1.5 text-xs font-semibold uppercase tracking-wider text-black transition hover:opacity-90"
               >
                 Search
               </button>
@@ -89,12 +94,28 @@ function HeaderContent({ compact, user }: Props) {
           >
             Sell
           </Link>
+          {!user && (
+            <>
+              <Link
+                href="/auth/login"
+                className="hidden text-muted hover:text-foreground sm:inline"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="rounded-sm bg-gold px-3 py-1.5 text-black hover:opacity-90 md:px-4 md:py-2"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
           {user && <UserMenu user={user} />}
         </nav>
       </div>
 
       {!compact && (
-        <form onSubmit={onSearch} className="border-t border-border px-4 pt-2 pb-2 md:hidden">
+        <form onSubmit={onSearch} className="border-t border-border px-4 pt-1.5 pb-1.5 md:hidden">
           <input
             type="search"
             value={q}

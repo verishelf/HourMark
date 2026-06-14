@@ -89,7 +89,7 @@ export function ListingForm({ listing }: Props) {
       <p className="mt-2 text-sm text-muted">
         {isEdit
           ? "Update any field on this listing — draft, pending, or live."
-          : "Creates a draft listing. Complete AI verification in the Crownly app to publish live on the marketplace."}
+          : "Creates a draft listing. You can manage it from your profile; AI verification in the app publishes it live on the marketplace."}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">

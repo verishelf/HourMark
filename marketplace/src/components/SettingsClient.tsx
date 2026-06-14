@@ -51,7 +51,7 @@ export function SettingsClient({ user }: Props) {
           List a watch
         </Link>
         <p className="text-xs text-muted-dim">
-          Full AI verification and photo upload are also available in the Crownly iOS app.
+          AI verification and photo upload are also available in the Crownly iOS app.
         </p>
       </section>
 

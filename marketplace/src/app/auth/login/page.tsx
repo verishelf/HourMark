@@ -70,7 +70,10 @@ function LoginForm() {
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-muted">
-        No account? <Link href="/auth/signup" className="text-gold">Create one</Link>
+        No account?{" "}
+        <Link href={`/auth/signup${redirect !== "/" ? `?redirect=${encodeURIComponent(redirect)}` : ""}`} className="text-gold">
+          Create one
+        </Link>
       </p>
     </div>
   );
