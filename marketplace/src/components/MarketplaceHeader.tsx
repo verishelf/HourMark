@@ -31,7 +31,7 @@ function HeaderContent({ compact, user }: Props) {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="hidden border-b border-border bg-card text-[11px] text-muted md:block">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-6 px-4 py-1.5">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-6 px-4 py-1">
           <a href={`${MARKETING_URL}/stories`} className="hover:text-foreground">
             Crownly Stories
           </a>
@@ -46,7 +46,7 @@ function HeaderContent({ compact, user }: Props) {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 md:gap-8 md:py-4">
+      <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-2 md:gap-8 md:py-2.5">
         <Link href="/" className="shrink-0">
           <Image src="/crownly-logo.png" alt="Crownly" width={46} height={28} priority />
         </Link>
@@ -59,7 +59,7 @@ function HeaderContent({ compact, user }: Props) {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search brand, model, or reference…"
-                className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none placeholder:text-muted-dim"
+                className="flex-1 bg-transparent px-4 py-2 text-sm outline-none placeholder:text-muted-dim"
               />
               <button
                 type="submit"
@@ -80,7 +80,7 @@ function HeaderContent({ compact, user }: Props) {
           </Link>
           <Link
             href="/sell"
-            className="rounded-sm border border-border-light px-3 py-2 text-muted hover:border-gold hover:text-gold md:px-4"
+            className="rounded-sm border border-border-light px-3 py-1.5 text-muted hover:border-gold hover:text-gold md:px-4 md:py-2"
           >
             Sell
           </Link>
@@ -89,13 +89,13 @@ function HeaderContent({ compact, user }: Props) {
       </div>
 
       {!compact && (
-        <form onSubmit={onSearch} className="border-t border-border px-4 pb-3 md:hidden">
+        <form onSubmit={onSearch} className="border-t border-border px-4 pb-2 md:hidden">
           <input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search watches…"
-            className="w-full rounded-sm border border-border-light bg-card px-3 py-2.5 text-sm outline-none"
+            className="w-full rounded-sm border border-border-light bg-card px-3 py-2 text-sm outline-none"
           />
         </form>
       )}
@@ -105,7 +105,7 @@ function HeaderContent({ compact, user }: Props) {
 
 export function MarketplaceHeader(props: Props) {
   return (
-    <Suspense fallback={<div className="h-[120px] border-b border-border bg-background" />}>
+    <Suspense fallback={<div className="h-[96px] border-b border-border bg-background" />}>
       <HeaderContent {...props} />
     </Suspense>
   );
