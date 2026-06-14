@@ -5,41 +5,10 @@ import Image from "next/image";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { HeaderUser } from "@/lib/user";
-import { getUserDisplayName, getUserInitial } from "@/lib/user";
+import { UserMenu } from "@/components/UserMenu";
 import { MARKETING_URL } from "@/lib/site";
 
 type Props = { compact?: boolean; user: HeaderUser | null };
-
-function UserMenu({ user }: { user: HeaderUser }) {
-  const name = getUserDisplayName(user);
-  const initial = getUserInitial(user);
-
-  return (
-    <Link
-      href={`/seller/${user.id}`}
-      className="flex items-center gap-2 rounded-sm transition hover:opacity-90"
-      title={name}
-    >
-      {user.avatar_url ? (
-        <Image
-          src={user.avatar_url}
-          alt={name}
-          width={32}
-          height={32}
-          unoptimized
-          className="h-8 w-8 rounded-full border border-border-light object-cover"
-        />
-      ) : (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-light bg-card text-xs font-semibold text-gold">
-          {initial}
-        </span>
-      )}
-      <span className="max-w-[120px] truncate normal-case tracking-normal text-foreground">
-        {name}
-      </span>
-    </Link>
-  );
-}
 
 function HeaderContent({ compact, user }: Props) {
   const router = useRouter();

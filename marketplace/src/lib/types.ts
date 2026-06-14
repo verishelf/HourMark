@@ -3,6 +3,7 @@ export type UserProfile = {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  bio?: string | null;
   verified: boolean;
   seller_rating: number | null;
   total_sales?: number;
