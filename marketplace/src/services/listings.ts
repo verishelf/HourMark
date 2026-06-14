@@ -10,7 +10,7 @@ function normalize(listing: Listing): Listing {
 }
 
 export async function getListings(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient | null,
   filters?: {
     brands?: string[];
     minPrice?: number;
@@ -19,7 +19,7 @@ export async function getListings(
     search?: string;
   }
 ): Promise<Listing[]> {
-  if (!isSupabaseConfigured) return [];
+  if (!isSupabaseConfigured || !supabase) return [];
 
   let query = supabase
     .from("listings")
@@ -47,10 +47,10 @@ export async function getListings(
 }
 
 export async function getListingById(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient | null,
   id: string
 ): Promise<Listing | null> {
-  if (!isSupabaseConfigured) return null;
+  if (!isSupabaseConfigured || !supabase) return null;
   const { data } = await supabase
     .from("listings")
     .select("*, seller:users(*)")
@@ -60,7 +60,7 @@ export async function getListingById(
 }
 
 export async function getRelatedListings(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient | null,
   listing: Listing,
   limit = 4
 ): Promise<Listing[]> {

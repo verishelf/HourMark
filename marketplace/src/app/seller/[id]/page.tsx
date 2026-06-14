@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ListingGrid } from "@/components/ListingGrid";
 
 async function getProfile(supabase: Awaited<ReturnType<typeof createClient>>, id: string) {
+  if (!supabase) return null;
   const { data } = await supabase.from("users").select("*").eq("id", id).maybeSingle();
   return data;
 }
@@ -11,7 +12,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const supabase = await createClient();
   const profile = await getProfile(supabase, id);
-  if (!profile) notFound();
+  if (!profile || !supabase) notFound();
 
   const { data } = await supabase
     .from("listings")

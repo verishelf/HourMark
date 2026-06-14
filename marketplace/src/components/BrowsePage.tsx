@@ -39,6 +39,7 @@ export function BrowsePage({ initialListings, initialQuery, initialBrand }: Prop
   const sorted = useMemo(() => sortListings(listings, sort), [listings, sort]);
 
   const applyFilters = useCallback(async () => {
+    if (!supabase) return;
     const results = await getListings(supabase, {
       brands: filters.brands.length ? filters.brands : undefined,
       minPrice: filters.minPrice ? Number(filters.minPrice) * 100 : undefined,

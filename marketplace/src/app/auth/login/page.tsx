@@ -18,7 +18,7 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !supabase) {
       setError(
         "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (local dev uses the root .env EXPO_PUBLIC_* values)."
       );
