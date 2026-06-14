@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ListingDetail } from "@/components/ListingDetail";
 import { createPublicClient } from "@/lib/supabase/public";
+import { getCurrentUser } from "@/lib/auth";
 import { getCoverImage, SITE_URL } from "@/lib/site";
 import { formatPrice } from "@/lib/types";
 import { getListingById, getRelatedListings } from "@/services/listings";
@@ -31,5 +32,6 @@ export default async function ListingPage({ params }: Props) {
   const listing = await getListingById(supabase, id);
   if (!listing) notFound();
   const related = await getRelatedListings(supabase, listing);
-  return <ListingDetail listing={listing} related={related} />;
+  const user = await getCurrentUser();
+  return <ListingDetail listing={listing} related={related} user={user} />;
 }

@@ -1,6 +1,8 @@
 import type { UserProfile } from "@/lib/types";
 
-export type HeaderUser = Pick<UserProfile, "id" | "username" | "full_name" | "avatar_url" | "verified">;
+export type HeaderUser = Pick<UserProfile, "id" | "username" | "full_name" | "avatar_url" | "verified"> & {
+  email?: string | null;
+};
 
 export function getUserDisplayName(user: HeaderUser): string {
   return user.username ?? user.full_name ?? "Account";

@@ -7,13 +7,14 @@ import { useRouter } from "next/navigation";
 import type { Listing } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
 import { getCoverImage } from "@/lib/site";
+import type { HeaderUser } from "@/lib/user";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { WatchCard } from "@/components/WatchCard";
 
-type Props = { listing: Listing; related: Listing[] };
+type Props = { listing: Listing; related: Listing[]; user: HeaderUser | null };
 
 /** Chrono24-style product detail — gallery left, sticky buy box right, specs table */
-export function ListingDetail({ listing, related }: Props) {
+export function ListingDetail({ listing, related, user }: Props) {
   const router = useRouter();
   const images = listing.images
     .map((u) => getCoverImage([u]))
@@ -23,6 +24,22 @@ export function ListingDetail({ listing, related }: Props) {
   const price = isAuction
     ? listing.auction_current_bid ?? listing.auction_starting_bid ?? listing.price
     : listing.price;
+  const isOwnListing = user?.id === listing.seller_id;
+
+  const handleBuy = () => {
+    if (isAuction) {
+      if (!user) {
+        router.push(`/auth/login?redirect=/listing/${listing.id}`);
+        return;
+      }
+      return;
+    }
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(`/checkout?listingId=${listing.id}`)}`);
+      return;
+    }
+    router.push(`/checkout?listingId=${listing.id}`);
+  };
 
   const specs: [string, string][] = [
     ["Brand", listing.brand],
@@ -49,8 +66,8 @@ export function ListingDetail({ listing, related }: Props) {
       />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
-        {/* Gallery — Chrono24 main + thumbnails */}
-        <div className="grid gap-4 md:grid-cols-[80px_1fr]">
+        {/* Gallery */}
+        <div className={images.length > 1 ? "grid gap-4 md:grid-cols-[80px_1fr]" : ""}>
           {images.length > 1 && (
             <div className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col">
               {images.map((img, i) => (
@@ -67,21 +84,21 @@ export function ListingDetail({ listing, related }: Props) {
               ))}
             </div>
           )}
-          <div className="relative order-1 aspect-square overflow-hidden rounded-sm border border-border bg-[#050505] md:order-2">
-            {images[active] && (
-              <Image
+          <div className="relative order-1 aspect-square min-h-[280px] w-full overflow-hidden rounded-sm border border-border bg-[#050505] md:order-2">
+            {images[active] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={images[active]}
                 alt={`${listing.brand} ${listing.model}`}
-                fill
-                unoptimized
-                className="object-contain p-6"
-                sizes="(max-width:1024px) 100vw, 60vw"
+                className="absolute inset-0 h-full w-full object-contain p-6"
               />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted">No image</div>
             )}
           </div>
         </div>
 
-        {/* Buy box — sticky like Chrono24 */}
+        {/* Buy box */}
         <div className="lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-sm border border-border bg-card p-5 md:p-6">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted">
@@ -108,21 +125,30 @@ export function ListingDetail({ listing, related }: Props) {
             )}
 
             <div className="mt-6 space-y-2">
-              <button
-                type="button"
-                onClick={() => router.push(`/auth/login?redirect=/listing/${listing.id}`)}
-                className="w-full rounded-sm bg-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-black hover:opacity-90"
-              >
-                {isAuction ? "Sign in to bid" : "Buy now"}
-              </button>
-              {!isAuction && (
+              {!isOwnListing && (
                 <button
                   type="button"
-                  onClick={() => router.push(`/auth/login?redirect=/listing/${listing.id}`)}
+                  onClick={handleBuy}
+                  className="w-full rounded-sm bg-gold py-3.5 text-sm font-semibold uppercase tracking-wider text-black hover:opacity-90"
+                >
+                  {isAuction ? (user ? "Place bid" : "Sign in to bid") : "Buy now"}
+                </button>
+              )}
+              {!isAuction && !isOwnListing && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    user
+                      ? router.push(`/auth/login?redirect=/listing/${listing.id}`)
+                      : router.push(`/auth/login?redirect=/listing/${listing.id}`)
+                  }
                   className="w-full rounded-sm border border-border-light py-3 text-sm font-medium text-foreground hover:border-gold hover:text-gold"
                 >
                   Make an offer
                 </button>
+              )}
+              {isOwnListing && (
+                <p className="text-center text-sm text-muted">This is your listing</p>
               )}
             </div>
 
@@ -148,7 +174,6 @@ export function ListingDetail({ listing, related }: Props) {
         </div>
       </div>
 
-      {/* Specs table — Chrono24 key-value rows */}
       <section className="mt-10 border border-border bg-card">
         <h2 className="border-b border-border px-5 py-3 text-sm font-semibold uppercase tracking-wide">
           Specifications

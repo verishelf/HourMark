@@ -62,6 +62,18 @@ export const CONDITIONS = [
 
 export type SortOption = "newest" | "price_asc" | "price_desc";
 
+export type ShippingDetails = {
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country?: string;
+};
+
 export function formatPrice(cents: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

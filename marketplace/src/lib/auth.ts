@@ -25,8 +25,9 @@ export async function getCurrentUser(): Promise<HeaderUser | null> {
       full_name: null,
       avatar_url: null,
       verified: false,
+      email: user.email,
     };
   }
 
-  return profile as HeaderUser;
+  return { ...(profile as HeaderUser), email: user.email };
 }
