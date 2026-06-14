@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { HeaderUser } from "@/lib/user";
 import { getUserDisplayName, getUserInitial } from "@/lib/user";
 import { signOutAction } from "@/app/profile/actions";
@@ -14,18 +14,24 @@ export function UserMenu({ user }: { user: HeaderUser }) {
   const initial = getUserInitial(user);
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open]);
+  const clearCloseTimer = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const handleOpen = () => {
+    clearCloseTimer();
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    clearCloseTimer();
+    closeTimer.current = setTimeout(() => setOpen(false), 120);
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -40,7 +46,11 @@ export function UserMenu({ user }: { user: HeaderUser }) {
   };
 
   return (
-    <div ref={menuRef} className="relative">
+    <div
+      className="relative"
+      onMouseEnter={handleOpen}
+      onMouseLeave={handleClose}
+    >
       <div className="flex items-center gap-1">
         <Link
           href="/profile"
@@ -65,38 +75,36 @@ export function UserMenu({ user }: { user: HeaderUser }) {
             {name}
           </span>
         </Link>
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-label="Account menu"
-          onClick={() => setOpen((v) => !v)}
-          className="rounded-sm px-1 py-2 text-muted hover:text-foreground"
+        <span
+          aria-hidden
+          className="rounded-sm px-1 py-2 text-muted"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
             <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" />
           </svg>
-        </button>
+        </span>
       </div>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 min-w-[180px] overflow-hidden rounded-sm border border-border bg-card py-1 shadow-lg">
+        <div
+          className="absolute right-0 top-full z-50 min-w-[180px] overflow-hidden rounded-sm border border-border bg-card py-1 shadow-lg"
+          onMouseEnter={handleOpen}
+          onMouseLeave={handleClose}
+        >
           <Link
             href="/profile"
-            onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm normal-case tracking-normal text-foreground hover:bg-card-hover"
           >
             My profile
           </Link>
           <Link
             href="/sell"
-            onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm normal-case tracking-normal text-foreground hover:bg-card-hover"
           >
             List a watch
           </Link>
           <Link
             href="/profile/settings"
-            onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm normal-case tracking-normal text-foreground hover:bg-card-hover"
           >
             Settings

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Listing, UserProfile } from "@/lib/types";
-import { formatPrice } from "@/lib/types";
 import { getUserDisplayName, getUserInitial } from "@/lib/user";
-import { getCoverImage } from "@/lib/site";
+import { ProfileListings } from "@/components/ProfileListings";
 import { WatchCard } from "@/components/WatchCard";
 
 type Props = {
@@ -12,19 +11,13 @@ type Props = {
   email?: string | null;
 };
 
-function statusLabel(status: string, auth?: string) {
-  if (status === "active" && auth === "auto_verified") return "Live";
-  if (status === "draft") return "Draft";
-  if (status === "sold") return "Sold";
-  if (auth === "pending") return "Pending verification";
-  return status;
-}
-
 export function ProfileDashboard({ profile, listings, email }: Props) {
   const name = getUserDisplayName(profile);
   const initial = getUserInitial(profile);
   const active = listings.filter((l) => l.status === "active");
-  const drafts = listings.filter((l) => l.status !== "active");
+  const pending = listings.filter(
+    (l) => l.authentication_status === "pending" || l.status === "draft"
+  );
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8">
@@ -86,8 +79,8 @@ export function ProfileDashboard({ profile, listings, email }: Props) {
           <p className="mt-1 text-2xl font-semibold">{active.length}</p>
         </div>
         <div className="rounded-sm border border-border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted">Drafts</p>
-          <p className="mt-1 text-2xl font-semibold">{drafts.length}</p>
+          <p className="text-xs uppercase tracking-wide text-muted">Draft / pending</p>
+          <p className="mt-1 text-2xl font-semibold">{pending.length}</p>
         </div>
         <div className="rounded-sm border border-border bg-card p-4">
           <p className="text-xs uppercase tracking-wide text-muted">Total sales</p>
@@ -102,54 +95,7 @@ export function ProfileDashboard({ profile, listings, email }: Props) {
             + Add listing
           </Link>
         </div>
-        {listings.length === 0 ? (
-          <p className="py-12 text-center text-muted">
-            No listings yet.{" "}
-            <Link href="/sell" className="text-gold hover:underline">
-              List your first watch
-            </Link>
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {listings.map((listing) => {
-              const cover = getCoverImage(listing.images);
-              return (
-                <div
-                  key={listing.id}
-                  className="flex flex-col gap-4 rounded-sm border border-border bg-card p-4 sm:flex-row sm:items-center"
-                >
-                  <div className="flex flex-1 items-center gap-4">
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-[#050505]">
-                      {cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={cover} alt="" className="h-full w-full object-contain p-1" />
-                      ) : null}
-                    </div>
-                    <div>
-                      <p className="font-medium">
-                        {listing.brand} {listing.model}
-                      </p>
-                      <p className="text-sm text-muted">{formatPrice(listing.price)}</p>
-                      <p className="text-xs text-muted-dim">
-                        {statusLabel(listing.status, listing.authentication_status)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {listing.status === "active" && listing.authentication_status === "auto_verified" && (
-                      <Link
-                        href={`/listing/${listing.id}`}
-                        className="rounded-sm border border-border-light px-3 py-1.5 text-xs hover:border-gold"
-                      >
-                        View
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ProfileListings listings={listings} />
       </section>
 
       {active.filter((l) => l.authentication_status === "auto_verified").length > 0 && (
