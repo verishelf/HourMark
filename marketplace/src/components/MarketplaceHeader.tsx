@@ -4,11 +4,44 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import type { HeaderUser } from "@/lib/user";
+import { getUserDisplayName, getUserInitial } from "@/lib/user";
 import { MARKETING_URL } from "@/lib/site";
 
-type Props = { compact?: boolean };
+type Props = { compact?: boolean; user: HeaderUser | null };
 
-function HeaderContent({ compact }: Props) {
+function UserMenu({ user }: { user: HeaderUser }) {
+  const name = getUserDisplayName(user);
+  const initial = getUserInitial(user);
+
+  return (
+    <Link
+      href={`/seller/${user.id}`}
+      className="flex items-center gap-2 rounded-sm transition hover:opacity-90"
+      title={name}
+    >
+      {user.avatar_url ? (
+        <Image
+          src={user.avatar_url}
+          alt={name}
+          width={32}
+          height={32}
+          unoptimized
+          className="h-8 w-8 rounded-full border border-border-light object-cover"
+        />
+      ) : (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-light bg-card text-xs font-semibold text-gold">
+          {initial}
+        </span>
+      )}
+      <span className="max-w-[120px] truncate normal-case tracking-normal text-foreground">
+        {name}
+      </span>
+    </Link>
+  );
+}
+
+function HeaderContent({ compact, user }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -29,16 +62,18 @@ function HeaderContent({ compact }: Props) {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="hidden border-b border-border bg-card text-[11px] text-muted md:block">
-        <div className="mx-auto flex max-w-[1400px] justify-end gap-6 px-4 py-1.5">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-6 px-4 py-1.5">
           <a href={`${MARKETING_URL}/stories`} className="hover:text-foreground">
             Crownly Stories
           </a>
           <Link href="/sell" className="hover:text-foreground">
             Sell a watch
           </Link>
-          <Link href="/auth/login" className="hover:text-foreground">
-            Sign in
-          </Link>
+          {!user && (
+            <Link href="/auth/login" className="hover:text-foreground">
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
 
@@ -67,7 +102,7 @@ function HeaderContent({ compact }: Props) {
           </form>
         )}
 
-        <nav className="ml-auto flex items-center gap-4 text-xs font-medium uppercase tracking-wide md:gap-6">
+        <nav className="ml-auto flex items-center gap-3 text-xs font-medium uppercase tracking-wide md:gap-6">
           <Link href="/search" className="hidden text-muted hover:text-foreground sm:inline">
             Buy
           </Link>
@@ -80,6 +115,7 @@ function HeaderContent({ compact }: Props) {
           >
             Sell
           </Link>
+          {user && <UserMenu user={user} />}
         </nav>
       </div>
 

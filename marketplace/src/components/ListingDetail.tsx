@@ -62,7 +62,7 @@ export function ListingDetail({ listing, related }: Props) {
                     i === active ? "border-gold" : "border-border"
                   }`}
                 >
-                  <Image src={img} alt="" fill className="object-contain p-1" sizes="80px" />
+                  <Image src={img} alt="" fill unoptimized className="object-contain p-1" sizes="80px" />
                 </button>
               ))}
             </div>
@@ -73,8 +73,8 @@ export function ListingDetail({ listing, related }: Props) {
                 src={images[active]}
                 alt={`${listing.brand} ${listing.model}`}
                 fill
+                unoptimized
                 className="object-contain p-6"
-                priority
                 sizes="(max-width:1024px) 100vw, 60vw"
               />
             )}

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import { MarketplaceHeader } from "@/components/MarketplaceHeader";
 import { MarketplaceFooter } from "@/components/MarketplaceFooter";
+import { getCurrentUser } from "@/lib/auth";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -17,14 +17,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
   return (
     <html lang="en" className="dark">
       <body className={`${geist.variable} min-h-screen antialiased`}>
-        <MarketplaceHeader />
+        <MarketplaceHeader user={user} />
         {children}
         <MarketplaceFooter />
-        <Analytics />
       </body>
     </html>
   );

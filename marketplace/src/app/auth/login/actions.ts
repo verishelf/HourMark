@@ -1,12 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export async function signInAction(formData: FormData): Promise<{ error: string | null }> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const redirectTo = String(formData.get("redirect") ?? "/") || "/";
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -23,5 +21,6 @@ export async function signInAction(formData: FormData): Promise<{ error: string 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
 
-  redirect(redirectTo);
+  // Return success — client must router.refresh() before navigating so auth cookies persist.
+  return { error: null };
 }

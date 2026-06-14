@@ -27,6 +27,7 @@ export function WatchCard({ listing }: Props) {
             alt={`${listing.brand} ${listing.model}`}
             fill
             unoptimized
+            loading="lazy"
             className="object-contain p-2 transition duration-300 group-hover:scale-[1.02]"
             sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"
           />

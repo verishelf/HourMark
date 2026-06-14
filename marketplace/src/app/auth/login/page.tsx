@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { signInAction } from "./actions";
 
 function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/";
   const [email, setEmail] = useState("");
@@ -21,9 +22,13 @@ function LoginForm() {
       const formData = new FormData();
       formData.set("email", email);
       formData.set("password", password);
-      formData.set("redirect", redirect);
       const result = await signInAction(formData);
-      if (result?.error) setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+      router.push(redirect);
     } catch {
       setError("Sign in failed. Please try again.");
     } finally {
