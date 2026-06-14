@@ -94,7 +94,7 @@ function HeaderContent({ compact, user }: Props) {
       </div>
 
       {!compact && (
-        <form onSubmit={onSearch} className="border-t border-border px-4 pb-2 md:hidden">
+        <form onSubmit={onSearch} className="border-t border-border px-4 pt-2 pb-2 md:hidden">
           <input
             type="search"
             value={q}
