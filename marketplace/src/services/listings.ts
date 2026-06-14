@@ -19,7 +19,7 @@ export async function getListings(
     search?: string;
   }
 ): Promise<Listing[]> {
-  if (!isSupabaseConfigured || !supabase) return [];
+  if (!isSupabaseConfigured() || !supabase) return [];
 
   let query = supabase
     .from("listings")
@@ -53,7 +53,7 @@ export async function getListingById(
   supabase: SupabaseClient | null,
   id: string
 ): Promise<Listing | null> {
-  if (!isSupabaseConfigured || !supabase) return null;
+  if (!isSupabaseConfigured() || !supabase) return null;
   const { data } = await supabase
     .from("listings")
     .select("*, seller:users(*)")

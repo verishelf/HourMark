@@ -1,35 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { useSupabase } from "@/hooks/useSupabase";
-import { isSupabaseConfigured } from "@/lib/site";
+import { signInAction } from "./actions";
 
 function LoginForm() {
-  const supabase = useSupabase();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    if (!isSupabaseConfigured || !supabase) {
-      setError(
-        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (local dev uses the root .env EXPO_PUBLIC_* values)."
-      );
-      return;
-    }
+    setPending(true);
     try {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-      if (err) setError(err.message);
-      else router.push(redirect);
+      const formData = new FormData();
+      formData.set("email", email);
+      formData.set("password", password);
+      formData.set("redirect", redirect);
+      const result = await signInAction(formData);
+      if (result?.error) setError(result.error);
     } catch {
-      setError("Cannot reach Supabase. Check your network connection and environment variables.");
+      setError("Sign in failed. Please try again.");
+    } finally {
+      setPending(false);
     }
   };
 
@@ -39,26 +37,31 @@ function LoginForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <input
           type="email"
+          name="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full rounded-sm border border-border-light bg-card px-3 py-2.5 text-sm outline-none focus:border-gold"
           required
+          autoComplete="email"
         />
         <input
           type="password"
+          name="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full rounded-sm border border-border-light bg-card px-3 py-2.5 text-sm outline-none focus:border-gold"
           required
+          autoComplete="current-password"
         />
         {error && <p className="text-sm text-red-400">{error}</p>}
         <button
           type="submit"
-          className="w-full rounded-sm bg-gold py-3 text-sm font-semibold uppercase tracking-wider text-black"
+          disabled={pending}
+          className="w-full rounded-sm bg-gold py-3 text-sm font-semibold uppercase tracking-wider text-black disabled:opacity-60"
         >
-          Sign in
+          {pending ? "Signing in…" : "Sign in"}
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-muted">

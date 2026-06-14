@@ -17,9 +17,11 @@ If build still fails, open **Settings → General → Build & Development Settin
 
 | Variable | Value |
 |----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (no quotes) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase **anon** key (not service role; no quotes) |
 | `NEXT_PUBLIC_SITE_URL` | `https://marketplace.crownly.art` |
+
+After changing env vars, **redeploy** — Next.js bakes `NEXT_PUBLIC_*` into the client bundle at build time.
 
 ## Local dev
 
