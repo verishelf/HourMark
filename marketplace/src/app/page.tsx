@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { WatchCard } from "@/components/WatchCard";
+import { HomeHero } from "@/components/HomeHero";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getListings } from "@/services/listings";
 import { LUXURY_BRANDS } from "@/lib/types";
@@ -11,27 +12,7 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero — Chrono24-style search-first landing, Crownly dark theme */}
-      <section className="border-b border-border bg-gradient-to-b from-card to-background">
-        <div className="mx-auto max-w-[1400px] px-4 py-12 text-center md:py-16">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-            Authenticated luxury watches
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-5xl">
-            Find your next grail
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-muted md:text-base">
-            Browse verified Rolex, Patek Philippe, Audemars Piguet, and more — with AI trust
-            scores and escrow checkout.
-          </p>
-          <Link
-            href="/search"
-            className="mt-8 inline-block rounded-sm bg-gold px-8 py-3.5 text-sm font-semibold uppercase tracking-wider text-black hover:opacity-90"
-          >
-            Browse all watches
-          </Link>
-        </div>
-      </section>
+      <HomeHero />
 
       {/* Popular brands — horizontal pills like Chrono24 brand row */}
       <section className="border-b border-border bg-card">
