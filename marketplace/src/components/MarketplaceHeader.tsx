@@ -6,6 +6,7 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import type { HeaderUser } from "@/lib/user";
 import { UserMenu } from "@/components/UserMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { MARKETING_URL } from "@/lib/site";
 
 type Props = { compact?: boolean; user: HeaderUser | null };
@@ -31,7 +32,8 @@ function HeaderContent({ compact, user }: Props) {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="hidden border-b border-border bg-card text-[11px] text-muted md:block">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-6 px-4 py-1">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-end gap-4 px-4 py-1">
+          <ThemeToggle />
           <a href={`${MARKETING_URL}/stories`} className="hover:text-foreground">
             Crownly Stories
           </a>
@@ -71,7 +73,10 @@ function HeaderContent({ compact, user }: Props) {
           </form>
         )}
 
-        <nav className="ml-auto flex items-center gap-3 text-xs font-medium uppercase tracking-wide md:gap-6">
+        <nav className="ml-auto flex items-center gap-2 text-xs font-medium uppercase tracking-wide md:gap-4">
+          <div className="md:hidden">
+            <ThemeToggle />
+          </div>
           <Link href="/search" className="hidden text-muted hover:text-foreground sm:inline">
             Buy
           </Link>

@@ -4,6 +4,7 @@ import { MarketplaceHeader } from "@/components/MarketplaceHeader";
 import { MarketplaceFooter } from "@/components/MarketplaceFooter";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE_URL } from "@/lib/site";
+import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -21,8 +22,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const user = await getCurrentUser();
 
   return (
-    <html lang="en" className="dark">
-      <body className={`${geist.variable} min-h-screen antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className={`${geist.variable} min-h-screen bg-background text-foreground antialiased`}>
         <MarketplaceHeader user={user} />
         {children}
         <MarketplaceFooter />

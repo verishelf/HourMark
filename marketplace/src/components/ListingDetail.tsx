@@ -84,7 +84,7 @@ export function ListingDetail({ listing, related, user }: Props) {
               ))}
             </div>
           )}
-          <div className="relative order-1 aspect-square min-h-[280px] w-full overflow-hidden rounded-sm border border-border bg-[#050505] md:order-2">
+          <div className="relative order-1 aspect-square min-h-[280px] w-full overflow-hidden rounded-sm border border-border bg-image-well md:order-2">
             {images[active] ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

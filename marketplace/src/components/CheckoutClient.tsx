@@ -271,7 +271,7 @@ export function CheckoutClient({ listing, user }: Props) {
               <img
                 src={cover}
                 alt=""
-                className="h-20 w-20 shrink-0 rounded-sm object-contain bg-[#050505] p-1"
+                className="h-20 w-20 shrink-0 rounded-sm object-contain bg-image-well p-1"
               />
             )}
             <div>

@@ -76,7 +76,7 @@ export function ProfileListings({ listings }: Props) {
               className="flex flex-col gap-4 rounded-sm border border-border bg-card p-4 sm:flex-row sm:items-center"
             >
               <div className="flex flex-1 items-center gap-4">
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-[#050505]">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-image-well">
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={cover} alt="" className="h-full w-full object-contain p-1" />

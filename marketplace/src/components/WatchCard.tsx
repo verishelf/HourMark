@@ -20,7 +20,7 @@ export function WatchCard({ listing }: Props) {
       href={`/listing/${listing.id}`}
       className="group flex flex-col overflow-hidden rounded-sm border border-border bg-card transition hover:border-border-light hover:bg-card-hover"
     >
-      <div className="relative aspect-square bg-[#050505] p-4">
+      <div className="relative aspect-square bg-image-well p-4">
         {cover ? (
           <Image
             src={cover}
